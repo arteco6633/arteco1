@@ -64,11 +64,10 @@ export default function HomePage() {
         .eq('is_featured', 'true')
         .limit(8)
 
-      // Загружаем новые товары
+      // Загружаем новые товары - пока без фильтра
       const { data: newData } = await supabase
         .from('products')
         .select('*')
-        .eq('is_new', 'true')
         .limit(8)
 
       // Загружаем категории
