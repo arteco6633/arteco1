@@ -53,6 +53,7 @@ async function loadCategories() {
 
 async function loadProducts() {
     try {
+        console.log('🔄 Загрузка товаров...');
         const { data, error } = await supabase
             .from('products')
             .select(`
@@ -67,11 +68,14 @@ async function loadProducts() {
         if (error) throw error;
         
         products = data || [];
+        console.log('✅ Товары загружены:', products.length);
+        console.log('📦 Данные:', products);
+        
         filterProducts();
         updateStats();
     } catch (error) {
-        console.error('Ошибка загрузки товаров:', error);
-        showNotification('Не удалось загрузить товары', 'error');
+        console.error('❌ Ошибка загрузки товаров:', error);
+        showNotification('Не удалось загрузить товары: ' + error.message, 'error');
     }
 }
 
