@@ -154,10 +154,18 @@
                     </label>
                 </div>
 
-                <!-- URL изображения -->
+                <!-- Загрузка изображения -->
                 <div class="form-group">
-                    <label for="productImage">URL главного изображения</label>
-                    <input type="url" id="productImage" name="image_url">
+                    <label for="productImageFile">Загрузить изображение</label>
+                    <input type="file" id="productImageFile" name="image_file" accept="image/*">
+                    <small style="color: #666;">Максимальный размер: 5MB</small>
+                    <div id="imagePreview" style="margin-top: 1rem;"></div>
+                </div>
+
+                <!-- Или URL изображения -->
+                <div class="form-group">
+                    <label for="productImage">Или URL изображения</label>
+                    <input type="url" id="productImage" name="image_url" placeholder="https://...">
                 </div>
 
                 <!-- Кнопки -->
