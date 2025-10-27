@@ -1,6 +1,9 @@
+import Link from 'next/link'
+
 interface Category {
   id: number
   name: string
+  slug: string
   description?: string
   image_url?: string
 }
@@ -9,21 +12,33 @@ export default function Categories({ categories }: { categories: Category[] }) {
   if (categories.length === 0) return null
 
   return (
-    <section className="py-12 bg-gray-50">
-      <div className="container">
-        <h2 className="text-3xl font-bold mb-8 text-center">Категории</h2>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+    <section className="pt-12 pb-2">
+      <div className="max-w-[1400px] mx-auto px-3">
+        <div className="flex gap-4">
           {categories.map((category) => (
-            <div
+            <Link
               key={category.id}
-              className="bg-white rounded-lg shadow-md p-6 text-center hover:shadow-xl transition-shadow cursor-pointer"
+              href={`/catalog/${category.slug}`}
+              className="text-center hover:opacity-80 transition-opacity flex-1 min-w-0"
             >
-              <div className="text-4xl mb-3">📦</div>
+              {category.image_url ? (
+                <div className="mb-3 aspect-square">
+                  <img
+                    src={category.image_url}
+                    alt={category.name}
+                    className="w-full h-full object-cover rounded-lg"
+                  />
+                </div>
+              ) : (
+                <div className="mb-3 aspect-square flex items-center justify-center bg-gray-100 rounded-lg">
+                  <span className="text-6xl">📦</span>
+                </div>
+              )}
               <h3 className="font-semibold text-lg">{category.name}</h3>
               {category.description && (
-                <p className="text-gray-600 text-sm mt-2">{category.description}</p>
+                <p className="sr-only">{category.description}</p>
               )}
-            </div>
+            </Link>
           ))}
         </div>
       </div>

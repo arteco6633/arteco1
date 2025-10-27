@@ -35,6 +35,7 @@ interface Category {
   name: string
   slug: string
   is_active: boolean
+  image_url: string | null
 }
 
 export default function HomePage() {
