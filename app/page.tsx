@@ -18,11 +18,30 @@ interface Product {
   is_new: boolean
 }
 
+interface Banner {
+  id: number
+  title: string
+  description: string
+  image_url: string
+  link_url: string
+  button_text: string
+  position: string
+  is_active: boolean
+  sort_order: number
+}
+
+interface Category {
+  id: number
+  name: string
+  slug: string
+  is_active: boolean
+}
+
 export default function HomePage() {
-  const [banners, setBanners] = useState([])
+  const [banners, setBanners] = useState<Banner[]>([])
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([])
   const [newProducts, setNewProducts] = useState<Product[]>([])
-  const [categories, setCategories] = useState([])
+  const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
