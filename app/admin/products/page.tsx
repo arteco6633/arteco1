@@ -40,14 +40,27 @@ export default function AdminProductsPage() {
 
   async function loadData() {
     try {
-      const { data: productsData } = await supabase
+      console.log('Загрузка данных админки...')
+      
+      const { data: productsData, error: productsError } = await supabase
         .from('products')
         .select('*')
         .order('id', { ascending: false })
 
-      const { data: categoriesData } = await supabase
+      if (productsError) {
+        console.error('Ошибка загрузки товаров:', productsError)
+      }
+
+      const { data: categoriesData, error: categoriesError } = await supabase
         .from('categories')
         .select('*')
+
+      if (categoriesError) {
+        console.error('Ошибка загрузки категорий:', categoriesError)
+      }
+
+      console.log('Товары загружены:', productsData?.length || 0)
+      console.log('Категории загружены:', categoriesData?.length || 0)
 
       setProducts(productsData || [])
       setCategories(categoriesData || [])
