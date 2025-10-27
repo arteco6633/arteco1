@@ -1,17 +1,26 @@
 {
   "name": "arteco",
   "version": "1.0.0",
-  "description": "Проект с интеграцией GitHub, Vercel и Supabase.",
-  "main": "index.js",
+  "private": true,
   "scripts": {
-    "dev": "vercel dev",
-    "deploy": "vercel",
-    "preview": "vercel"
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
   "dependencies": {
-    "@supabase/supabase-js": "^2.76.1"
+    "@supabase/supabase-js": "^2.76.1",
+    "next": "^15.1.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.12.0",
+    "@types/react": "^19.0.6",
+    "@types/react-dom": "^19.0.2",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.47",
+    "tailwindcss": "^3.4.17",
+    "typescript": "^5.7.3"
   }
 }

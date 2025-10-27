@@ -1,0 +1,119 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --foreground-rgb: 0, 0, 0;
+  --background-start-rgb: 255, 255, 255;
+  --background-end-rgb: 255, 255, 255;
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background: linear-gradient(
+      to bottom,
+      transparent,
+      rgb(var(--background-end-rgb))
+    )
+    rgb(var(--background-start-rgb));
+}
+
+/* Кастомные стили для магазина */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+/* Навбар */
+.navbar {
+  @apply bg-white shadow-md sticky top-0 z-50;
+}
+
+.navbar .container {
+  @apply flex justify-between items-center py-4;
+}
+
+.logo {
+  @apply text-2xl font-bold text-blue-600;
+}
+
+.nav-links {
+  @apply flex gap-6;
+}
+
+.nav-links a {
+  @apply text-gray-700 hover:text-blue-600 transition-colors;
+}
+
+.cart-icon {
+  @apply relative cursor-pointer text-2xl;
+}
+
+.cart-icon span {
+  @apply absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center;
+}
+
+/* Категории и товары */
+.products-grid {
+  @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6;
+}
+
+.product-card {
+  @apply bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow;
+}
+
+.product-image {
+  @apply w-full h-64 object-cover;
+}
+
+.product-info {
+  @apply p-4;
+}
+
+.product-title {
+  @apply font-semibold text-lg mb-2;
+}
+
+.product-price {
+  @apply text-blue-600 font-bold text-xl;
+}
+
+/* Админ-панель */
+.admin-container {
+  @apply p-6;
+}
+
+.admin-header {
+  @apply flex justify-between items-center mb-6;
+}
+
+.admin-table {
+  @apply w-full bg-white rounded-lg shadow-md overflow-hidden;
+}
+
+.admin-table th,
+.admin-table td {
+  @apply px-4 py-3 text-left border-b;
+}
+
+.admin-table th {
+  @apply bg-gray-100 font-semibold;
+}
+
+.btn {
+  @apply px-4 py-2 rounded-lg transition-colors;
+}
+
+.btn-primary {
+  @apply bg-blue-600 text-white hover:bg-blue-700;
+}
+
+.btn-danger {
+  @apply bg-red-600 text-white hover:bg-red-700;
+}
+
+.btn-secondary {
+  @apply bg-gray-600 text-white hover:bg-gray-700;
+}
+
