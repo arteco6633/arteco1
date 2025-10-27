@@ -177,8 +177,8 @@ INSERT INTO categories (name, slug, is_active) VALUES
 INSERT INTO products (category_id, name, slug, price, sku, stock_quantity, is_featured, image_url) VALUES
 (1, 'Смартфон Apple iPhone 15', 'apple-iphone-15', 79999.00, 'SKU-001', 10, true, 'https://example.com/iphone15.jpg'),
 (1, 'Ноутбук MacBook Pro', 'macbook-pro', 149999.00, 'SKU-002', 5, true, 'https://example.com/macbook.jpg'),
-(2, 'Джинсы Levi\'s', 'levis-jeans', 3999.00, 'SKU-003', 20, false, 'https://example.com/jeans.jpg'),
-(3, 'Книга "Грокаем алгоритмы"', 'grokking-algorithms', 1299.00, 'SKU-004', 50, true, 'https://example.com/book.jpg');
+(2, 'Джинсы Levi''s', 'levis-jeans', 3999.00, 'SKU-003', 20, false, 'https://example.com/jeans.jpg'),
+(3, 'Книга «Грокаем алгоритмы»', 'grokking-algorithms', 1299.00, 'SKU-004', 50, true, 'https://example.com/book.jpg');
 
 -- Добавляем промо-баннеры
 INSERT INTO promo_blocks (title, image_url, link_url, position, is_active, sort_order, start_date) VALUES
