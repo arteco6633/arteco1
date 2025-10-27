@@ -3,114 +3,103 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ARTECO Project</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-        .container {
-            background: white;
-            border-radius: 20px;
-            padding: 40px;
-            max-width: 600px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-        }
-        h1 {
-            color: #333;
-            margin-bottom: 10px;
-            font-size: 2.5em;
-        }
-        .subtitle {
-            color: #666;
-            margin-bottom: 30px;
-        }
-        .status {
-            background: #f0f4ff;
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-        }
-        .status-item {
-            display: flex;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-        .status-item:last-child {
-            margin-bottom: 0;
-        }
-        .icon {
-            width: 20px;
-            height: 20px;
-            margin-right: 10px;
-        }
-        .tech-stack {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 15px;
-            margin-top: 20px;
-        }
-        .tech-card {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 20px;
-            border-radius: 10px;
-            text-align: center;
-        }
-        .tech-card h3 {
-            margin-bottom: 5px;
-        }
-        .tech-card p {
-            font-size: 0.9em;
-            opacity: 0.9;
-        }
-    </style>
+    <title>ARTECO - Интернет-магазин</title>
+    <link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body>
-    <div class="container">
-        <h1>🚀 ARTECO</h1>
-        <p class="subtitle">Проект успешно запущен!</p>
-        
-        <div class="status">
-            <div class="status-item">
-                <span>✅</span>
-                <span>GitHub подключен</span>
+    <!-- Навбар -->
+    <nav class="navbar">
+        <div class="container">
+            <div class="logo">🏪 ARTECO</div>
+            <div class="nav-links">
+                <a href="#home">Главная</a>
+                <a href="#catalog">Каталог</a>
+                <a href="#about">О нас</a>
+                <a href="#contacts">Контакты</a>
+                <a href="admin/products.html" class="admin-link">Админ-панель</a>
             </div>
-            <div class="status-item">
-                <span>✅</span>
-                <span>Vercel развернут</span>
+            <div class="cart-icon">🛒 <span id="cartCount">0</span></div>
+        </div>
+    </nav>
+
+    <!-- Главный контент -->
+    <main id="home">
+        <!-- Промо-баннеры -->
+        <section class="hero" id="promoBanners">
+            <div class="container">
+                <div id="bannersContainer" class="banners-grid">
+                    <!-- Баннеры загрузятся через JavaScript -->
+                    <div class="loading">Загрузка баннеров...</div>
+                </div>
             </div>
-            <div class="status-item">
-                <span>✅</span>
-                <span>Supabase настроен и работает</span>
+        </section>
+
+        <!-- Хиты продаж -->
+        <section class="products-section">
+            <div class="container">
+                <h2 class="section-title">
+                    🔥 Хиты продаж
+                    <a href="#catalog" class="view-all">Посмотреть всё →</a>
+                </h2>
+                <div class="products-grid" id="featuredProducts">
+                    <div class="loading">Загрузка товаров...</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Новинки -->
+        <section class="products-section">
+            <div class="container">
+                <h2 class="section-title">
+                    ✨ Новинки
+                    <a href="#catalog" class="view-all">Посмотреть всё →</a>
+                </h2>
+                <div class="products-grid" id="newProducts">
+                    <div class="loading">Загрузка товаров...</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Категории -->
+        <section class="categories-section">
+            <div class="container">
+                <h2 class="section-title">Категории товаров</h2>
+                <div class="categories-grid" id="categoriesContainer">
+                    <div class="loading">Загрузка категорий...</div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Футер -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>ARTECO</h3>
+                    <p>Качественные товары для вашего дома</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Контакты</h4>
+                    <p>Email: info@arteco.ru</p>
+                    <p>Телефон: +7 (123) 456-78-90</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Мы в соцсетях</h4>
+                    <div class="social-links">
+                        <a href="#">📘 VK</a>
+                        <a href="#">📷 Instagram</a>
+                        <a href="#">💬 Telegram</a>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 ARTECO. Все права защищены.</p>
             </div>
         </div>
-        
-        <div class="tech-stack">
-            <div class="tech-card">
-                <h3>GitHub</h3>
-                <p>Хранение кода</p>
-            </div>
-            <div class="tech-card">
-                <h3>Vercel</h3>
-                <p>Деплой</p>
-            </div>
-            <div class="tech-card">
-                <h3>Supabase</h3>
-                <p>База данных</p>
-            </div>
-        </div>
-    </div>
+    </footer>
+
+    <!-- Подключаем скрипты -->
+    <script type="module" src="assets/js/main.js"></script>
 </body>
 </html>
-
