@@ -25,6 +25,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     await loadCategories();
     await loadProducts();
     setupEventListeners();
+    setupImagePreview(); // Настройка превью изображений
 });
 
 // ============================================
@@ -543,11 +544,6 @@ function setupImagePreview() {
         });
     }
 }
-
-// Инициализируем превью при загрузке
-document.addEventListener('DOMContentLoaded', () => {
-    setupImagePreview();
-});
 
 // Делаем функции глобальными для использования в onclick
 window.editProduct = editProduct;
