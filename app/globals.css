@@ -117,3 +117,37 @@ body {
   @apply bg-gray-600 text-white hover:bg-gray-700;
 }
 
+/* Отключение анимации для промо-баннера */
+.animate-disabled * {
+  animation: none !important;
+  transition: none !important;
+}
+
+/* Анимация появления снизу к центру */
+@keyframes slideUp {
+  0% {
+    opacity: 0;
+    transform: translateY(150px) scale(0.8);
+  }
+  50% {
+    opacity: 0.5;
+    transform: translateY(75px) scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Анимация для текста снизу */
+@keyframes slideUpBottom {
+  0% {
+    opacity: 0;
+    transform: translateY(80px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+

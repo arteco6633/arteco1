@@ -110,7 +110,7 @@ export default function HomePage() {
             <div className="max-w-[1400px] mx-auto px-3">
               <div className="grid grid-cols-10 gap-4">
                 {/* Большой банер - 7 колонок (70%) */}
-                <div className="relative h-[500px] md:h-[600px] col-span-10 md:col-span-7 overflow-hidden rounded-[25px] group">
+                <div className="relative h-[500px] md:h-[600px] col-span-10 md:col-span-7 overflow-hidden rounded-[15px] group">
                   <img
                     src={topBanner.image_url}
                     alt={topBanner.title}
@@ -142,7 +142,7 @@ export default function HomePage() {
                 {/* Кнопка каталога - 3 колонки (30%) */}
                 <a
                   href="/catalog"
-                  className="h-[500px] md:h-[600px] col-span-10 md:col-span-3 flex flex-col justify-between text-black hover:opacity-90 transition-opacity py-8 px-8 md:px-12 rounded-[25px]"
+                  className="h-[500px] md:h-[600px] col-span-10 md:col-span-3 flex flex-col justify-between text-black hover:opacity-90 transition-opacity py-8 px-8 md:px-12 rounded-[15px]"
                   style={{ backgroundColor: '#F7A8C2' }}
                 >
                   <div className="flex-1 flex items-center justify-center">
@@ -170,7 +170,7 @@ export default function HomePage() {
             <div className="max-w-[1400px] mx-auto px-3">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {middleBanners.map((banner) => (
-                  <div key={banner.id} className="relative h-[400px] md:h-[500px] overflow-hidden rounded-[25px] group">
+                  <div key={banner.id} className="relative h-[400px] md:h-[500px] overflow-hidden rounded-[15px] group">
                     <img
                       src={banner.image_url}
                       alt={banner.title}
@@ -185,17 +185,15 @@ export default function HomePage() {
                           {banner.description}
                         </p>
                       )}
-                      {banner.link_url && (
-                        <div className="group">
-                          <a
-                            href={banner.link_url}
-                            className="inline-flex items-center text-white font-semibold text-lg group-hover:translate-x-4 transition-all duration-300 cursor-pointer"
-                          >
-                            <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 mr-2">→</span>
-                            <span>{banner.button_text || 'Перейти'}</span>
-                          </a>
-                        </div>
-                      )}
+                      <div className="group">
+                        <a
+                          href={banner.link_url || '/'}
+                          className="inline-flex items-center text-white font-semibold text-lg group-hover:translate-x-4 transition-all duration-300 cursor-pointer"
+                        >
+                          <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 mr-2">→</span>
+                          <span>{banner.button_text || 'Подробнее'}</span>
+                        </a>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -203,6 +201,81 @@ export default function HomePage() {
             </div>
           </section>
         )}
+
+        {/* Третий блок: Статический промо-баннер с анимацией */}
+        {bottomBanner && (
+          <section className="py-2">
+            <div className="max-w-[1400px] mx-auto px-3">
+              <a
+                href={bottomBanner.link_url || '/catalog'}
+                className="block w-full h-[600px] md:h-[700px] relative overflow-hidden rounded-[15px] group cursor-pointer"
+                style={{ 
+                  background: '#B2F542',
+                }}
+              >
+                {/* Черные сердечки (анимация из центра вверх) */}
+                <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-[15px]">
+                  <div className="absolute bottom-1/3 left-[38%] opacity-0 group-hover:opacity-100 transition-all duration-700 group-hover:-translate-y-60 group-hover:translate-x-6" style={{ transitionDelay: '0ms' }}>
+                    <span className="text-5xl text-black">♥</span>
+                  </div>
+                  <div className="absolute bottom-1/3 right-[38%] opacity-0 group-hover:opacity-100 transition-all duration-700 group-hover:-translate-y-64 group-hover:-translate-x-10" style={{ transitionDelay: '200ms' }}>
+                    <span className="text-4xl text-black">♥</span>
+                  </div>
+                  <div className="absolute bottom-1/3 left-[50%] opacity-0 group-hover:opacity-100 transition-all duration-700 group-hover:-translate-y-72 group-hover:translate-x-3" style={{ transitionDelay: '400ms' }}>
+                    <span className="text-6xl text-black">♡</span>
+                  </div>
+                  <div className="absolute bottom-1/3 right-[50%] opacity-0 group-hover:opacity-100 transition-all duration-700 group-hover:-translate-y-56 group-hover:-translate-x-5" style={{ transitionDelay: '300ms' }}>
+                    <span className="text-3xl text-black">♥</span>
+                  </div>
+                  
+                  {/* Дополнительные черные сердечки */}
+                  <div className="absolute bottom-1/3 left-[35%] opacity-0 group-hover:opacity-100 transition-all duration-700 group-hover:-translate-y-54 group-hover:translate-x-8" style={{ transitionDelay: '100ms' }}>
+                    <span className="text-4xl text-black">♡</span>
+                  </div>
+                  <div className="absolute bottom-1/3 right-[35%] opacity-0 group-hover:opacity-100 transition-all duration-700 group-hover:-translate-y-62 group-hover:-translate-x-12" style={{ transitionDelay: '500ms' }}>
+                    <span className="text-5xl text-black">♥</span>
+                  </div>
+                  <div className="absolute bottom-1/3 left-[52%] opacity-0 group-hover:opacity-100 transition-all duration-700 group-hover:-translate-y-48 group-hover:translate-x-2" style={{ transitionDelay: '600ms' }}>
+                    <span className="text-3xl text-black">♥</span>
+                  </div>
+                  <div className="absolute bottom-1/3 right-[52%] opacity-0 group-hover:opacity-100 transition-all duration-700 group-hover:-translate-y-50 group-hover:-translate-x-3" style={{ transitionDelay: '150ms' }}>
+                    <span className="text-4xl text-black">♥</span>
+                  </div>
+                </div>
+
+                {/* Контент */}
+                <div className="absolute inset-0 p-12 flex flex-col items-center justify-center">
+                  {/* Главный заголовок - по центру */}
+                  <div className="text-center animate-[slideUp_1.5s_ease-out]">
+                    <h3 className="text-black text-6xl md:text-8xl font-extrabold leading-tight tracking-tight">
+                      The ARTECO kitchen<br />
+                      <span className="block mt-4">
+                        match<wbr />maker
+                      </span>
+                    </h3>
+                  </div>
+                  
+                  {/* Текст и кнопка - внизу слева */}
+                  <div className="absolute bottom-12 left-12 flex flex-col items-start group-hover:translate-x-4 transition-all duration-300 animate-[slideUpBottom_1.8s_ease-out_0.5s_both]">
+                    <p className="text-black text-lg mb-6">
+                      Откройте для себя кухню своей мечты
+                    </p>
+                    
+                    {/* Кнопка с анимацией стрелки */}
+                    <div className="flex items-center">
+                      <span className="opacity-0 group-hover:opacity-100 transition-all duration-300 -translate-x-8 group-hover:translate-x-0 text-4xl text-black mr-0 group-hover:mr-2">→</span>
+                      <span className="text-black font-bold text-4xl">
+                        Пройди тест!
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </a>
+            </div>
+          </section>
+        )}
+
+        <Categories categories={categories} />
 
         {/* Новинки */}
         {newProducts.length > 0 && (
@@ -212,42 +285,6 @@ export default function HomePage() {
                 Новинки
               </h2>
               <ProductGrid products={newProducts} />
-            </div>
-          </section>
-        )}
-
-        {/* Третий блок: Еще один большой банер */}
-        {bottomBanner && (
-          <section className="py-2">
-            <div className="max-w-[1400px] mx-auto px-3">
-              <div className="relative w-full h-[500px] md:h-[600px] overflow-hidden rounded-[25px] group">
-                <img
-                  src={bottomBanner.image_url}
-                  alt={bottomBanner.title}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent flex flex-col justify-end p-16">
-                  <h3 className="text-white text-5xl font-bold mb-5">
-                    {bottomBanner.title}
-                  </h3>
-                  {bottomBanner.description && (
-                    <p className="text-white/90 text-2xl mb-8">
-                      {bottomBanner.description}
-                    </p>
-                  )}
-                  {bottomBanner.link_url && (
-                    <div className="group">
-                      <a
-                        href={bottomBanner.link_url}
-                        className="inline-flex items-center text-white font-bold text-2xl group-hover:translate-x-4 transition-all duration-300 cursor-pointer"
-                      >
-                        <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 mr-3 text-3xl">→</span>
-                        <span>{bottomBanner.button_text || 'Перейти'}</span>
-                      </a>
-                    </div>
-                  )}
-                </div>
-              </div>
             </div>
           </section>
         )}
@@ -263,8 +300,6 @@ export default function HomePage() {
             </div>
           </section>
         )}
-
-        <Categories categories={categories} />
       </main>
 
       <footer className="bg-gray-800 text-white py-8 mt-12">
