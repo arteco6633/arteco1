@@ -111,26 +111,27 @@ export default function Navbar() {
           </div>
         </div>
 
-      {/* Выпадающее меню категорий */}
-      {isMenuOpen && (
-        <div className="absolute top-16 left-0 right-0 bg-white border-t shadow-lg">
-          <div className="max-w-[1400px] mx-auto px-3 py-6">
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-              {categories.map((category) => (
-                <Link
-                  key={category.id}
-                  href={`/catalog/${category.slug}`}
-                  className="p-4 border border-gray-200 rounded-lg hover:border-gray-400 hover:shadow-md transition-all"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  <div className="text-xl mb-2">📦</div>
-                  <div className="font-semibold">{category.name}</div>
-                </Link>
-              ))}
+        {/* Выпадающее меню категорий */}
+        {isMenuOpen && (
+          <div className="absolute top-20 left-0 right-0 bg-white border-t shadow-lg">
+            <div className="max-w-[1400px] mx-auto px-3 py-6">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                {categories.map((category) => (
+                  <Link
+                    key={category.id}
+                    href={`/catalog/${category.slug}`}
+                    className="p-4 border border-gray-200 rounded-lg hover:border-gray-400 hover:shadow-md transition-all"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    <div className="text-xl mb-2">📦</div>
+                    <div className="font-semibold">{category.name}</div>
+                  </Link>
+                ))}
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </header>
   )
 }
