@@ -54,21 +54,21 @@ export default function HomePage() {
       const { data: bannersData } = await supabase
         .from('promo_blocks')
         .select('*')
-        .eq('is_active', true)
+        .eq('is_active', 'true')
         .order('position', { ascending: true })
 
       // Загружаем featured товары
       const { data: featuredData } = await supabase
         .from('products')
         .select('*')
-        .eq('is_featured', true)
+        .eq('is_featured', 'true')
         .limit(8)
 
       // Загружаем новые товары
       const { data: newData } = await supabase
         .from('products')
         .select('*')
-        .eq('is_new', true)
+        .eq('is_new', 'true')
         .limit(8)
 
       // Загружаем категории
