@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Админ-панель: Управление товарами</title>
+    <link rel="stylesheet" href="../assets/css/admin.css">
+</head>
+<body>
+    <!-- Навбар -->
+    <nav class="admin-navbar">
+        <div class="container">
+            <div class="navbar-brand">ARTECO Admin</div>
+            <div class="navbar-links">
+                <a href="products.html" class="active">Товары</a>
+                <a href="banners.html">Баннеры</a>
+                <a href="orders.html">Заказы</a>
+                <a href="../index.html" target="_blank">Перейти на сайт</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Основной контент -->
+    <main class="admin-main">
+        <div class="container">
+            <!-- Заголовок страницы -->
+            <div class="page-header">
+                <h1>Управление товарами</h1>
+                <button class="btn-primary" onclick="openAddProductModal()">
+                    + Добавить товар
+                </button>
+            </div>
+
+            <!-- Статистика -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value" id="totalProducts">0</div>
+                    <div class="stat-label">Всего товаров</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="activeProducts">0</div>
+                    <div class="stat-label">Активных</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="lowStock">0</div>
+                    <div class="stat-label">Мало на складе</div>
+                </div>
+            </div>
+
+            <!-- Фильтры и поиск -->
+            <div class="filters-bar">
+                <input type="text" id="searchInput" placeholder="Поиск по названию..." class="search-input">
+                <select id="categoryFilter" class="filter-select">
+                    <option value="">Все категории</option>
+                </select>
+                <select id="statusFilter" class="filter-select">
+                    <option value="">Все статусы</option>
+                    <option value="active">Активные</option>
+                    <option value="inactive">Неактивные</option>
+                </select>
+            </div>
+
+            <!-- Таблица товаров -->
+            <div class="table-container">
+                <table class="products-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Изображение</th>
+                            <th>Название</th>
+                            <th>Цена</th>
+                            <th>Количество</th>
+                            <th>Категория</th>
+                            <th>Статус</th>
+                            <th>Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody id="productsTableBody">
+                        <!-- Товары загрузятся через JS -->
+                        <tr>
+                            <td colspan="8" class="loading">Загрузка товаров...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Пагинация -->
+            <div class="pagination" id="pagination"></div>
+        </div>
+    </main>
+
+    <!-- Модальное окно для добавления/редактирования товара -->
+    <div id="productModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Добавить товар</h2>
+                <span class="close" onclick="closeProductModal()">&times;</span>
+            </div>
+            <form id="productForm" class="modal-body">
+                <input type="hidden" id="productId" name="id">
+                
+                <!-- Название -->
+                <div class="form-group">
+                    <label for="productName">Название товара *</label>
+                    <input type="text" id="productName" name="name" required>
+                </div>
+
+                <!-- Категория -->
+                <div class="form-group">
+                    <label for="productCategory">Категория *</label>
+                    <select id="productCategory" name="category_id" required>
+                        <option value="">Выберите категорию</option>
+                    </select>
+                </div>
+
+                <!-- Описание -->
+                <div class="form-group">
+                    <label for="productDescription">Описание</label>
+                    <textarea id="productDescription" name="description" rows="4"></textarea>
+                </div>
+
+                <!-- Цена и SKU -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="productPrice">Цена (₽) *</label>
+                        <input type="number" id="productPrice" name="price" step="0.01" min="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="productSKU">Артикул (SKU) *</label>
+                        <input type="text" id="productSKU" name="sku" required>
+                    </div>
+                </div>
+
+                <!-- Количество и статус -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="productStock">Количество на складе *</label>
+                        <input type="number" id="productStock" name="stock_quantity" min="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="productStatus">Статус</label>
+                        <select id="productStatus" name="status">
+                            <option value="active">Активен</option>
+                            <option value="inactive">Неактивен</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Хит продаж -->
+                <div class="form-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="productFeatured" name="is_featured">
+                        <span>Хит продаж</span>
+                    </label>
+                </div>
+
+                <!-- URL изображения -->
+                <div class="form-group">
+                    <label for="productImage">URL главного изображения</label>
+                    <input type="url" id="productImage" name="image_url">
+                </div>
+
+                <!-- Кнопки -->
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary" onclick="closeProductModal()">Отмена</button>
+                    <button type="submit" class="btn-primary">Сохранить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Подключаем JavaScript -->
+    <script type="module" src="../assets/js/admin.js"></script>
+</body>
+</html>
+

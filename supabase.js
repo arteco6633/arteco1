@@ -1,16 +1,14 @@
 // Конфигурация Supabase
 // Это файл для подключения к базе данных Supabase
 
-import { createClient } from '@supabase/supabase-js'
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm'
 
-// Получаем переменные окружения
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
+// URL и ключ Supabase (для браузерной среды)
+const supabaseUrl = 'https://omfffkpochfembpeikjz.supabase.co'
+const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9tZmZma3BvY2hmZW1icGVpa2p6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEyMjM3OTUsImV4cCI6MjA3Njc5OTc5NX0.H-bkBj0cHvlIYkqeLIhH6ESmkmw8t2Rn5wF8R_9u898'
 
 // Создаём клиент Supabase
-// Это клиент с публичным ключом (anon key) - безопасен для использования на клиенте
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
-// Для серверных запросов с правами администратора используйте service_role key
-// const supabaseAdmin = createClient(supabaseUrl, process.env.SUPABASE_SERVICE_ROLE_KEY)
+console.log('✅ Supabase подключен:', supabaseUrl)
 
