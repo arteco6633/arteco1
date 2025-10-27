@@ -1,0 +1,9 @@
+admin/
+assets/
+*.html
+*.md
+*.sql
+.env
+.next
+node_modules
+
