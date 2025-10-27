@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тест подключения Supabase</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .status {
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+        }
+        .success { background: #d1fae5; color: #065f46; }
+        .error { background: #fee2e2; color: #991b1b; }
+        .info { background: #dbeafe; color: #1e40af; }
+        button {
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        pre {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Тест подключения к Supabase</h1>
+    
+    <div class="status info">Нажмите кнопки ниже для проверки...</div>
+    
+    <button onclick="testConnection()">1. Проверить подключение</button>
+    <button onclick="loadCategories()">2. Загрузить категории</button>
+    <button onclick="loadProducts()">3. Загрузить товары</button>
+    
+    <div id="result"></div>
+    
+    <script type="module">
+        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm'
+        
+        const supabaseUrl = 'https://omfffkpochfembpeikjz.supabase.co'
+        const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9tZmZma3BvY2hmZW1icGVpa2p6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEyMjM3OTUsImV4cCI6MjA3Njc5OTc5NX0.H-bkBj0cHvlIYkqeLIhH6ESmkmw8t2Rn5wF8R_9u898'
+        
+        const supabase = createClient(supabaseUrl, supabaseAnonKey)
+        
+        window.supabase = supabase
+        
+        function showResult(title, data, isError = false) {
+            const result = document.getElementById('result')
+            result.innerHTML = `
+                <div class="status ${isError ? 'error' : 'success'}">
+                    <h3>${title}</h3>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                </div>
+            `
+        }
+        
+        window.testConnection = async function() {
+            try {
+                const { data, error } = await supabase.from('test_table').select('*')
+                if (error) throw error
+                showResult('✅ Подключение успешно!', data)
+            } catch (error) {
+                showResult('❌ Ошибка подключения', error, true)
+            }
+        }
+        
+        window.loadCategories = async function() {
+            try {
+                const { data, error } = await supabase
+                    .from('categories')
+                    .select('*')
+                    .eq('is_active', true)
+                
+                if (error) throw error
+                showResult('✅ Категории загружены', data)
+            } catch (error) {
+                showResult('❌ Ошибка загрузки категорий', error, true)
+            }
+        }
+        
+        window.loadProducts = async function() {
+            try {
+                const { data, error } = await supabase
+                    .from('products')
+                    .select('*, categories(*)')
+                
+                if (error) throw error
+                showResult('✅ Товары загружены', data)
+            } catch (error) {
+                showResult('❌ Ошибка загрузки товаров', error, true)
+            }
+        }
+        
+        console.log('✅ Supabase инициализирован:', supabaseUrl)
+    </script>
+</body>
+</html>
+
