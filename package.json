@@ -1,0 +1,14 @@
+{
+  "name": "arteco",
+  "version": "1.0.0",
+  "description": "Проект с интеграцией GitHub, Vercel и Supabase.",
+  "main": "index.js",
+  "scripts": {
+    "dev": "vercel dev",
+    "deploy": "vercel",
+    "preview": "vercel"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
