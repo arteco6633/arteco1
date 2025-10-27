@@ -5,7 +5,7 @@ interface Category {
   name: string
   slug: string
   description?: string
-  image_url?: string
+  image_url: string | null
 }
 
 export default function Categories({ categories }: { categories: Category[] }) {
