@@ -3,9 +3,9 @@
 
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm'
 
-// URL и ключ Supabase (для браузерной среды)
-const supabaseUrl = 'https://omfffkpochfembpeikjz.supabase.co'
-const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9tZmZma3BvY2hmZW1icGVpa2p6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEyMjM3OTUsImV4cCI6MjA3Njc5OTc5NX0.H-bkBj0cHvlIYkqeLIhH6ESmkmw8t2Rn5wF8R_9u898'
+// URL и ключ Supabase (ваш собственный Supabase на Beget)
+const supabaseUrl = 'https://zijajicude.beget.app'
+const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlzcyI6InN1cGFiYXNlIiwiaWF0IjoxNzYxNTIzMjAwLCJleHAiOjE5MTkyODk2MDB9.l9rF02tJ4OKoCSqVsKeHnBR47mYkFG5BxF_Imkz9tcs'
 
 // Создаём клиент Supabase
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
