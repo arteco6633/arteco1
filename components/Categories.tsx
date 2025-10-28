@@ -13,12 +13,12 @@ export default function Categories({ categories }: { categories: Category[] }) {
 
   return (
     <section className="pt-12 pb-2">
-      <div className="max-w-[1400px] mx-auto px-3">
-        <div className="md:hidden flex items-center gap-2 text-gray-500 text-sm px-1 mb-3">
+      <div className="max-w-[1400px] 2xl:max-w-[1600px] mx-auto px-0 md:px-3 xl:px-6 2xl:px-9">
+        <div className="md:hidden flex items-center gap-2 text-gray-500 text-sm px-0 mb-3">
           <span>Прокрутите категории</span>
           <span className="inline-block animate-pulse">→</span>
         </div>
-        <div className="flex gap-5 sm:gap-4 overflow-x-auto sm:overflow-visible snap-x snap-mandatory px-1 sm:px-0 no-scrollbar">
+        <div className="flex gap-5 sm:gap-4 overflow-x-auto sm:overflow-visible snap-x snap-mandatory px-0 no-scrollbar">
           {categories.map((category) => (
             <Link
               key={category.id}

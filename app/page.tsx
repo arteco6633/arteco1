@@ -154,7 +154,7 @@ export default function HomePage() {
         {/* Первый блок: Один большой банер слева + кнопка справа */}
         {topBanner && (
           <section className="py-2">
-            <div className="max-w-[1400px] 2xl:max-w-[1600px] mx-auto px-0 md:px-3 xl:px-6 2xl:px-9">
+            <div className="max-w-[1400px] 2xl:max-w-none mx-auto px-0 md:px-3 xl:px-6 2xl:px-9">
               <div className="grid grid-cols-10 gap-4">
                 {/* Большой банер - 7 колонок (70%) */}
                 <div ref={firstBannerRef} className={`relative h-[440px] sm:h-[520px] md:h-[600px] col-span-10 md:col-span-7 overflow-hidden rounded-[15px] group reveal-on-scroll ${firstBannerInView ? 'in-view' : ''}`}>
@@ -214,7 +214,7 @@ export default function HomePage() {
         {/* Второй блок: Два промо-баннера */}
         {middleBanners.length > 0 && (
           <section className="py-2">
-            <div className="max-w-[1400px] 2xl:max-w-[1600px] mx-auto px-0 md:px-3 xl:px-6 2xl:px-9">
+            <div className="max-w-[1400px] 2xl:max-w-none mx-auto px-0 md:px-3 xl:px-6 2xl:px-9">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {middleBanners.map((banner) => (
                   <div key={banner.id} className="relative h-[360px] sm:h-[420px] md:h-[500px] overflow-hidden rounded-[15px] group">
@@ -252,7 +252,7 @@ export default function HomePage() {
         {/* Третий блок: Статический промо-баннер с анимацией */}
         {bottomBanner && (
           <section className="py-2">
-            <div className="max-w-[1400px] 2xl:max-w-[1600px] mx-auto px-0 md:px-3 xl:px-6 2xl:px-9">
+            <div className="max-w-[1400px] 2xl:max-w-none mx-auto px-0 md:px-3 xl:px-6 2xl:px-9">
               <a
                 href={bottomBanner.link_url || '/catalog'}
                 className="block w-full h-[600px] md:h-[700px] relative overflow-hidden rounded-[15px] group cursor-pointer"
@@ -327,7 +327,7 @@ export default function HomePage() {
         {/* Дополнительные два промо-баннера (динамичные) */}
         {middleBanners2.length > 0 && (
           <section className="pt-12 pb-2">
-            <div className="max-w-[1400px] 2xl:max-w-[1600px] mx-auto px-0 md:px-3 xl:px-6 2xl:px-9">
+            <div className="max-w-[1400px] 2xl:max-w-none mx-auto px-0 md:px-3 xl:px-6 2xl:px-9">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {middleBanners2.map((banner) => (
                   <div key={banner.id} className="relative h-[360px] sm:h-[420px] md:h-[500px] overflow-hidden rounded-[15px] group">
@@ -365,7 +365,7 @@ export default function HomePage() {
         {/* Один статичный промо-баннер (ниже) */}
         {bottomBanner2 && (
           <section className="py-2">
-            <div className="max-w-[1400px] 2xl:max-w-[1600px] mx-auto px-0 md:px-3 xl:px-6 2xl:px-9">
+            <div className="max-w-[1400px] 2xl:max-w-none mx-auto px-0 md:px-3 xl:px-6 2xl:px-9">
               <a
                 href={bottomBanner2.link_url || '/catalog'}
                 className="block w-full h-[600px] md:h-[700px] relative overflow-hidden rounded-[15px] group cursor-pointer"
@@ -435,7 +435,7 @@ export default function HomePage() {
         {/* Новинки */}
         {newProducts.length > 0 && (
           <section className="py-8 bg-white">
-            <div className="max-w-[1400px] 2xl:max-w-[1600px] mx-auto px-0 md:px-3 xl:px-6 2xl:px-9">
+            <div className="max-w-[1400px] 2xl:max-w-none mx-auto px-0 md:px-3 xl:px-6 2xl:px-9">
               <div className="mb-6 flex flex-col md:flex-row md:items-start md:justify-between gap-6">
                 <div className="order-2 md:order-1 flex-1">
                   <ProductGrid products={newProducts} onlyFirstTwo />
@@ -465,7 +465,7 @@ export default function HomePage() {
       </main>
 
       <footer className="bg-gray-800 text-white py-8 mt-12">
-        <div className="max-w-[1400px] 2xl:max-w-[1600px] mx-auto px-0 md:px-3 xl:px-6 2xl:px-9">
+        <div className="max-w-[1400px] 2xl:max-w-none mx-auto px-0 md:px-3 xl:px-6 2xl:px-9">
           <div className="text-center">
             <p>&copy; 2025 ARTECO. Все права защищены.</p>
           </div>
