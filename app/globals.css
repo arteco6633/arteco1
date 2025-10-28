@@ -151,3 +151,48 @@ body {
   }
 }
 
+/* Анимация выхода текста слева направо */
+@keyframes slideInFromLeft {
+  0% {
+    opacity: 0;
+    transform: translateX(-100%);
+  }
+  50% {
+    opacity: 0.5;
+    transform: translateX(-30%);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Резкий старт, плавное завершение */
+@keyframes slideInSharp {
+  0% {
+    opacity: 0;
+    transform: translateX(-200%) scale(0.5);
+  }
+  30% {
+    opacity: 0.8;
+    transform: translateX(-50%) scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+/* Появление стрелки при скролле на мобильных */
+@media (max-width: 767px) {
+  .reveal-on-scroll .scroll-arrow {
+    opacity: 0;
+    transform: translateX(-8px);
+    transition: opacity 300ms ease, transform 300ms ease;
+  }
+  .reveal-on-scroll.in-view .scroll-arrow {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
