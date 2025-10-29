@@ -33,6 +33,7 @@ interface Product {
   } | null
   schemes?: string[] | null
   videos?: string[] | null
+  downloadable_files?: Array<{ url: string; name: string }> | null
   category_id: number
   is_featured: boolean
   is_new: boolean
@@ -59,6 +60,7 @@ export default function ProductPage() {
   const [syncedRightHeight, setSyncedRightHeight] = useState<number>(0)
   const [selectedDrawerIdx, setSelectedDrawerIdx] = useState<number | null>(null)
   const [selectedLightingIdx, setSelectedLightingIdx] = useState<number | null>(null)
+  const [selectedColorIdx, setSelectedColorIdx] = useState<number | null>(null)
   const finalPrice = useMemo(() => {
     if (!product) return 0
     const base = Number(product.price) || 0
@@ -72,7 +74,7 @@ export default function ProductPage() {
   const [openHinge, setOpenHinge] = useState(false)
   const [openDrawer, setOpenDrawer] = useState(false)
   const [openLighting, setOpenLighting] = useState(false)
-  const [activeTab, setActiveTab] = useState<'schemes' | 'specs' | 'videos'>('schemes')
+  const [activeTab, setActiveTab] = useState<'schemes' | 'videos'>('videos')
   const [related, setRelated] = useState<any[]>([])
   // Квиз «Рассчитать под мои размеры»
   const [isCalcOpen, setIsCalcOpen] = useState(false)
@@ -299,10 +301,50 @@ export default function ProductPage() {
               {product.colors && product.colors.length > 0 && (
                 <div className="mb-4">
                   <div className="font-semibold mb-2">Цвета</div>
-                  <div className="flex items-center gap-2 flex-wrap">
-                    {product.colors.map((c, idx) => (
-                      <span key={idx} className="w-6 h-6 rounded-full border border-black/10" style={{ background: c }} title={c} />
-                    ))}
+                  <div className="flex items-center gap-3 flex-wrap">
+                    {product.colors.map((c, idx) => {
+                      const colorObj: { value: string; imageIndex?: number | null } = typeof c === 'object' && c !== null ? (c as any) : { value: c as string, imageIndex: null }
+                      const colorValue = colorObj.value || (typeof c === 'string' ? c : '')
+                      const isImageUrl = typeof colorValue === 'string' && (colorValue.startsWith('http') || colorValue.startsWith('/'))
+                      const isSelected = selectedColorIdx === idx
+                      return isImageUrl ? (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => {
+                            setSelectedColorIdx(idx)
+                            // Если цвет связан с изображением через imageIndex
+                            if (colorObj.imageIndex !== null && colorObj.imageIndex !== undefined && product.images && product.images[colorObj.imageIndex]) {
+                              setActiveImageIdx(colorObj.imageIndex)
+                            } else if (product.images && product.images.length > idx) {
+                              // Фоллбек: если нет связи, переключаемся по индексу
+                              setActiveImageIdx(Math.min(idx, product.images.length - 1))
+                            }
+                          }}
+                          className={`w-12 h-12 rounded-full border-2 ${isSelected ? 'border-black ring-2 ring-black/30' : 'border-black/10'} object-cover cursor-pointer hover:ring-2 hover:ring-black/20 transition-all`}
+                        >
+                          <img src={colorValue} alt={`Цвет ${idx + 1}`} className="w-full h-full rounded-full object-cover" />
+                        </button>
+                      ) : (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => {
+                            setSelectedColorIdx(idx)
+                            // Если цвет связан с изображением через imageIndex
+                            if (colorObj.imageIndex !== null && colorObj.imageIndex !== undefined && product.images && product.images[colorObj.imageIndex]) {
+                              setActiveImageIdx(colorObj.imageIndex)
+                            } else if (product.images && product.images.length > idx) {
+                              // Фоллбек: если нет связи, переключаемся по индексу
+                              setActiveImageIdx(Math.min(idx, product.images.length - 1))
+                            }
+                          }}
+                          className={`w-12 h-12 rounded-full border-2 ${isSelected ? 'border-black ring-2 ring-black/30' : 'border-black/10'} shadow-sm cursor-pointer hover:ring-2 hover:ring-black/20 transition-all`}
+                          style={{ background: colorValue || '#ccc' }}
+                          title={colorValue || 'Цвет'}
+                        />
+                      )
+                    })}
                   </div>
                 </div>
               )}
@@ -331,16 +373,20 @@ export default function ProductPage() {
                             onClick={() => setSelectedFillingIdx(idx)}
                             className={`text-left p-3 rounded-lg border hover:bg-gray-50 ${selectedFillingIdx===idx ? 'border-black' : 'border-gray-200'}`}
                           >
-                            <div className="flex items-center gap-3">
-                              {f.image_url && <img src={f.image_url} className="w-28 h-28 rounded object-cover" />}
-                              <div>
-                                <div className="font-medium">{f.name}</div>
+                            <div className="flex items-start gap-3">
+                              {f.image_url ? (
+                                <img src={f.image_url} alt={f.name || 'Вариант'} className="w-32 h-32 min-w-[128px] rounded object-cover border border-gray-200" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
+                              ) : (
+                                <div className="w-32 h-32 min-w-[128px] rounded bg-gray-100 border border-gray-200 flex items-center justify-center text-gray-400 text-xs">Нет фото</div>
+                              )}
+                              <div className="flex-1">
+                                <div className="font-medium mb-1">{f.name || 'Без названия'}</div>
                                 {typeof f.delta_price === 'number' && f.delta_price !== 0 && (
-                                  <div className="text-sm text-gray-600">{f.delta_price > 0 ? '+' : ''}{f.delta_price?.toLocaleString('ru-RU')} ₽</div>
+                                  <div className="text-sm text-gray-600 mb-1">{f.delta_price > 0 ? '+' : ''}{f.delta_price?.toLocaleString('ru-RU')} ₽</div>
                                 )}
+                                {f.description && <div className="text-xs text-gray-500">{f.description}</div>}
                               </div>
                             </div>
-                            {f.description && <div className="text-xs text-gray-500 mt-1">{f.description}</div>}
                           </button>
                         ))}
                       </div>
@@ -373,16 +419,20 @@ export default function ProductPage() {
                             onClick={() => setSelectedHingeIdx(idx)}
                             className={`text-left p-3 rounded-lg border hover:bg-gray-50 ${selectedHingeIdx===idx ? 'border-black' : 'border-gray-200'}`}
                           >
-                            <div className="flex items-center gap-3">
-                              {h.image_url && <img src={h.image_url} className="w-28 h-28 rounded object-cover" />}
-                              <div>
-                                <div className="font-medium">{h.name}</div>
+                            <div className="flex items-start gap-3">
+                              {h.image_url ? (
+                                <img src={h.image_url} alt={h.name || 'Вариант'} className="w-32 h-32 min-w-[128px] rounded object-cover border border-gray-200" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
+                              ) : (
+                                <div className="w-32 h-32 min-w-[128px] rounded bg-gray-100 border border-gray-200 flex items-center justify-center text-gray-400 text-xs">Нет фото</div>
+                              )}
+                              <div className="flex-1">
+                                <div className="font-medium mb-1">{h.name || 'Без названия'}</div>
                                 {typeof h.delta_price === 'number' && h.delta_price !== 0 && (
-                                  <div className="text-sm text-gray-600">{h.delta_price > 0 ? '+' : ''}{h.delta_price?.toLocaleString('ru-RU')} ₽</div>
+                                  <div className="text-sm text-gray-600 mb-1">{h.delta_price > 0 ? '+' : ''}{h.delta_price?.toLocaleString('ru-RU')} ₽</div>
                                 )}
+                                {h.description && <div className="text-xs text-gray-500">{h.description}</div>}
                               </div>
                             </div>
-                            {h.description && <div className="text-xs text-gray-500 mt-1">{h.description}</div>}
                           </button>
                         ))}
                       </div>
@@ -415,16 +465,20 @@ export default function ProductPage() {
                             onClick={() => setSelectedDrawerIdx(idx)}
                             className={`text-left p-3 rounded-lg border hover:bg-gray-50 ${selectedDrawerIdx===idx ? 'border-black' : 'border-gray-200'}`}
                           >
-                            <div className="flex items-center gap-3">
-                              {d.image_url && <img src={d.image_url} className="w-28 h-28 rounded object-cover" />}
-                              <div>
-                                <div className="font-medium">{d.name}</div>
+                            <div className="flex items-start gap-3">
+                              {d.image_url ? (
+                                <img src={d.image_url} alt={d.name || 'Вариант'} className="w-32 h-32 min-w-[128px] rounded object-cover border border-gray-200" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
+                              ) : (
+                                <div className="w-32 h-32 min-w-[128px] rounded bg-gray-100 border border-gray-200 flex items-center justify-center text-gray-400 text-xs">Нет фото</div>
+                              )}
+                              <div className="flex-1">
+                                <div className="font-medium mb-1">{d.name || 'Без названия'}</div>
                                 {typeof d.delta_price === 'number' && d.delta_price !== 0 && (
-                                  <div className="text-sm text-gray-600">{d.delta_price > 0 ? '+' : ''}{d.delta_price?.toLocaleString('ru-RU')} ₽</div>
+                                  <div className="text-sm text-gray-600 mb-1">{d.delta_price > 0 ? '+' : ''}{d.delta_price?.toLocaleString('ru-RU')} ₽</div>
                                 )}
+                                {d.description && <div className="text-xs text-gray-500">{d.description}</div>}
                               </div>
                             </div>
-                            {d.description && <div className="text-xs text-gray-500 mt-1">{d.description}</div>}
                           </button>
                         ))}
                       </div>
@@ -457,16 +511,20 @@ export default function ProductPage() {
                             onClick={() => setSelectedLightingIdx(idx)}
                             className={`text-left p-3 rounded-lg border hover:bg-gray-50 ${selectedLightingIdx===idx ? 'border-black' : 'border-gray-200'}`}
                           >
-                            <div className="flex items-center gap-3">
-                              {l.image_url && <img src={l.image_url} className="w-28 h-28 rounded object-cover" />}
-                              <div>
-                                <div className="font-medium">{l.name}</div>
+                            <div className="flex items-start gap-3">
+                              {l.image_url ? (
+                                <img src={l.image_url} alt={l.name || 'Вариант'} className="w-32 h-32 min-w-[128px] rounded object-cover border border-gray-200" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
+                              ) : (
+                                <div className="w-32 h-32 min-w-[128px] rounded bg-gray-100 border border-gray-200 flex items-center justify-center text-gray-400 text-xs">Нет фото</div>
+                              )}
+                              <div className="flex-1">
+                                <div className="font-medium mb-1">{l.name || 'Без названия'}</div>
                                 {typeof l.delta_price === 'number' && l.delta_price !== 0 && (
-                                  <div className="text-sm text-gray-600">{l.delta_price > 0 ? '+' : ''}{l.delta_price?.toLocaleString('ru-RU')} ₽</div>
+                                  <div className="text-sm text-gray-600 mb-1">{l.delta_price > 0 ? '+' : ''}{l.delta_price?.toLocaleString('ru-RU')} ₽</div>
                                 )}
+                                {l.description && <div className="text-xs text-gray-500">{l.description}</div>}
                               </div>
                             </div>
-                            {l.description && <div className="text-xs text-gray-500 mt-1">{l.description}</div>}
                           </button>
                         ))}
                       </div>
@@ -510,29 +568,22 @@ export default function ProductPage() {
             </div>
 
 
-        {/* Вкладки: Размеры / Характеристики */}
+        {/* Вкладки: Характеристики / Размеры */}
         <section className="mt-12 w-full">
           <div className="flex gap-2 border-b mb-6">
+            <button
+              type="button"
+              onClick={() => setActiveTab('videos')}
+              className={`px-4 py-2 -mb-[1px] border-b-2 ${activeTab==='videos' ? 'border-black font-semibold' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+            >
+              Характеристики
+            </button>
             <button
               type="button"
               onClick={() => setActiveTab('schemes')}
               className={`px-4 py-2 -mb-[1px] border-b-2 ${activeTab==='schemes' ? 'border-black font-semibold' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
             >
               Размеры
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab('specs')}
-              className={`px-4 py-2 -mb-[1px] border-b-2 ${activeTab==='specs' ? 'border-black font-semibold' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
-            >
-              Характеристики
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab('videos')}
-              className={`px-4 py-2 -mb-[1px] border-b-2 ${activeTab==='videos' ? 'border-black font-semibold' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
-            >
-              Видео кухни
             </button>
           </div>
 
@@ -547,70 +598,33 @@ export default function ProductPage() {
               ) : (
                 <div className="text-gray-500">Схемы отсутствуют</div>
               )}
+
+              {/* Спецификация */}
+              {product.downloadable_files && product.downloadable_files.length > 0 && (
+                <div className="mt-8 pt-8 border-t">
+                  <h3 className="text-lg font-semibold mb-4">Спецификация</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {product.downloadable_files.map((file, idx) => (
+                      <a
+                        key={idx}
+                        href={file.url}
+                        download={file.name}
+                        className="flex items-center gap-3 p-4 bg-white border rounded-lg hover:bg-gray-50 hover:shadow-md transition-all"
+                      >
+                        <span className="text-3xl">📄</span>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-medium text-gray-900 truncate">{file.name}</div>
+                          <div className="text-xs text-gray-500 mt-1">Скачать файл</div>
+                        </div>
+                        <span className="text-gray-400">↓</span>
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
-          {activeTab === 'specs' && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-700">
-              {product.specs?.body_material && (
-                <div className="p-3 bg-gray-50 rounded-lg">
-                  <span className="font-semibold block mb-1">Материал корпуса</span>
-                  <span>{product.specs.body_material}</span>
-                </div>
-              )}
-              {product.specs?.facade_material && (
-                <div className="p-3 bg-gray-50 rounded-lg">
-                  <span className="font-semibold block mb-1">Материал фасадов</span>
-                  <span>{product.specs.facade_material}</span>
-                </div>
-              )}
-              {product.specs?.additional && (
-                <div className="p-3 bg-gray-50 rounded-lg">
-                  <span className="font-semibold block mb-1">Дополнительно</span>
-                  <span>{product.specs.additional}</span>
-                </div>
-              )}
-              {product.specs?.handles && (
-                <div className="p-3 bg-gray-50 rounded-lg">
-                  <span className="font-semibold block mb-1">Ручки</span>
-                  <span>{product.specs.handles}</span>
-                </div>
-              )}
-              {product.specs?.handle_material && (
-                <div className="p-3 bg-gray-50 rounded-lg">
-                  <span className="font-semibold block mb-1">Материал ручек</span>
-                  <span>{product.specs.handle_material}</span>
-                </div>
-              )}
-              {product.specs?.back_wall_material && (
-                <div className="p-3 bg-gray-50 rounded-lg">
-                  <span className="font-semibold block mb-1">Материал задней стенки</span>
-                  <span>{product.specs.back_wall_material}</span>
-                </div>
-              )}
-              {product.specs?.delivery_option && (
-                <div className="p-3 bg-gray-50 rounded-lg">
-                  <span className="font-semibold block mb-1">Вариант доставки</span>
-                  <span>{product.specs.delivery_option}</span>
-                </div>
-              )}
-              {product.specs?.feet && (
-                <div className="p-3 bg-gray-50 rounded-lg">
-                  <span className="font-semibold block mb-1">Подпятники</span>
-                  <span>{product.specs.feet}</span>
-                </div>
-              )}
-              {product.specs?.country && (
-                <div className="p-3 bg-gray-50 rounded-lg">
-                  <span className="font-semibold block mb-1">Страна производства</span>
-                  <span>{product.specs.country}</span>
-                </div>
-              )}
-              {!product.specs || Object.keys(product.specs).length === 0 && (
-                <div className="col-span-full text-gray-500 text-center py-8">Характеристики отсутствуют</div>
-              )}
-            </div>
-          )}
           {activeTab === 'videos' && (
             <div className="w-full grid grid-cols-1 md:grid-cols-12 gap-6">
               <div className="w-full md:col-span-5 flex items-start justify-center">

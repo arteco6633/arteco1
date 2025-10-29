@@ -29,6 +29,7 @@ interface Product {
   } | null
   schemes?: string[] | null
   videos?: string[] | null
+  downloadable_files?: Array<{ url: string; name: string }> | null
   category_id: number
   is_featured: boolean
   is_new: boolean
@@ -54,6 +55,10 @@ export default function AdminProductsPage() {
   // DnD для схем товара
   const schemeInputRef = useRef<HTMLInputElement | null>(null)
   const [isDraggingSchemes, setIsDraggingSchemes] = useState(false)
+  // DnD для файлов для скачивания
+  const filesInputRef = useRef<HTMLInputElement | null>(null)
+  const [isDraggingFiles, setIsDraggingFiles] = useState(false)
+  const [uploadingFiles, setUploadingFiles] = useState(false)
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -78,6 +83,7 @@ export default function AdminProductsPage() {
     } as any,
     schemes: [] as string[],
     videos: [] as string[],
+    downloadable_files: [] as Array<{ url: string; name: string }>,
     category_id: '',
     is_featured: false,
     is_new: false,
@@ -148,6 +154,7 @@ export default function AdminProductsPage() {
       },
       schemes: [],
       videos: [],
+      downloadable_files: [],
       category_id: '',
       is_featured: false,
       is_new: false,
@@ -165,7 +172,9 @@ export default function AdminProductsPage() {
       price: product.price.toString(),
       image_url: product.image_url,
       images: (product.images as any) || [],
-      colors: (product.colors as any) || [],
+      colors: Array.isArray(product.colors) && product.colors.length > 0
+        ? (product.colors as any[]).map(c => typeof c === 'string' ? { value: c, imageIndex: null } : c)
+        : [],
       fillings: (product.fillings as any) || [],
       hinges: (product.hinges as any) || [],
       drawers: (product.drawers as any) || [],
@@ -183,6 +192,7 @@ export default function AdminProductsPage() {
       },
       schemes: (product.schemes as any) || [],
       videos: (product.videos as any) || [],
+      downloadable_files: (product.downloadable_files as any) || [],
       category_id: product.category_id.toString(),
       is_featured: product.is_featured,
       is_new: product.is_new,
@@ -249,6 +259,21 @@ export default function AdminProductsPage() {
       urls.push(data.publicUrl)
     }
     return urls
+  }
+
+  // Загрузка файлов для скачивания (PDF, DOC и т.д.) в Storage
+  async function uploadDownloadableFiles(files: File[]): Promise<Array<{ url: string; name: string }>> {
+    const result: Array<{ url: string; name: string }> = []
+    for (const file of files) {
+      const ext = file.name.split('.').pop()?.toLowerCase() || 'pdf'
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${ext}`
+      const filePath = `downloads/${fileName}`
+      const { error } = await supabase.storage.from('product').upload(filePath, file)
+      if (error) throw error
+      const { data } = supabase.storage.from('product').getPublicUrl(filePath)
+      result.push({ url: data.publicUrl, name: file.name })
+    }
+    return result
   }
 
   // Загрузка свотчей цветов в Storage (возвращает URL)
@@ -325,8 +350,9 @@ export default function AdminProductsPage() {
     try {
       setUploadingColors(true)
       const urls = await uploadColorFiles(files)
-      const current = Array.isArray(formData.colors) ? (formData.colors as string[]) : (formData.colors ? (formData.colors as string).split(',').map(s=>s.trim()) : [])
-      setFormData({ ...formData, colors: [...current, ...urls] })
+      const current = Array.isArray(formData.colors) ? formData.colors : []
+      const newColors = urls.map(url => ({ value: url, imageIndex: null as number | null }))
+      setFormData({ ...formData, colors: [...current, ...newColors] })
     } catch (err) {
       console.error('Ошибка загрузки цветов:', err)
       alert('Не удалось загрузить изображения цветов')
@@ -344,8 +370,9 @@ export default function AdminProductsPage() {
     try {
       setUploadingColors(true)
       const urls = await uploadColorFiles(files)
-      const current = Array.isArray(formData.colors) ? (formData.colors as string[]) : (formData.colors ? (formData.colors as string).split(',').map(s=>s.trim()) : [])
-      setFormData({ ...formData, colors: [...current, ...urls] })
+      const current = Array.isArray(formData.colors) ? formData.colors : []
+      const newColors = urls.map(url => ({ value: url, imageIndex: null as number | null }))
+      setFormData({ ...formData, colors: [...current, ...newColors] })
     } catch (err) {
       console.error('Ошибка dnd цветов:', err)
       alert('Не удалось загрузить файлы цветов')
@@ -380,6 +407,7 @@ export default function AdminProductsPage() {
         specs: formData.specs,
         schemes: formData.schemes,
         videos: formData.videos,
+        downloadable_files: formData.downloadable_files,
         category_id: parseInt(formData.category_id),
         is_featured: formData.is_featured,
         is_new: formData.is_new,
@@ -634,6 +662,65 @@ export default function AdminProductsPage() {
                   )}
                 </div>
 
+                {/* Спецификация: drag & drop + выбор файлов */}
+                <div className="mb-6">
+                  <label className="block mb-2 font-semibold">Спецификация (PDF, DOC и т.д.)</label>
+                  <div
+                    className={`w-full border-2 ${isDraggingFiles ? 'border-blue-500 bg-blue-50' : 'border-dashed border-gray-300'} rounded-lg p-5 text-center transition-colors`}
+                    onDragOver={(e) => { e.preventDefault(); setIsDraggingFiles(true) }}
+                    onDragLeave={() => setIsDraggingFiles(false)}
+                    onDrop={async (e) => {
+                      e.preventDefault(); setIsDraggingFiles(false);
+                      const files = Array.from(e.dataTransfer.files || [])
+                      if (files.length === 0) return
+                      try { 
+                        setUploadingFiles(true); 
+                        const uploaded = await uploadDownloadableFiles(files); 
+                        setFormData({ ...formData, downloadable_files: [...formData.downloadable_files, ...uploaded] }) 
+                      } catch(err){ 
+                        console.error(err); 
+                        alert('Не удалось загрузить файлы') 
+                      } finally { 
+                        setUploadingFiles(false) 
+                      }
+                    }}
+                  >
+                    <p className="mb-2">Перетащите файлы (PDF, DOC, DOCX и т.д.) или</p>
+                    <button type="button" className="px-4 py-2 border rounded-lg hover:bg-gray-50" onClick={() => filesInputRef.current?.click()} disabled={uploadingFiles}>
+                      Выбрать файлы
+                    </button>
+                    <input ref={filesInputRef} type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.zip,.rar" multiple className="hidden" onChange={async (e)=>{ 
+                      const files = Array.from(e.target.files||[]); 
+                      if(files.length===0) return; 
+                      try{ 
+                        setUploadingFiles(true); 
+                        const uploaded = await uploadDownloadableFiles(files); 
+                        setFormData({ ...formData, downloadable_files: [...formData.downloadable_files, ...uploaded] }) 
+                      }catch(err){ 
+                        console.error(err); 
+                        alert('Не удалось загрузить файлы') 
+                      } finally { 
+                        setUploadingFiles(false); 
+                        if(filesInputRef.current) filesInputRef.current.value='' 
+                      } 
+                    }} />
+                    {uploadingFiles && <div className="mt-2 text-sm text-gray-500">Загрузка...</div>}
+                  </div>
+                  {formData.downloadable_files.length > 0 && (
+                    <div className="mt-3 space-y-2">
+                      {formData.downloadable_files.map((file, idx) => (
+                        <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border">
+                          <div className="flex items-center gap-3">
+                            <span className="text-2xl">📄</span>
+                            <span className="text-sm font-medium">{file.name}</span>
+                          </div>
+                          <button type="button" className="text-red-600 hover:text-red-800 text-sm" onClick={() => setFormData({ ...formData, downloadable_files: formData.downloadable_files.filter((_,i)=>i!==idx) })}>× Удалить</button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
                 {/* Видео товара: drag & drop + выбор файлов */}
                 <div className="mb-6">
                   <label className="block mb-2 font-semibold">Видео кухни (Drag & Drop или выбрать файлы)</label>
@@ -691,24 +778,72 @@ export default function AdminProductsPage() {
                       type="text"
                       className="w-full px-3 py-2 border rounded-lg"
                       placeholder="#000000, #ffffff, red"
-                      value={(formData.colors as string[]).filter((v)=>!v.startsWith('http')).join(', ')}
-                      onChange={(e) => setFormData({ ...formData, colors: e.target.value.split(',').map(s=>s.trim()).filter(Boolean) })}
+                      onChange={(e) => {
+                        const hexValues = e.target.value.split(',').map(s=>s.trim()).filter(Boolean)
+                        const newColors = hexValues.map(val => ({ value: val, imageIndex: null as number | null }))
+                        // Сохраняем существующие цвета (с изображениями) и добавляем новые hex
+                        const existing = Array.isArray(formData.colors) ? formData.colors.filter((c: any) => 
+                          typeof c === 'object' && c.value && c.value.startsWith('http')
+                        ) : []
+                        setFormData({ ...formData, colors: [...existing, ...newColors] })
+                      }}
                     />
                   </div>
 
-                  {/* Превью цветов (URL или hex) */}
-                  {Array.isArray(formData.colors) && (formData.colors as string[]).length > 0 && (
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      {(formData.colors as string[]).map((val, idx) => (
-                        <div key={idx} className="relative">
-                          {val.startsWith('http') ? (
-                            <img src={val} className="w-8 h-8 rounded-full object-cover border" />
-                          ) : (
-                            <span className="w-8 h-8 rounded-full inline-block border" style={{ background: val }} />
-                          )}
-                          <button type="button" className="absolute -top-2 -right-2 bg-white rounded-full border w-5 h-5 text-[10px]" onClick={() => setFormData({ ...formData, colors: (formData.colors as string[]).filter((_,i)=>i!==idx) })}>×</button>
-                        </div>
-                      ))}
+                  {/* Превью и управление цветами с выбором изображений */}
+                  {Array.isArray(formData.colors) && (formData.colors as any[]).length > 0 && (
+                    <div className="mt-3 space-y-3">
+                      {(formData.colors as any[]).map((colorItem, idx) => {
+                        // Обработка старого формата (строка) и нового (объект)
+                        const colorValue = typeof colorItem === 'string' ? colorItem : (colorItem?.value || colorItem)
+                        const imageIndex = typeof colorItem === 'object' ? (colorItem?.imageIndex ?? null) : null
+                        const isImageUrl = typeof colorValue === 'string' && (colorValue.startsWith('http') || colorValue.startsWith('/'))
+                        return (
+                          <div key={idx} className="border rounded-lg p-3 bg-gray-50">
+                            <div className="flex items-center gap-3 mb-2">
+                              <div className="relative">
+                                {isImageUrl ? (
+                                  <img src={colorValue} className="w-12 h-12 rounded-full object-cover border" />
+                                ) : (
+                                  <span className="w-12 h-12 rounded-full inline-block border shadow-sm" style={{ background: colorValue || '#ccc' }} />
+                                )}
+                              </div>
+                              <div className="flex-1">
+                                <div className="text-sm font-medium mb-1">Цвет #{idx + 1}</div>
+                                <div className="text-xs text-gray-600">{isImageUrl ? 'Изображение свотча' : colorValue}</div>
+                              </div>
+                              <button type="button" className="text-red-600 hover:text-red-800" onClick={() => {
+                                const arr = [...(formData.colors as any[])]
+                                arr.splice(idx, 1)
+                                setFormData({ ...formData, colors: arr })
+                              }}>× Удалить</button>
+                            </div>
+                            <div className="mt-2">
+                              <label className="block text-xs text-gray-600 mb-1">Связать с изображением из галереи:</label>
+                              <select
+                                className="w-full px-2 py-1 border rounded text-sm"
+                                value={imageIndex !== null ? imageIndex : ''}
+                                onChange={(e) => {
+                                  const arr = [...(formData.colors as any[])]
+                                  const val = e.target.value === '' ? null : parseInt(e.target.value)
+                                  arr[idx] = typeof arr[idx] === 'object' ? { ...arr[idx], imageIndex: val } : { value: arr[idx], imageIndex: val }
+                                  setFormData({ ...formData, colors: arr })
+                                }}
+                              >
+                                <option value="">Не связывать</option>
+                                {formData.images.map((imgUrl, imgIdx) => (
+                                  <option key={imgIdx} value={imgIdx}>Изображение {imgIdx + 1}</option>
+                                ))}
+                              </select>
+                              {imageIndex !== null && formData.images[imageIndex] && (
+                                <div className="mt-2">
+                                  <img src={formData.images[imageIndex]} alt={`Привязанное изображение`} className="w-20 h-20 object-cover rounded border" />
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )
+                      })}
                     </div>
                   )}
                 </div>
