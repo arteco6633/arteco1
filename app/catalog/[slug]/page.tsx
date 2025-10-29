@@ -104,10 +104,10 @@ export default function CategoryPage() {
       
       <main className="mx-auto max-w-[1680px] px-1 md:px-2 xl:px-4 2xl:px-6 py-8">
         {/* Заголовок категории */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-4">{category.name}</h1>
+        <div className="mb-6 md:mb-8">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 md:mb-4">{category.name}</h1>
           {category.description && (
-            <p className="text-gray-600 text-lg">{category.description}</p>
+            <p className="text-gray-600 text-base sm:text-lg">{category.description}</p>
           )}
         </div>
 

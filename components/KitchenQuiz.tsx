@@ -79,19 +79,19 @@ export default function KitchenQuiz({ isOpen, onClose, imageUrl }: Props) {
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }} className="bg-white w-[92%] max-w-2xl rounded-2xl shadow-xl overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-2 sm:p-4">
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }} className="bg-white w-full max-w-2xl rounded-xl sm:rounded-2xl shadow-xl overflow-hidden max-h-[95vh] flex flex-col">
         {/* Верхнее изображение товара */}
         {imageUrl && (
-          <div className="w-full h-40 sm:h-56 bg-gray-100 overflow-hidden">
+          <div className="w-full h-32 sm:h-40 md:h-56 bg-gray-100 overflow-hidden flex-shrink-0">
             <img src={imageUrl} alt="Товар" className="w-full h-full object-cover" />
           </div>
         )}
         {/* Прогресс */}
-        <div className="h-1 bg-gray-100">
+        <div className="h-1 bg-gray-100 flex-shrink-0">
           <div className="h-1 bg-black transition-all" style={{ width: `${progress}%` }} />
         </div>
-        <div className="p-6">
+        <div className="p-4 sm:p-6 overflow-y-auto flex-1">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-xl font-bold">Рассчитать под мои размеры</h3>
             <button className="text-gray-500 hover:text-black" onClick={onClose}>✕</button>
@@ -167,12 +167,12 @@ export default function KitchenQuiz({ isOpen, onClose, imageUrl }: Props) {
           </AnimatePresence>
 
           {/* Навигация */}
-          <div className="mt-6 flex items-center justify-between">
-            <button disabled={step===1} onClick={()=> setStep((s)=> Math.max(1, s-1))} className="px-4 py-2 rounded-full border disabled:opacity-40">Назад</button>
+          <div className="mt-6 flex items-center justify-between gap-3 flex-shrink-0">
+            <button disabled={step===1} onClick={()=> setStep((s)=> Math.max(1, s-1))} className="px-4 sm:px-5 py-2 rounded-full border disabled:opacity-40 text-sm sm:text-base flex-shrink-0">Назад</button>
             {step<4 ? (
-              <button disabled={!canNext} onClick={()=> setStep((s)=> Math.min(4, s+1))} className="px-5 py-2 rounded-full bg-black text-white disabled:opacity-40">Далее</button>
+              <button disabled={!canNext} onClick={()=> setStep((s)=> Math.min(4, s+1))} className="px-5 sm:px-6 py-2 rounded-full bg-black text-white disabled:opacity-40 text-sm sm:text-base flex-1 sm:flex-none">Далее</button>
             ) : (
-              <button disabled={!canNext} onClick={submit} className="px-5 py-2 rounded-full bg-black text-white disabled:opacity-40">Отправить</button>
+              <button disabled={!canNext} onClick={submit} className="px-5 sm:px-6 py-2 rounded-full bg-black text-white disabled:opacity-40 text-sm sm:text-base flex-1 sm:flex-none">Отправить</button>
             )}
           </div>
         </div>

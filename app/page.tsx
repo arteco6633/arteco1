@@ -441,7 +441,7 @@ export default function HomePage() {
                   <ProductGrid products={newProducts} onlyFirstTwo />
                 </div>
                 <div className="order-1 md:order-2 w-full md:w-[420px] lg:w-[480px]">
-                  <h2 className="text-3xl font-bold mb-4">Каталог новинок</h2>
+                  <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4">Каталог новинок</h2>
                   <p className="text-gray-600 text-base mb-4">
                     ARTECO – интернет-магазин по-настоящему удобной мебели. Мы предлагаем своим покупателям современную мебель собственного производства и готовы гарантировать не только высокое качество изделий, но и доступную цену. А наши регулярные акции и специальные предложения приятно удивят!
                   </p>

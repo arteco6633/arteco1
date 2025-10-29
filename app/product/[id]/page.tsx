@@ -61,6 +61,7 @@ export default function ProductPage() {
   const [selectedDrawerIdx, setSelectedDrawerIdx] = useState<number | null>(null)
   const [selectedLightingIdx, setSelectedLightingIdx] = useState<number | null>(null)
   const [selectedColorIdx, setSelectedColorIdx] = useState<number | null>(null)
+  const [isDesktop, setIsDesktop] = useState(false)
   const finalPrice = useMemo(() => {
     if (!product) return 0
     const base = Number(product.price) || 0
@@ -86,6 +87,15 @@ export default function ProductPage() {
       loadProduct()
     }
   }, [id])
+
+  useEffect(() => {
+    const checkDesktop = () => {
+      setIsDesktop(window.innerWidth >= 768)
+    }
+    checkDesktop()
+    window.addEventListener('resize', checkDesktop)
+    return () => window.removeEventListener('resize', checkDesktop)
+  }, [])
 
   useEffect(() => {
     const updateHeight = () => {
@@ -196,71 +206,96 @@ export default function ProductPage() {
       
       <main className="max-w-[1680px] 2xl:max-w-[1880px] mx-auto px-1 md:px-2 xl:px-4 2xl:px-6 py-8">
         {/* Хлебные крошки */}
-        <nav className="flex mb-6 text-sm text-gray-500">
+        <nav className="flex mb-4 md:mb-6 text-xs sm:text-sm text-gray-500 flex-wrap items-center gap-1">
           <Link href="/" className="hover:text-gray-700">Главная</Link>
           {category && (
             <>
-              <span className="mx-2">/</span>
-              <Link href={`/catalog/${category.slug}`} className="hover:text-gray-700">
+              <span>/</span>
+              <Link href={`/catalog/${category.slug}`} className="hover:text-gray-700 truncate max-w-[150px] sm:max-w-none">
                 {category.name}
               </Link>
             </>
           )}
-          <span className="mx-2">/</span>
-          <span className="text-gray-900">{product.name}</span>
+          <span>/</span>
+          <span className="text-gray-900 truncate max-w-[200px] sm:max-w-none">{product.name}</span>
         </nav>
 
-        <div className="grid md:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8">
           {/* Галерея изображений — миниатюры слева, большое фото справа */}
-          <div>
-            {/* Главное фото с кнопками навигации */}
-            <div ref={leftMainImageRef} className="rounded-lg overflow-hidden shadow-lg relative aspect-square">
-            <img
-                  src={(product.images && product.images[activeImageIdx]) || (product.images && product.images[0]) || product.image_url || '/placeholder.jpg'}
-              alt={product.name}
-                  className="w-full h-full object-cover"
-                />
-                {product.images && product.images.length > 1 && (
-                  <>
-                    {/* Кнопка "Назад" */}
-                    {activeImageIdx > 0 && (
-                      <button
-                        type="button"
-                        onClick={() => setActiveImageIdx(activeImageIdx - 1)}
-                        className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white w-10 h-10 rounded-full flex items-center justify-center transition-colors"
-                      >
-                        ←
-                      </button>
-                    )}
-                    {/* Кнопка "Вперёд" */}
-                    {activeImageIdx < product.images.length - 1 && (
-                      <button
-                        type="button"
-                        onClick={() => setActiveImageIdx(activeImageIdx + 1)}
-                        className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white w-10 h-10 rounded-full flex items-center justify-center transition-colors"
-                      >
-                        →
-                      </button>
-                    )}
-                  </>
-                )}
-            </div>
+          <div className="order-first md:order-none">
+            <div className="flex gap-3">
+              {/* Миниатюры слева от главного фото */}
+              {product.images && product.images.length > 1 && (
+                <div className="hidden md:flex flex-col gap-2 flex-shrink-0" style={{ height: syncedRightHeight ? `${syncedRightHeight}px` : 'auto' }}>
+                  <div className="overflow-y-auto overflow-x-hidden pr-1 scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-transparent" style={{ height: '100%' }}>
+                    <div className="flex flex-col gap-2">
+                      {product.images.map((url, idx) => (
+                        <button 
+                          key={idx} 
+                          type="button" 
+                          onClick={() => setActiveImageIdx(idx)} 
+                          className={`rounded overflow-hidden ring-2 flex-shrink-0 w-20 ${activeImageIdx===idx ? 'ring-black' : 'ring-transparent hover:ring-gray-300'}`}
+                          style={{ aspectRatio: '1', minWidth: '80px' }}
+                        >
+                          <img src={url} alt={`Фото ${idx+1}`} className="w-full h-full object-cover" />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              {/* Главное фото с кнопками навигации */}
+              <div className="flex-1 relative">
+                <div ref={leftMainImageRef} className="rounded-lg overflow-hidden shadow-lg relative aspect-square">
+                  <img
+                    src={(product.images && product.images[activeImageIdx]) || (product.images && product.images[0]) || product.image_url || '/placeholder.jpg'}
+                    alt={product.name}
+                    className="w-full h-full object-cover"
+                  />
+                  {product.images && product.images.length > 1 && (
+                    <>
+                      {/* Кнопка "Назад" */}
+                      {activeImageIdx > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => setActiveImageIdx(activeImageIdx - 1)}
+                          className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white w-10 h-10 rounded-full flex items-center justify-center transition-colors z-10"
+                        >
+                          ←
+                        </button>
+                      )}
+                      {/* Кнопка "Вперёд" */}
+                      {activeImageIdx < product.images.length - 1 && (
+                        <button
+                          type="button"
+                          onClick={() => setActiveImageIdx(activeImageIdx + 1)}
+                          className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white w-10 h-10 rounded-full flex items-center justify-center transition-colors z-10"
+                        >
+                          →
+                        </button>
+                      )}
+                    </>
+                  )}
+                </div>
 
-            {/* Миниатюры под главным фото */}
-            {product.images && product.images.length > 1 && (
-              <div className="mt-3 grid grid-cols-5 gap-2">
-                {product.images.slice(0,10).map((url, idx) => (
-                  <button key={idx} type="button" onClick={() => setActiveImageIdx(idx)} className={`rounded overflow-hidden ring-2 ${activeImageIdx===idx ? 'ring-black' : 'ring-transparent'}`}>
-                    <img src={url} alt={`Фото ${idx+1}`} className="w-full h-20 object-cover" />
-                  </button>
-                ))}
+                {/* Миниатюры под главным фото на мобильных */}
+                {product.images && product.images.length > 1 && (
+                  <div className="mt-3 md:hidden grid grid-cols-4 gap-2">
+                    {product.images.slice(0,10).map((url, idx) => (
+                      <button key={idx} type="button" onClick={() => setActiveImageIdx(idx)} className={`rounded overflow-hidden ring-2 ${activeImageIdx===idx ? 'ring-black' : 'ring-transparent'}`}>
+                        <img src={url} alt={`Фото ${idx+1}`} className="w-full h-16 object-cover" />
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
-            )}
+            </div>
           </div>
 
           {/* Информация о товаре */}
-          <div className="relative flex flex-col overflow-hidden" style={{ height: syncedRightHeight ? `${syncedRightHeight}px` : undefined }}>
-            <div className="flex-1 overflow-y-auto">
+          <div className="relative flex flex-col md:overflow-hidden" style={isDesktop && syncedRightHeight ? { height: `${syncedRightHeight}px` } : {}}>
+            <div className="flex-1 md:overflow-y-auto md:h-full">
             {category && (
               <Link
                 href={`/catalog/${category.slug}`}
@@ -270,12 +305,12 @@ export default function ProductPage() {
               </Link>
             )}
 
-            <h1 className="text-4xl font-bold mb-2 leading-tight">{product.name}</h1>
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2 leading-tight">{product.name}</h1>
 
             {product.description && (
               <>
-                <p className="text-gray-600 text-lg leading-snug mb-1">{product.description}</p>
-                <div className="text-4xl font-bold text-black mt-1 mb-1">
+                <p className="text-gray-600 text-base sm:text-lg leading-snug mb-1">{product.description}</p>
+                <div className="text-3xl sm:text-4xl font-bold text-black mt-1 mb-1">
                   {finalPrice.toLocaleString('ru-RU')} ₽
                 </div>
               </>
@@ -364,8 +399,8 @@ export default function ProductPage() {
                     <span className="text-xl">{openFilling ? '−' : '+'}</span>
                   </button>
                   {openFilling && (
-                    <div className="px-4 pb-4 bg-white">
-                      <div className="grid grid-cols-2 gap-2">
+                    <div className="px-2 sm:px-4 pb-4 bg-white">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         {product.fillings.map((f, idx) => (
                           <button
                             key={idx}
@@ -373,11 +408,11 @@ export default function ProductPage() {
                             onClick={() => setSelectedFillingIdx(idx)}
                             className={`text-left p-3 rounded-lg border hover:bg-gray-50 ${selectedFillingIdx===idx ? 'border-black' : 'border-gray-200'}`}
                           >
-                            <div className="flex items-start gap-3">
+                            <div className="flex items-start gap-2 sm:gap-3">
                               {f.image_url ? (
-                                <img src={f.image_url} alt={f.name || 'Вариант'} className="w-32 h-32 min-w-[128px] rounded object-cover border border-gray-200" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
+                                <img src={f.image_url} alt={f.name || 'Вариант'} className="w-24 h-24 sm:w-32 sm:h-32 min-w-[96px] sm:min-w-[128px] rounded object-cover border border-gray-200 flex-shrink-0" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
                               ) : (
-                                <div className="w-32 h-32 min-w-[128px] rounded bg-gray-100 border border-gray-200 flex items-center justify-center text-gray-400 text-xs">Нет фото</div>
+                                <div className="w-24 h-24 sm:w-32 sm:h-32 min-w-[96px] sm:min-w-[128px] rounded bg-gray-100 border border-gray-200 flex items-center justify-center text-gray-400 text-xs flex-shrink-0">Нет фото</div>
                               )}
                               <div className="flex-1">
                                 <div className="font-medium mb-1">{f.name || 'Без названия'}</div>
@@ -410,8 +445,8 @@ export default function ProductPage() {
                     <span className="text-xl">{openHinge ? '−' : '+'}</span>
                   </button>
                   {openHinge && (
-                    <div className="px-4 pb-4 bg-white">
-                      <div className="grid grid-cols-2 gap-2">
+                    <div className="px-2 sm:px-4 pb-4 bg-white">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         {product.hinges.map((h, idx) => (
                           <button
                             key={idx}
@@ -419,11 +454,11 @@ export default function ProductPage() {
                             onClick={() => setSelectedHingeIdx(idx)}
                             className={`text-left p-3 rounded-lg border hover:bg-gray-50 ${selectedHingeIdx===idx ? 'border-black' : 'border-gray-200'}`}
                           >
-                            <div className="flex items-start gap-3">
+                            <div className="flex items-start gap-2 sm:gap-3">
                               {h.image_url ? (
-                                <img src={h.image_url} alt={h.name || 'Вариант'} className="w-32 h-32 min-w-[128px] rounded object-cover border border-gray-200" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
+                                <img src={h.image_url} alt={h.name || 'Вариант'} className="w-24 h-24 sm:w-32 sm:h-32 min-w-[96px] sm:min-w-[128px] rounded object-cover border border-gray-200 flex-shrink-0" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
                               ) : (
-                                <div className="w-32 h-32 min-w-[128px] rounded bg-gray-100 border border-gray-200 flex items-center justify-center text-gray-400 text-xs">Нет фото</div>
+                                <div className="w-24 h-24 sm:w-32 sm:h-32 min-w-[96px] sm:min-w-[128px] rounded bg-gray-100 border border-gray-200 flex items-center justify-center text-gray-400 text-xs flex-shrink-0">Нет фото</div>
                               )}
                               <div className="flex-1">
                                 <div className="font-medium mb-1">{h.name || 'Без названия'}</div>
@@ -456,8 +491,8 @@ export default function ProductPage() {
                     <span className="text-xl">{openDrawer ? '−' : '+'}</span>
                   </button>
                   {openDrawer && (
-                    <div className="px-4 pb-4 bg-white">
-                      <div className="grid grid-cols-2 gap-2">
+                    <div className="px-2 sm:px-4 pb-4 bg-white">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         {product.drawers.map((d, idx) => (
                           <button
                             key={idx}
@@ -465,11 +500,11 @@ export default function ProductPage() {
                             onClick={() => setSelectedDrawerIdx(idx)}
                             className={`text-left p-3 rounded-lg border hover:bg-gray-50 ${selectedDrawerIdx===idx ? 'border-black' : 'border-gray-200'}`}
                           >
-                            <div className="flex items-start gap-3">
+                            <div className="flex items-start gap-2 sm:gap-3">
                               {d.image_url ? (
-                                <img src={d.image_url} alt={d.name || 'Вариант'} className="w-32 h-32 min-w-[128px] rounded object-cover border border-gray-200" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
+                                <img src={d.image_url} alt={d.name || 'Вариант'} className="w-24 h-24 sm:w-32 sm:h-32 min-w-[96px] sm:min-w-[128px] rounded object-cover border border-gray-200 flex-shrink-0" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
                               ) : (
-                                <div className="w-32 h-32 min-w-[128px] rounded bg-gray-100 border border-gray-200 flex items-center justify-center text-gray-400 text-xs">Нет фото</div>
+                                <div className="w-24 h-24 sm:w-32 sm:h-32 min-w-[96px] sm:min-w-[128px] rounded bg-gray-100 border border-gray-200 flex items-center justify-center text-gray-400 text-xs flex-shrink-0">Нет фото</div>
                               )}
                               <div className="flex-1">
                                 <div className="font-medium mb-1">{d.name || 'Без названия'}</div>
@@ -502,8 +537,8 @@ export default function ProductPage() {
                     <span className="text-xl">{openLighting ? '−' : '+'}</span>
                   </button>
                   {openLighting && (
-                    <div className="px-4 pb-4 bg-white">
-                      <div className="grid grid-cols-2 gap-2">
+                    <div className="px-2 sm:px-4 pb-4 bg-white">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         {product.lighting.map((l, idx) => (
                           <button
                             key={idx}
@@ -511,11 +546,11 @@ export default function ProductPage() {
                             onClick={() => setSelectedLightingIdx(idx)}
                             className={`text-left p-3 rounded-lg border hover:bg-gray-50 ${selectedLightingIdx===idx ? 'border-black' : 'border-gray-200'}`}
                           >
-                            <div className="flex items-start gap-3">
+                            <div className="flex items-start gap-2 sm:gap-3">
                               {l.image_url ? (
-                                <img src={l.image_url} alt={l.name || 'Вариант'} className="w-32 h-32 min-w-[128px] rounded object-cover border border-gray-200" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
+                                <img src={l.image_url} alt={l.name || 'Вариант'} className="w-24 h-24 sm:w-32 sm:h-32 min-w-[96px] sm:min-w-[128px] rounded object-cover border border-gray-200 flex-shrink-0" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
                               ) : (
-                                <div className="w-32 h-32 min-w-[128px] rounded bg-gray-100 border border-gray-200 flex items-center justify-center text-gray-400 text-xs">Нет фото</div>
+                                <div className="w-24 h-24 sm:w-32 sm:h-32 min-w-[96px] sm:min-w-[128px] rounded bg-gray-100 border border-gray-200 flex items-center justify-center text-gray-400 text-xs flex-shrink-0">Нет фото</div>
                               )}
                               <div className="flex-1">
                                 <div className="font-medium mb-1">{l.name || 'Без названия'}</div>
@@ -537,27 +572,49 @@ export default function ProductPage() {
               </div>
 
             {/* Низ блока: количество и кнопка, закреплены вне скролла */}
-            <div className="mt-4 flex items-center justify-end gap-3">
-              <div className="flex items-center gap-2">
+            <div className="mt-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-2 sm:gap-3">
+              {/* Вишлист на мобильных рядом с "В корзину", на десктопе отдельно */}
+              <div className="flex md:hidden items-center gap-2 justify-end">
                 <button
                   type="button"
                   aria-label="Добавить в избранное"
                   onClick={() => alert('Добавлено в избранное')}
-                  className="w-10 h-10 rounded-full border border-black text-black hover:bg-black/5 transition-colors flex items-center justify-center"
+                  className="w-10 h-10 rounded-full border border-black text-black hover:bg-black/5 transition-colors flex items-center justify-center flex-shrink-0"
+                >
+                  ♥
+                </button>
+                <button
+                  onClick={addToCart}
+                  className="px-6 py-2 bg-black text-white rounded-[50px] hover:bg-black/80 transition-colors font-semibold text-sm flex-1"
+                >
+                  В корзину
+                </button>
+              </div>
+              
+              {/* Вишлист на десктопе */}
+              <div className="hidden md:flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  aria-label="Добавить в избранное"
+                  onClick={() => alert('Добавлено в избранное')}
+                  className="w-10 h-10 rounded-full border border-black text-black hover:bg-black/5 transition-colors flex items-center justify-center flex-shrink-0"
                 >
                   ♥
                 </button>
               </div>
+              
+              {/* Кнопка "В корзину" на десктопе */}
               <button
                 onClick={addToCart}
-                className="px-8 py-3 bg-black text-white rounded-[50px] hover:bg-black/80 transition-colors font-semibold"
+                className="hidden md:inline-block px-8 py-3 bg-black text-white rounded-[50px] hover:bg-black/80 transition-colors font-semibold text-base"
               >
                 В корзину
               </button>
+              
               <button
                 type="button"
                 onClick={() => { setIsCalcOpen(true); setQuizStep(1) }}
-                className="px-8 py-3 border border-black text-black rounded-[50px] hover:bg-black/5 transition-colors font-semibold"
+                className="px-4 sm:px-8 py-2 sm:py-3 border border-black text-black rounded-[50px] hover:bg-black/5 transition-colors font-semibold text-sm sm:text-base whitespace-nowrap flex-1 sm:flex-none"
               >
                 Рассчитать под мои размеры
               </button>
@@ -569,19 +626,19 @@ export default function ProductPage() {
 
 
         {/* Вкладки: Характеристики / Размеры */}
-        <section className="mt-12 w-full">
-          <div className="flex gap-2 border-b mb-6">
+        <section className="mt-8 md:mt-12 w-full">
+          <div className="flex gap-2 border-b mb-4 md:mb-6 overflow-x-auto">
             <button
               type="button"
               onClick={() => setActiveTab('videos')}
-              className={`px-4 py-2 -mb-[1px] border-b-2 ${activeTab==='videos' ? 'border-black font-semibold' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+              className={`px-3 sm:px-4 py-2 -mb-[1px] border-b-2 text-sm sm:text-base whitespace-nowrap ${activeTab==='videos' ? 'border-black font-semibold' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
             >
               Характеристики
             </button>
             <button
               type="button"
               onClick={() => setActiveTab('schemes')}
-              className={`px-4 py-2 -mb-[1px] border-b-2 ${activeTab==='schemes' ? 'border-black font-semibold' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+              className={`px-3 sm:px-4 py-2 -mb-[1px] border-b-2 text-sm sm:text-base whitespace-nowrap ${activeTab==='schemes' ? 'border-black font-semibold' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
             >
               Размеры
             </button>
@@ -626,13 +683,13 @@ export default function ProductPage() {
           )}
 
           {activeTab === 'videos' && (
-            <div className="w-full grid grid-cols-1 md:grid-cols-12 gap-6">
+            <div className="w-full grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-6">
               <div className="w-full md:col-span-5 flex items-start justify-center">
                 {(product.videos && product.videos.length > 0) ? (
                   <div className="w-full rounded-lg overflow-hidden">
                     <video
                       src={product.videos[0]}
-                      className="w-full h-[70vh] object-cover bg-transparent"
+                      className="w-full h-auto md:h-[70vh] object-cover bg-transparent"
                       autoPlay
                       muted
                       playsInline
@@ -688,8 +745,8 @@ export default function ProductPage() {
         <KitchenQuiz isOpen={isCalcOpen} onClose={() => setIsCalcOpen(false)} imageUrl={product?.images?.[0] || (product as any)?.image_url || ''} />
 
         {related.length > 0 && (
-          <section className="mt-12">
-            <h2 className="text-2xl font-bold mb-4">Вам понравится</h2>
+          <section className="mt-8 md:mt-12">
+            <h2 className="text-xl sm:text-2xl md:text-3xl font-bold mb-4 md:mb-6">Вам понравится</h2>
             <ProductGrid products={related as any} />
           </section>
         )}
