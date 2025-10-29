@@ -12,6 +12,8 @@ interface Product {
   description: string | null
   price: number
   image_url: string
+  images?: string[] | null
+  colors?: string[] | null
   category_id: number
   is_featured: boolean
   is_new: boolean
@@ -31,6 +33,8 @@ export default function CategoryPage() {
   const [category, setCategory] = useState<Category | null>(null)
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
+  // Выбранные варианты цветов/изображений по товару (индекс)
+  const [selectedVariantIndexById, setSelectedVariantIndexById] = useState<Record<number, number>>({})
 
   useEffect(() => {
     if (slug) {
@@ -98,7 +102,7 @@ export default function CategoryPage() {
     <div className="min-h-screen">
       <Navbar />
       
-      <main className="container mx-auto px-4 py-8">
+      <main className="mx-auto max-w-[1680px] px-1 md:px-2 xl:px-4 2xl:px-6 py-8">
         {/* Заголовок категории */}
         <div className="mb-8">
           <h1 className="text-4xl font-bold mb-4">{category.name}</h1>
@@ -124,49 +128,74 @@ export default function CategoryPage() {
             <p className="text-gray-600">В данной категории пока нет товаров</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-x-4 md:gap-x-6 gap-y-1 md:gap-y-2">
             {products.map((product) => (
               <Link 
                 key={product.id} 
                 href={`/product/${product.id}`}
-                className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow group"
+                className="group block relative hover:z-10 p-3"
               >
-                <div className="relative">
-                  <img
-                    src={product.image_url || '/placeholder.jpg'}
-                    alt={product.name}
-                    className="w-full h-64 object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
-                  {(product.is_new || product.is_featured) && (
-                    <div className="absolute top-2 left-2 flex gap-2">
-                      {product.is_new && (
-                        <span className="bg-green-500 text-white px-2 py-1 rounded text-xs font-semibold">
-                          NEW
-                        </span>
-                      )}
-                      {product.is_featured && (
-                        <span className="bg-blue-500 text-white px-2 py-1 rounded text-xs font-semibold">
-                          ⭐
-                        </span>
-                      )}
+                {/* Белый фон появляется только при ховере и не смещает соседей */}
+                <div className="pointer-events-none absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-white shadow-xl ring-1 ring-black/5"></div>
+                <div className="relative z-10">
+                  <div className="relative rounded-lg overflow-hidden">
+                    <img
+                      src={(() => {
+                        const imgs = (product as any).images as string[] | undefined
+                        const idx = selectedVariantIndexById[product.id] || 0
+                        return (imgs && imgs[idx]) || (imgs && imgs[0]) || product.image_url || '/placeholder.jpg'
+                      })()}
+                      alt={product.name}
+                      className="w-full h-56 md:h-64 object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                    {(product.is_new || product.is_featured) && (
+                      <div className="absolute top-2 left-2 flex gap-2">
+                        {product.is_new && (
+                          <span className="bg-green-500 text-white px-2 py-1 rounded text-xs font-semibold">
+                            NEW
+                          </span>
+                        )}
+                        {product.is_featured && (
+                          <span className="bg-blue-500 text-white px-2 py-1 rounded text-xs font-semibold">
+                            ⭐
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="pt-3">
+                    <div className="mb-1 text-black font-semibold text-lg whitespace-nowrap">
+                      {product.price.toLocaleString('ru-RU')} ₽
                     </div>
-                  )}
-                </div>
-                
-                <div className="p-4">
-                  <h3 className="font-semibold text-lg mb-2 group-hover:text-blue-600 transition-colors">
-                    {product.name}
-                  </h3>
-                  {product.description && (
-                    <p className="text-gray-600 text-sm mb-3 line-clamp-2">
-                      {product.description}
-                    </p>
-                  )}
-                  <div className="flex justify-between items-center">
-                    <span className="text-blue-600 font-bold text-xl">
-                      {product.price} ₽
-                    </span>
-                    <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                    <h3 className="font-medium text-[16px] leading-snug line-clamp-2 group-hover:text-black transition-colors">
+                      {product.name}
+                    </h3>
+                    {/* Свотчи цветов */}
+                    {!!(product as any).colors?.length && (
+                      <div className="mt-2 flex items-center gap-1.5">
+                        {((product as any).colors as string[])?.slice(0,5).map((c, idx) => (
+                          <button
+                            type="button"
+                            key={idx}
+                            onClick={(e) => { e.preventDefault(); setSelectedVariantIndexById((prev) => ({ ...prev, [product.id]: idx })) }}
+                            className={`w-4 h-4 rounded-full border ${ (selectedVariantIndexById[product.id] || 0) === idx ? 'border-black' : 'border-black/10'}`}
+                            style={{ background: c }}
+                            title={c}
+                          />
+                        ))}
+                        {((product as any).colors as string[])?.length > 5 && (
+                          <span className="text-xs text-gray-500">+{((product as any).colors as string[]).length - 5}</span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  {/* Кнопка в корзину под названием; появляется по ховеру, не сдвигая соседей */}
+                  <div className="pt-3 opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300">
+                    <button
+                      className="w-full bg-black text-white py-2.5 rounded-lg shadow-md hover:bg-gray-900"
+                      onClick={(e) => e.preventDefault()}
+                    >
                       В корзину
                     </button>
                   </div>

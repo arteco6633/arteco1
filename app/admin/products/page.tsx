@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import Navbar from '@/components/Navbar'
 
@@ -10,6 +10,24 @@ interface Product {
   description: string | null
   price: number
   image_url: string
+  images?: string[] | null
+  colors?: string[] | null
+  fillings?: Array<{ name: string; description?: string; image_url?: string; delta_price?: number }> | null
+  hinges?: Array<{ name: string; description?: string; image_url?: string; delta_price?: number }> | null
+  drawers?: Array<{ name: string; description?: string; image_url?: string; delta_price?: number }> | null
+  lighting?: Array<{ name: string; description?: string; image_url?: string; delta_price?: number }> | null
+  specs?: { 
+    body_material?: string
+    facade_material?: string
+    additional?: string
+    handles?: string
+    handle_material?: string
+    back_wall_material?: string
+    delivery_option?: string
+    feet?: string
+    country?: string
+  } | null
+  schemes?: string[] | null
   category_id: number
   is_featured: boolean
   is_new: boolean
@@ -24,11 +42,40 @@ export default function AdminProductsPage() {
   const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string>('')
   const [uploading, setUploading] = useState(false)
+  // DnD загрузка галереи
+  const [uploadingGallery, setUploadingGallery] = useState(false)
+  const galleryInputRef = useRef<HTMLInputElement | null>(null)
+  const [isDragging, setIsDragging] = useState(false)
+  // DnD для цветов (иконок/свотчей)
+  const [uploadingColors, setUploadingColors] = useState(false)
+  const colorInputRef = useRef<HTMLInputElement | null>(null)
+  const [isDraggingColors, setIsDraggingColors] = useState(false)
+  // DnD для схем товара
+  const schemeInputRef = useRef<HTMLInputElement | null>(null)
+  const [isDraggingSchemes, setIsDraggingSchemes] = useState(false)
   const [formData, setFormData] = useState({
     name: '',
     description: '',
     price: '',
     image_url: '',
+    images: [] as string[],
+    colors: [] as any,
+    fillings: [] as any,
+    hinges: [] as any,
+    drawers: [] as any,
+    lighting: [] as any,
+    specs: { 
+      body_material: '', 
+      facade_material: '', 
+      additional: '',
+      handles: '',
+      handle_material: '',
+      back_wall_material: '',
+      delivery_option: '',
+      feet: '',
+      country: ''
+    } as any,
+    schemes: [] as string[],
     category_id: '',
     is_featured: false,
     is_new: false,
@@ -80,6 +127,24 @@ export default function AdminProductsPage() {
       description: '',
       price: '',
       image_url: '',
+      images: [],
+      colors: [],
+      fillings: [],
+      hinges: [],
+      drawers: [],
+      lighting: [],
+      specs: { 
+        body_material: '', 
+        facade_material: '', 
+        additional: '',
+        handles: '',
+        handle_material: '',
+        back_wall_material: '',
+        delivery_option: '',
+        feet: '',
+        country: ''
+      },
+      schemes: [],
       category_id: '',
       is_featured: false,
       is_new: false,
@@ -96,6 +161,24 @@ export default function AdminProductsPage() {
       description: product.description || '',
       price: product.price.toString(),
       image_url: product.image_url,
+      images: (product.images as any) || [],
+      colors: (product.colors as any) || [],
+      fillings: (product.fillings as any) || [],
+      hinges: (product.hinges as any) || [],
+      drawers: (product.drawers as any) || [],
+      lighting: (product.lighting as any) || [],
+      specs: (product.specs as any) || { 
+        body_material: '', 
+        facade_material: '', 
+        additional: '',
+        handles: '',
+        handle_material: '',
+        back_wall_material: '',
+        delivery_option: '',
+        feet: '',
+        country: ''
+      },
+      schemes: (product.schemes as any) || [],
       category_id: product.category_id.toString(),
       is_featured: product.is_featured,
       is_new: product.is_new,
@@ -123,6 +206,47 @@ export default function AdminProductsPage() {
     return data.publicUrl
   }
 
+  // Универсальная загрузка файла в Storage в указанный подкаталог
+  async function uploadToFolder(file: File, folder: string): Promise<string> {
+    const fileExt = file.name.split('.').pop()
+    const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`
+    const filePath = `${folder}/${fileName}`
+    const { error } = await supabase.storage.from('product').upload(filePath, file)
+    if (error) throw error
+    const { data } = supabase.storage.from('product').getPublicUrl(filePath)
+    return data.publicUrl
+  }
+
+  // Загрузка нескольких файлов в Storage -> массив публичных ссылок
+  async function uploadGalleryFiles(files: File[]): Promise<string[]> {
+    const urls: string[] = []
+    for (const file of files) {
+      const fileExt = file.name.split('.').pop()
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`
+      const filePath = `gallery/${fileName}`
+      const { error } = await supabase.storage.from('product').upload(filePath, file)
+      if (error) throw error
+      const { data } = supabase.storage.from('product').getPublicUrl(filePath)
+      urls.push(data.publicUrl)
+    }
+    return urls
+  }
+
+  // Загрузка свотчей цветов в Storage (возвращает URL)
+  async function uploadColorFiles(files: File[]): Promise<string[]> {
+    const urls: string[] = []
+    for (const file of files) {
+      const fileExt = file.name.split('.').pop()
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`
+      const filePath = `colors/${fileName}`
+      const { error } = await supabase.storage.from('product').upload(filePath, file)
+      if (error) throw error
+      const { data } = supabase.storage.from('product').getPublicUrl(filePath)
+      urls.push(data.publicUrl)
+    }
+    return urls
+  }
+
   function handleImageSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (file) {
@@ -138,6 +262,76 @@ export default function AdminProductsPage() {
         setImagePreview(e.target?.result as string)
       }
       reader.readAsDataURL(file)
+    }
+  }
+
+  async function handleGallerySelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const fileList = e.target.files
+    if (!fileList || fileList.length === 0) return
+    const files = Array.from(fileList)
+    try {
+      setUploadingGallery(true)
+      const urls = await uploadGalleryFiles(files)
+      setFormData({ ...formData, images: [...formData.images, ...urls] })
+    } catch (err) {
+      console.error('Ошибка загрузки галереи:', err)
+      alert('Не удалось загрузить изображения галереи')
+    } finally {
+      setUploadingGallery(false)
+      if (galleryInputRef.current) galleryInputRef.current.value = ''
+    }
+  }
+
+  async function handleGalleryDrop(e: React.DragEvent<HTMLDivElement>) {
+    e.preventDefault()
+    setIsDragging(false)
+    const files = Array.from(e.dataTransfer.files || [])
+    if (files.length === 0) return
+    try {
+      setUploadingGallery(true)
+      const urls = await uploadGalleryFiles(files)
+      setFormData({ ...formData, images: [...formData.images, ...urls] })
+    } catch (err) {
+      console.error('Ошибка dnd загрузки:', err)
+      alert('Не удалось загрузить файлы')
+    } finally {
+      setUploadingGallery(false)
+    }
+  }
+
+  async function handleColorsSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const fileList = e.target.files
+    if (!fileList || fileList.length === 0) return
+    const files = Array.from(fileList)
+    try {
+      setUploadingColors(true)
+      const urls = await uploadColorFiles(files)
+      const current = Array.isArray(formData.colors) ? (formData.colors as string[]) : (formData.colors ? (formData.colors as string).split(',').map(s=>s.trim()) : [])
+      setFormData({ ...formData, colors: [...current, ...urls] })
+    } catch (err) {
+      console.error('Ошибка загрузки цветов:', err)
+      alert('Не удалось загрузить изображения цветов')
+    } finally {
+      setUploadingColors(false)
+      if (colorInputRef.current) colorInputRef.current.value = ''
+    }
+  }
+
+  async function handleColorsDrop(e: React.DragEvent<HTMLDivElement>) {
+    e.preventDefault()
+    setIsDraggingColors(false)
+    const files = Array.from(e.dataTransfer.files || [])
+    if (files.length === 0) return
+    try {
+      setUploadingColors(true)
+      const urls = await uploadColorFiles(files)
+      const current = Array.isArray(formData.colors) ? (formData.colors as string[]) : (formData.colors ? (formData.colors as string).split(',').map(s=>s.trim()) : [])
+      setFormData({ ...formData, colors: [...current, ...urls] })
+    } catch (err) {
+      console.error('Ошибка dnd цветов:', err)
+      alert('Не удалось загрузить файлы цветов')
+    } finally {
+      setUploadingColors(false)
     }
   }
 
@@ -158,6 +352,14 @@ export default function AdminProductsPage() {
         description: formData.description || null,
         price: parseFloat(formData.price),
         image_url: imageUrl,
+        images: formData.images,
+        colors: Array.isArray(formData.colors) ? formData.colors : [],
+        fillings: formData.fillings,
+        hinges: formData.hinges,
+        drawers: formData.drawers,
+        lighting: formData.lighting,
+        specs: formData.specs,
+        schemes: formData.schemes,
         category_id: parseInt(formData.category_id),
         is_featured: formData.is_featured,
         is_new: formData.is_new,
@@ -348,6 +550,281 @@ export default function AdminProductsPage() {
                       />
                     </div>
                   )}
+                </div>
+
+                {/* Галерея изображений: drag & drop + выбор файлов */}
+                <div className="mb-4">
+                  <label className="block mb-2 font-semibold">Доп. изображения (Drag & Drop или выберите файлы)</label>
+                  <div
+                    className={`w-full border-2 ${isDragging ? 'border-blue-500 bg-blue-50' : 'border-dashed border-gray-300'} rounded-lg p-5 text-center transition-colors`}
+                    onDragOver={(e) => { e.preventDefault(); setIsDragging(true) }}
+                    onDragLeave={() => setIsDragging(false)}
+                    onDrop={handleGalleryDrop}
+                  >
+                    <p className="mb-2">Перетащите сюда изображения или</p>
+                    <button type="button" className="px-4 py-2 border rounded-lg hover:bg-gray-50" onClick={() => galleryInputRef.current?.click()} disabled={uploadingGallery}>
+                      Выбрать файлы
+                    </button>
+                    <input ref={galleryInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handleGallerySelect} />
+                    {uploadingGallery && <div className="mt-2 text-sm text-gray-500">Загрузка...</div>}
+                  </div>
+
+                  {formData.images.length > 0 && (
+                    <div className="mt-3 grid grid-cols-5 gap-2">
+                      {formData.images.map((url, idx) => (
+                        <div key={idx} className="relative">
+                          <img src={url} className="w-full h-20 object-cover rounded" />
+                          <button type="button" className="absolute -top-2 -right-2 bg-white rounded-full border w-6 h-6 text-xs" onClick={() => setFormData({ ...formData, images: formData.images.filter((_,i)=>i!==idx) })}>×</button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Схемы товара: drag & drop + выбор файлов */}
+                <div className="mb-6">
+                  <label className="block mb-2 font-semibold">Схемы товара (Drag & Drop или выбрать файлы)</label>
+                  <div
+                    className={`w-full border-2 ${isDraggingSchemes ? 'border-blue-500 bg-blue-50' : 'border-dashed border-gray-300'} rounded-lg p-5 text-center transition-colors`}
+                    onDragOver={(e) => { e.preventDefault(); setIsDraggingSchemes(true) }}
+                    onDragLeave={() => setIsDraggingSchemes(false)}
+                    onDrop={async (e) => {
+                      e.preventDefault(); setIsDraggingSchemes(false);
+                      const files = Array.from(e.dataTransfer.files || [])
+                      if (files.length === 0) return
+                      try { setUploadingGallery(true); const urls = await uploadGalleryFiles(files); setFormData({ ...formData, schemes: [...formData.schemes, ...urls] }) } catch(err){ console.error(err); alert('Не удалось загрузить схемы') } finally { setUploadingGallery(false) }
+                    }}
+                  >
+                    <p className="mb-2">Перетащите файлы схем или</p>
+                    <button type="button" className="px-4 py-2 border rounded-lg hover:bg-gray-50" onClick={() => schemeInputRef.current?.click()} disabled={uploadingGallery}>
+                      Выбрать файлы
+                    </button>
+                    <input ref={schemeInputRef} type="file" accept="image/*" multiple className="hidden" onChange={async (e)=>{ const files = Array.from(e.target.files||[]); if(files.length===0) return; try{ setUploadingGallery(true); const urls= await uploadGalleryFiles(files); setFormData({ ...formData, schemes: [...formData.schemes, ...urls] }) }catch(err){ console.error(err); alert('Не удалось загрузить схемы') } finally { setUploadingGallery(false); if(schemeInputRef.current) schemeInputRef.current.value='' } }} />
+                    {uploadingGallery && <div className="mt-2 text-sm text-gray-500">Загрузка...</div>}
+                  </div>
+                  {formData.schemes.length > 0 && (
+                    <div className="mt-3 grid grid-cols-5 gap-2">
+                      {formData.schemes.map((url, idx) => (
+                        <div key={idx} className="relative">
+                          <img src={url} className="w-full h-20 object-cover rounded" />
+                          <button type="button" className="absolute -top-2 -right-2 bg-white rounded-full border w-6 h-6 text-xs" onClick={() => setFormData({ ...formData, schemes: formData.schemes.filter((_,i)=>i!==idx) })}>×</button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Варианты цветов: Drag & Drop (иконки/свотчи) + ручной ввод */}
+                <div className="mb-4">
+                  <label className="block mb-2 font-semibold">Цвета (изображения свотчей, drag & drop или выбрать файлы)</label>
+                  <div
+                    className={`w-full border-2 ${isDraggingColors ? 'border-blue-500 bg-blue-50' : 'border-dashed border-gray-300'} rounded-lg p-5 text-center transition-colors`}
+                    onDragOver={(e) => { e.preventDefault(); setIsDraggingColors(true) }}
+                    onDragLeave={() => setIsDraggingColors(false)}
+                    onDrop={handleColorsDrop}
+                  >
+                    <p className="mb-2">Перетащите иконки/изображения цветов или</p>
+                    <button type="button" className="px-4 py-2 border rounded-lg hover:bg-gray-50" onClick={() => colorInputRef.current?.click()} disabled={uploadingColors}>
+                      Выбрать файлы
+                    </button>
+                    <input ref={colorInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handleColorsSelect} />
+                    {uploadingColors && <div className="mt-2 text-sm text-gray-500">Загрузка...</div>}
+                  </div>
+
+                  {/* Альтернатива: ручной ввод значений цвета */}
+                  <div className="mt-3">
+                    <label className="block mb-2 font-semibold">Или значения цветов (hex/названия, через запятую)</label>
+                    <input
+                      type="text"
+                      className="w-full px-3 py-2 border rounded-lg"
+                      placeholder="#000000, #ffffff, red"
+                      value={(formData.colors as string[]).filter((v)=>!v.startsWith('http')).join(', ')}
+                      onChange={(e) => setFormData({ ...formData, colors: e.target.value.split(',').map(s=>s.trim()).filter(Boolean) })}
+                    />
+                  </div>
+
+                  {/* Превью цветов (URL или hex) */}
+                  {Array.isArray(formData.colors) && (formData.colors as string[]).length > 0 && (
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {(formData.colors as string[]).map((val, idx) => (
+                        <div key={idx} className="relative">
+                          {val.startsWith('http') ? (
+                            <img src={val} className="w-8 h-8 rounded-full object-cover border" />
+                          ) : (
+                            <span className="w-8 h-8 rounded-full inline-block border" style={{ background: val }} />
+                          )}
+                          <button type="button" className="absolute -top-2 -right-2 bg-white rounded-full border w-5 h-5 text-[10px]" onClick={() => setFormData({ ...formData, colors: (formData.colors as string[]).filter((_,i)=>i!==idx) })}>×</button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Варианты наполнений */}
+                <div className="mb-6">
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="font-semibold">Варианты наполнений</label>
+                    <button type="button" className="px-3 py-1 border rounded" onClick={() => setFormData({ ...formData, fillings: [...formData.fillings, { name: '', description: '', image_url: '', delta_price: 0 }] })}>+ Добавить</button>
+                  </div>
+                  {(formData.fillings as any[]).map((f, idx) => (
+                    <div key={idx} className="border rounded-lg p-3 mb-3 grid grid-cols-1 md:grid-cols-4 gap-3">
+                      <input className="px-3 py-2 border rounded" placeholder="Название" value={f.name} onChange={(e)=>{
+                        const arr=[...formData.fillings]; (arr as any)[idx].name=e.target.value; setFormData({ ...formData, fillings: arr })
+                      }} />
+                      <input className="px-3 py-2 border rounded" placeholder="URL изображения" value={f.image_url||''} onChange={(e)=>{
+                        const arr=[...formData.fillings]; (arr as any)[idx].image_url=e.target.value; setFormData({ ...formData, fillings: arr })
+                      }} />
+                      <input type="file" accept="image/*" onChange={async (e)=>{
+                        const file=e.target.files?.[0]; if(!file) return; 
+                        try{ const url= await uploadToFolder(file,'options/fillings'); const arr=[...formData.fillings]; (arr as any)[idx].image_url=url; setFormData({ ...formData, fillings: arr }) }catch(err){ console.error(err); alert('Не удалось загрузить изображение варианта') }
+                      }} />
+                      <input type="number" className="px-3 py-2 border rounded" placeholder="Δ цена" value={f.delta_price||0} onChange={(e)=>{
+                        const arr=[...formData.fillings]; (arr as any)[idx].delta_price= Number(e.target.value); setFormData({ ...formData, fillings: arr })
+                      }} />
+                      <input className="px-3 py-2 border rounded md:col-span-4" placeholder="Описание" value={f.description||''} onChange={(e)=>{
+                        const arr=[...formData.fillings]; (arr as any)[idx].description= e.target.value; setFormData({ ...formData, fillings: arr })
+                      }} />
+                      <div className="md:col-span-4 text-right">
+                        <button type="button" className="text-red-600" onClick={()=> setFormData({ ...formData, fillings: (formData.fillings as any[]).filter((_,i)=>i!==idx) })}>Удалить</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Опции петель */}
+                <div className="mb-6">
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="font-semibold">Петли</label>
+                    <button type="button" className="px-3 py-1 border rounded" onClick={() => setFormData({ ...formData, hinges: [...formData.hinges, { name: '', description: '', image_url: '', delta_price: 0 }] })}>+ Добавить</button>
+                  </div>
+                  {(formData.hinges as any[]).map((h, idx) => (
+                    <div key={idx} className="border rounded-lg p-3 mb-3 grid grid-cols-1 md:grid-cols-4 gap-3">
+                      <input className="px-3 py-2 border rounded" placeholder="Название" value={h.name} onChange={(e)=>{
+                        const arr=[...formData.hinges]; (arr as any)[idx].name=e.target.value; setFormData({ ...formData, hinges: arr })
+                      }} />
+                      <input className="px-3 py-2 border rounded" placeholder="URL изображения" value={h.image_url||''} onChange={(e)=>{
+                        const arr=[...formData.hinges]; (arr as any)[idx].image_url=e.target.value; setFormData({ ...formData, hinges: arr })
+                      }} />
+                      <input type="file" accept="image/*" onChange={async (e)=>{
+                        const file=e.target.files?.[0]; if(!file) return; 
+                        try{ const url= await uploadToFolder(file,'options/hinges'); const arr=[...formData.hinges]; (arr as any)[idx].image_url=url; setFormData({ ...formData, hinges: arr }) }catch(err){ console.error(err); alert('Не удалось загрузить изображение петли') }
+                      }} />
+                      <input type="number" className="px-3 py-2 border rounded" placeholder="Δ цена" value={h.delta_price||0} onChange={(e)=>{
+                        const arr=[...formData.hinges]; (arr as any)[idx].delta_price= Number(e.target.value); setFormData({ ...formData, hinges: arr })
+                      }} />
+                      <input className="px-3 py-2 border rounded md:col-span-4" placeholder="Описание" value={h.description||''} onChange={(e)=>{
+                        const arr=[...formData.hinges]; (arr as any)[idx].description= e.target.value; setFormData({ ...formData, hinges: arr })
+                      }} />
+                      <div className="md:col-span-4 text-right">
+                        <button type="button" className="text-red-600" onClick={()=> setFormData({ ...formData, hinges: (formData.hinges as any[]).filter((_,i)=>i!==idx) })}>Удалить</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Опции ящиков */}
+                <div className="mb-6">
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="font-semibold">Ящики</label>
+                    <button type="button" className="px-3 py-1 border rounded" onClick={() => setFormData({ ...formData, drawers: [...formData.drawers, { name: '', description: '', image_url: '', delta_price: 0 }] })}>+ Добавить</button>
+                  </div>
+                  {(formData.drawers as any[]).map((d, idx) => (
+                    <div key={idx} className="border rounded-lg p-3 mb-3 grid grid-cols-1 md:grid-cols-4 gap-3">
+                      <input className="px-3 py-2 border rounded" placeholder="Название" value={d.name} onChange={(e)=>{
+                        const arr=[...formData.drawers]; (arr as any)[idx].name=e.target.value; setFormData({ ...formData, drawers: arr })
+                      }} />
+                      <input className="px-3 py-2 border rounded" placeholder="URL изображения" value={d.image_url||''} onChange={(e)=>{
+                        const arr=[...formData.drawers]; (arr as any)[idx].image_url=e.target.value; setFormData({ ...formData, drawers: arr })
+                      }} />
+                      <input type="file" accept="image/*" onChange={async (e)=>{
+                        const file=e.target.files?.[0]; if(!file) return; 
+                        try{ const url= await uploadToFolder(file,'options/drawers'); const arr=[...formData.drawers]; (arr as any)[idx].image_url=url; setFormData({ ...formData, drawers: arr }) }catch(err){ console.error(err); alert('Не удалось загрузить изображение ящика') }
+                      }} />
+                      <input type="number" className="px-3 py-2 border rounded" placeholder="Δ цена" value={d.delta_price||0} onChange={(e)=>{
+                        const arr=[...formData.drawers]; (arr as any)[idx].delta_price= Number(e.target.value); setFormData({ ...formData, drawers: arr })
+                      }} />
+                      <input className="px-3 py-2 border rounded md:col-span-4" placeholder="Описание" value={d.description||''} onChange={(e)=>{
+                        const arr=[...formData.drawers]; (arr as any)[idx].description= e.target.value; setFormData({ ...formData, drawers: arr })
+                      }} />
+                      <div className="md:col-span-4 text-right">
+                        <button type="button" className="text-red-600" onClick={()=> setFormData({ ...formData, drawers: (formData.drawers as any[]).filter((_,i)=>i!==idx) })}>Удалить</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Опции подсветки */}
+                <div className="mb-6">
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="font-semibold">Подсветка</label>
+                    <button type="button" className="px-3 py-1 border rounded" onClick={() => setFormData({ ...formData, lighting: [...formData.lighting, { name: '', description: '', image_url: '', delta_price: 0 }] })}>+ Добавить</button>
+                  </div>
+                  {(formData.lighting as any[]).map((l, idx) => (
+                    <div key={idx} className="border rounded-lg p-3 mb-3 grid grid-cols-1 md:grid-cols-4 gap-3">
+                      <input className="px-3 py-2 border rounded" placeholder="Название" value={l.name} onChange={(e)=>{
+                        const arr=[...formData.lighting]; (arr as any)[idx].name=e.target.value; setFormData({ ...formData, lighting: arr })
+                      }} />
+                      <input className="px-3 py-2 border rounded" placeholder="URL изображения" value={l.image_url||''} onChange={(e)=>{
+                        const arr=[...formData.lighting]; (arr as any)[idx].image_url=e.target.value; setFormData({ ...formData, lighting: arr })
+                      }} />
+                      <input type="file" accept="image/*" onChange={async (e)=>{
+                        const file=e.target.files?.[0]; if(!file) return; 
+                        try{ const url= await uploadToFolder(file,'options/lighting'); const arr=[...formData.lighting]; (arr as any)[idx].image_url=url; setFormData({ ...formData, lighting: arr }) }catch(err){ console.error(err); alert('Не удалось загрузить изображение подсветки') }
+                      }} />
+                      <input type="number" className="px-3 py-2 border rounded" placeholder="Δ цена" value={l.delta_price||0} onChange={(e)=>{
+                        const arr=[...formData.lighting]; (arr as any)[idx].delta_price= Number(e.target.value); setFormData({ ...formData, lighting: arr })
+                      }} />
+                      <input className="px-3 py-2 border rounded md:col-span-4" placeholder="Описание" value={l.description||''} onChange={(e)=>{
+                        const arr=[...formData.lighting]; (arr as any)[idx].description= e.target.value; setFormData({ ...formData, lighting: arr })
+                      }} />
+                      <div className="md:col-span-4 text-right">
+                        <button type="button" className="text-red-600" onClick={()=> setFormData({ ...formData, lighting: (formData.lighting as any[]).filter((_,i)=>i!==idx) })}>Удалить</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Характеристики */}
+                <div className="mb-6">
+                  <h3 className="text-lg font-semibold mb-4">Характеристики товара</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div>
+                      <label className="block mb-2 font-semibold">Материал корпуса</label>
+                      <input className="w-full px-3 py-2 border rounded-lg" value={(formData.specs && (formData.specs as any).body_material) || ''} onChange={(e)=> setFormData({ ...formData, specs: { ...(formData.specs || {}), body_material: e.target.value } })} />
+                    </div>
+                    <div>
+                      <label className="block mb-2 font-semibold">Материал фасадов</label>
+                      <input className="w-full px-3 py-2 border rounded-lg" value={(formData.specs && (formData.specs as any).facade_material) || ''} onChange={(e)=> setFormData({ ...formData, specs: { ...(formData.specs || {}), facade_material: e.target.value } })} />
+                    </div>
+                    <div>
+                      <label className="block mb-2 font-semibold">Дополнительно</label>
+                      <input className="w-full px-3 py-2 border rounded-lg" value={(formData.specs && (formData.specs as any).additional) || ''} onChange={(e)=> setFormData({ ...formData, specs: { ...(formData.specs || {}), additional: e.target.value } })} />
+                    </div>
+                    <div>
+                      <label className="block mb-2 font-semibold">Ручки</label>
+                      <input className="w-full px-3 py-2 border rounded-lg" value={(formData.specs && (formData.specs as any).handles) || ''} onChange={(e)=> setFormData({ ...formData, specs: { ...(formData.specs || {}), handles: e.target.value } })} />
+                    </div>
+                    <div>
+                      <label className="block mb-2 font-semibold">Материал ручек</label>
+                      <input className="w-full px-3 py-2 border rounded-lg" value={(formData.specs && (formData.specs as any).handle_material) || ''} onChange={(e)=> setFormData({ ...formData, specs: { ...(formData.specs || {}), handle_material: e.target.value } })} />
+                    </div>
+                    <div>
+                      <label className="block mb-2 font-semibold">Материал задней стенки</label>
+                      <input className="w-full px-3 py-2 border rounded-lg" value={(formData.specs && (formData.specs as any).back_wall_material) || ''} onChange={(e)=> setFormData({ ...formData, specs: { ...(formData.specs || {}), back_wall_material: e.target.value } })} />
+                    </div>
+                    <div>
+                      <label className="block mb-2 font-semibold">Вариант доставки</label>
+                      <input className="w-full px-3 py-2 border rounded-lg" value={(formData.specs && (formData.specs as any).delivery_option) || ''} onChange={(e)=> setFormData({ ...formData, specs: { ...(formData.specs || {}), delivery_option: e.target.value } })} />
+                    </div>
+                    <div>
+                      <label className="block mb-2 font-semibold">Подпятники</label>
+                      <input className="w-full px-3 py-2 border rounded-lg" value={(formData.specs && (formData.specs as any).feet) || ''} onChange={(e)=> setFormData({ ...formData, specs: { ...(formData.specs || {}), feet: e.target.value } })} />
+                    </div>
+                    <div>
+                      <label className="block mb-2 font-semibold">Страна производства</label>
+                      <input className="w-full px-3 py-2 border rounded-lg" value={(formData.specs && (formData.specs as any).country) || ''} onChange={(e)=> setFormData({ ...formData, specs: { ...(formData.specs || {}), country: e.target.value } })} />
+                    </div>
+                  </div>
                 </div>
 
                 <div className="mb-4">

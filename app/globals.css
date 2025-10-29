@@ -8,6 +8,63 @@
   --background-end-rgb: 255, 255, 255;
 }
 
+/* Нормализация коробочной модели */
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden; /* предотвращаем горизонтальный скролл */
+  overscroll-behavior-x: none; /* блокируем инерционный сдвиг по оси X */
+  touch-action: pan-y; /* запрещаем горизонтальные жесты прокрутки */
+}
+
+@supports (overflow-x: clip) {
+  html, body { overflow-x: clip; }
+}
+
+/* Медиа может неширнуть вьюпорт */
+img, video, svg { max-width: 100%; height: auto; display: block; }
+
+/* Полоса прокрутки только по оси Y */
+:root { overflow-y: auto; overflow-x: hidden; }
+
+/* Временная обводка для отладки переполнения. Удалите класс 'debug-outlines' в <body>, когда закончим проверку */
+.debug-outlines * { outline: none; }
+
+/* Диагностика: запрет 100vw-ловушки на мобилках */
+[class*="w-[100vw]"] { width: 100% !important; }
+[class*="max-w-[100vw]"] { max-width: 100% !important; }
+
+/* Безопасные flex/grid: разрешаем сжиматься, чтобы не выталкивать ширину */
+.shrink-children > * { min-width: 0; flex-shrink: 1; }
+
+/* Удалено жёсткое ограничение корневого контейнера (ломало отступы и тени) */
+
+/* Утилита для жёсткой обрезки контента по оси X */
+.clip-x { overflow-x: hidden; }
+@supports (overflow-x: clip) {
+  .clip-x { overflow-x: clip; }
+}
+
+/* Контейнер с изоляцией по ширине */
+.contain-inline { contain: inline-size; }
+
+/* Доп. гарантия против горизонтального скролла на базовых контейнерах */
+header, main, footer, section, .container { 
+  max-width: 100vw;
+  overscroll-behavior-x: none;
+}
+
+/* Контейнер, предотвращающий влияние горизонтального скролла на страницу */
+.x-scroll-guard {
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-gutter: stable both-edges;
+  contain: inline-size; /* не даём содержимому расширять страницу */
+}
+
 body {
   color: rgb(var(--foreground-rgb));
   background: linear-gradient(
@@ -24,6 +81,18 @@ body {
   margin: 0 auto;
   padding: 0 20px;
 }
+
+/* Улучшаем контейнер на очень малых и очень больших экранах */
+@media (max-width: 359px) {
+  .container { padding: 0 12px; }
+}
+@media (min-width: 1536px) {
+  .container { max-width: 1440px; }
+}
+
+/* скрыть полосу прокрутки в горизонтальных списках */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
 /* Навбар */
 .navbar {
@@ -65,6 +134,11 @@ body {
 
 .product-image {
   @apply w-full h-64 object-cover;
+}
+
+/* Мобильная высота карточек товара */
+@media (max-width: 480px) {
+  .product-image { @apply h-56; }
 }
 
 .product-info {
@@ -194,5 +268,17 @@ body {
     opacity: 1;
     transform: translateX(0);
   }
+}
+
+/* Утилиты для адаптива (кастом вне Tailwind) */
+.safe-area-px {
+  padding-left: max(env(safe-area-inset-left), 16px);
+  padding-right: max(env(safe-area-inset-right), 16px);
+}
+
+/* Исправляем переполнение длинных слов в заголовках */
+.break-balance {
+  overflow-wrap: anywhere;
+  text-wrap: balance;
 }
 

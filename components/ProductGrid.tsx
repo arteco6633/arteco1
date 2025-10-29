@@ -26,9 +26,10 @@ function Card({ product }: { product: Product }) {
   return (
     <Link
       href={`/product/${product.id}`}
-      className="bg-white rounded-xl shadow-md overflow-hidden transition-all duration-300 group hover:-translate-y-1.5 hover:shadow-xl hover:ring-1 hover:ring-black/10 block cursor-pointer"
+      className="bg-white rounded-xl shadow-md transition-all duration-300 group hover:-translate-y-1.5 hover:shadow-xl hover:ring-1 hover:ring-black/10 block cursor-pointer"
     >
-      <div className="relative">
+      {/* Обёртка для изображения с клипом только картинки, не тени */}
+      <div className="relative rounded-t-xl overflow-hidden">
         <img
           src={product.image_url || '/placeholder.jpg'}
           alt={product.name}
@@ -48,7 +49,7 @@ function Card({ product }: { product: Product }) {
           </span>
         )}
       </div>
-      <div className="p-4 sm:p-5 pr-16 relative">
+      <div className="p-4 sm:p-5 pr-16 relative rounded-b-xl">
         <h3 className="text-[16px] md:text-[18px] leading-6 text-gray-900/90 font-medium line-clamp-2 mb-3">
           {product.name}
         </h3>
@@ -77,7 +78,7 @@ export default function ProductGrid({ products, splitTwoFirst = false, onlyFirst
   if (onlyFirstTwo) {
     const firstTwoOnly = products.slice(0, 2)
     return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-7">
+      <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 gap-4 sm:gap-7 overflow-visible max-w-full">
         {firstTwoOnly.map((p) => (
           <Card key={p.id} product={p} />
         ))}
@@ -87,7 +88,7 @@ export default function ProductGrid({ products, splitTwoFirst = false, onlyFirst
 
   if (!splitTwoFirst) {
     return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-7">
+      <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-7 overflow-visible max-w-full">
         {products.map((p) => (
           <Card key={p.id} product={p} />
         ))}

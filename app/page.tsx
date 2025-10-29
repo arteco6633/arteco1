@@ -148,16 +148,16 @@ export default function HomePage() {
   const bottomBanner2 = bottom2ByPosition[0] || availableBanners[0]
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen overflow-x-hidden max-w-full">
       <Navbar />
-      <main>
+      <main className="overflow-x-hidden contain-inline">
         {/* Первый блок: Один большой банер слева + кнопка справа */}
         {topBanner && (
-          <section className="py-2">
-            <div className="max-w-[1400px] 2xl:max-w-none mx-auto px-0 md:px-3 xl:px-6 2xl:px-9">
-              <div className="grid grid-cols-10 gap-4">
+          <section className="py-2 clip-x">
+            <div className="max-w-[1680px] 2xl:max-w-none mx-auto px-1 md:px-2 xl:px-4 2xl:px-6 max-w-full">
+              <div className="grid grid-cols-10 gap-4 max-w-full">
                 {/* Большой банер - 7 колонок (70%) */}
-                <div ref={firstBannerRef} className={`relative h-[440px] sm:h-[520px] md:h-[600px] col-span-10 md:col-span-7 overflow-hidden rounded-[15px] group reveal-on-scroll ${firstBannerInView ? 'in-view' : ''}`}>
+                <div ref={firstBannerRef} className={`relative h-[440px] sm:h-[520px] md:h-[600px] col-span-10 md:col-span-7 overflow-hidden rounded-[15px] group reveal-on-scroll ${firstBannerInView ? 'in-view' : ''} max-w-full`}>
                   <img
                     src={topBanner.image_url}
                     alt={topBanner.title}
@@ -189,7 +189,7 @@ export default function HomePage() {
                 {/* Кнопка каталога - 3 колонки (30%) */}
                 <a
                   href="/catalog"
-                  className="h-[340px] sm:h-[420px] md:h-[600px] col-span-10 md:col-span-3 flex flex-col justify-between text-black hover:opacity-90 transition-opacity py-8 px-8 md:px-12 rounded-[15px]"
+                  className="h-[340px] sm:h-[420px] md:h-[600px] col-span-10 md:col-span-3 flex flex-col justify-between text-black hover:opacity-90 transition-opacity py-8 px-8 md:px-12 rounded-[15px] max-w-full contain-inline"
                   style={{ backgroundColor: '#F7A8C2' }}
                 >
                   <div className="flex-1 flex items-center justify-center">
@@ -213,11 +213,11 @@ export default function HomePage() {
 
         {/* Второй блок: Два промо-баннера */}
         {middleBanners.length > 0 && (
-          <section className="py-2">
-            <div className="max-w-[1400px] 2xl:max-w-none mx-auto px-0 md:px-3 xl:px-6 2xl:px-9">
+          <section className="py-2 clip-x">
+            <div className="max-w-[1680px] 2xl:max-w-none mx-auto px-1 md:px-2 xl:px-4 2xl:px-6 max-w-full">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {middleBanners.map((banner) => (
-                  <div key={banner.id} className="relative h-[360px] sm:h-[420px] md:h-[500px] overflow-hidden rounded-[15px] group">
+                  <div key={banner.id} className="relative h-[360px] sm:h-[420px] md:h-[500px] overflow-hidden rounded-[15px] group max-w-full">
                     <img
                       src={banner.image_url}
                       alt={banner.title}
@@ -251,41 +251,41 @@ export default function HomePage() {
 
         {/* Третий блок: Статический промо-баннер с анимацией */}
         {bottomBanner && (
-          <section className="py-2">
-            <div className="max-w-[1400px] 2xl:max-w-none mx-auto px-0 md:px-3 xl:px-6 2xl:px-9">
+          <section className="py-2 clip-x">
+            <div className="max-w-[1680px] 2xl:max-w-none mx-auto px-1 md:px-2 xl:px-4 2xl:px-6 max-w-full">
               <a
                 href={bottomBanner.link_url || '/catalog'}
-                className="block w-full h-[600px] md:h-[700px] relative overflow-hidden rounded-[15px] group cursor-pointer"
+                className="block w-full h-[600px] md:h-[700px] relative overflow-hidden rounded-[15px] group cursor-pointer max-w-full contain-inline"
                 style={{ 
                   background: '#B2F542',
                 }}
               >
                 {/* Черные сердечки (анимация из центра вверх) */}
-                <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-[15px]">
-                  <div className="absolute bottom-1/3 left-[38%] opacity-0 group-hover:opacity-100 transition-all duration-700 group-hover:-translate-y-60 group-hover:translate-x-6" style={{ transitionDelay: '0ms' }}>
+                <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-[15px] max-w-full">
+                  <div className="absolute bottom-1/3 left-[38%] max-w-full opacity-0 group-hover:opacity-100 transition-all duration-700 group-hover:-translate-y-60 group-hover:translate-x-6" style={{ transitionDelay: '0ms' }}>
                     <span className="text-5xl text-black">♥</span>
                   </div>
-                  <div className="absolute bottom-1/3 right-[38%] opacity-0 group-hover:opacity-100 transition-all duration-700 group-hover:-translate-y-64 group-hover:-translate-x-10" style={{ transitionDelay: '200ms' }}>
+                  <div className="absolute bottom-1/3 right-[38%] max-w-full opacity-0 group-hover:opacity-100 transition-all duration-700 group-hover:-translate-y-64 group-hover:-translate-x-10" style={{ transitionDelay: '200ms' }}>
                     <span className="text-4xl text-black">♥</span>
                   </div>
-                  <div className="absolute bottom-1/3 left-[50%] opacity-0 group-hover:opacity-100 transition-all duration-700 group-hover:-translate-y-72 group-hover:translate-x-3" style={{ transitionDelay: '400ms' }}>
+                  <div className="absolute bottom-1/3 left-[50%] max-w-full opacity-0 group-hover:opacity-100 transition-all duration-700 group-hover:-translate-y-72 group-hover:translate-x-3" style={{ transitionDelay: '400ms' }}>
                     <span className="text-6xl text-black">♡</span>
                   </div>
-                  <div className="absolute bottom-1/3 right-[50%] opacity-0 group-hover:opacity-100 transition-all duration-700 group-hover:-translate-y-56 group-hover:-translate-x-5" style={{ transitionDelay: '300ms' }}>
+                  <div className="absolute bottom-1/3 right-[50%] max-w-full opacity-0 group-hover:opacity-100 transition-all duration-700 group-hover:-translate-y-56 group-hover:-translate-x-5" style={{ transitionDelay: '300ms' }}>
                     <span className="text-3xl text-black">♥</span>
                   </div>
                   
                   {/* Дополнительные черные сердечки */}
-                  <div className="absolute bottom-1/3 left-[35%] opacity-0 group-hover:opacity-100 transition-all duration-700 group-hover:-translate-y-54 group-hover:translate-x-8" style={{ transitionDelay: '100ms' }}>
+                  <div className="absolute bottom-1/3 left-[35%] max-w-full opacity-0 group-hover:opacity-100 transition-all duration-700 group-hover:-translate-y-54 group-hover:translate-x-8" style={{ transitionDelay: '100ms' }}>
                     <span className="text-4xl text-black">♡</span>
                   </div>
-                  <div className="absolute bottom-1/3 right-[35%] opacity-0 group-hover:opacity-100 transition-all duration-700 group-hover:-translate-y-62 group-hover:-translate-x-12" style={{ transitionDelay: '500ms' }}>
+                  <div className="absolute bottom-1/3 right-[35%] max-w-full opacity-0 group-hover:opacity-100 transition-all duration-700 group-hover:-translate-y-62 group-hover:-translate-x-12" style={{ transitionDelay: '500ms' }}>
                     <span className="text-5xl text-black">♥</span>
                   </div>
-                  <div className="absolute bottom-1/3 left-[52%] opacity-0 group-hover:opacity-100 transition-all duration-700 group-hover:-translate-y-48 group-hover:translate-x-2" style={{ transitionDelay: '600ms' }}>
+                  <div className="absolute bottom-1/3 left-[52%] max-w-full opacity-0 group-hover:opacity-100 transition-all duration-700 group-hover:-translate-y-48 group-hover:translate-x-2" style={{ transitionDelay: '600ms' }}>
                     <span className="text-3xl text-black">♥</span>
                   </div>
-                  <div className="absolute bottom-1/3 right-[52%] opacity-0 group-hover:opacity-100 transition-all duration-700 group-hover:-translate-y-50 group-hover:-translate-x-3" style={{ transitionDelay: '150ms' }}>
+                  <div className="absolute bottom-1/3 right-[52%] max-w-full opacity-0 group-hover:opacity-100 transition-all duration-700 group-hover:-translate-y-50 group-hover:-translate-x-3" style={{ transitionDelay: '150ms' }}>
                     <span className="text-4xl text-black">♥</span>
                   </div>
                 </div>
@@ -326,11 +326,11 @@ export default function HomePage() {
 
         {/* Дополнительные два промо-баннера (динамичные) */}
         {middleBanners2.length > 0 && (
-          <section className="pt-12 pb-2">
-            <div className="max-w-[1400px] 2xl:max-w-none mx-auto px-0 md:px-3 xl:px-6 2xl:px-9">
+          <section className="pt-12 pb-2 clip-x">
+            <div className="max-w-[1680px] 2xl:max-w-none mx-auto px-1 md:px-2 xl:px-4 2xl:px-6 max-w-full">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {middleBanners2.map((banner) => (
-                  <div key={banner.id} className="relative h-[360px] sm:h-[420px] md:h-[500px] overflow-hidden rounded-[15px] group">
+                  <div key={banner.id} className="relative h-[360px] sm:h-[420px] md:h-[500px] overflow-hidden rounded-[15px] group max-w-full">
                     <img
                       src={banner.image_url}
                       alt={banner.title}
@@ -364,35 +364,35 @@ export default function HomePage() {
 
         {/* Один статичный промо-баннер (ниже) */}
         {bottomBanner2 && (
-          <section className="py-2">
-            <div className="max-w-[1400px] 2xl:max-w-none mx-auto px-0 md:px-3 xl:px-6 2xl:px-9">
+          <section className="py-2 clip-x">
+            <div className="max-w-[1680px] 2xl:max-w-none mx-auto px-1 md:px-2 xl:px-4 2xl:px-6 max-w-full">
               <a
                 href={bottomBanner2.link_url || '/catalog'}
-                className="block w-full h-[600px] md:h-[700px] relative overflow-hidden rounded-[15px] group cursor-pointer"
+                className="block w-full h-[600px] md:h-[700px] relative overflow-hidden rounded-[15px] group cursor-pointer max-w-full contain-inline"
                 style={{ 
                   background: '#FFA94D',
                 }}
               >
                 {/* Черные шарики (анимация из центра вверх) */}
-                <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-[15px]">
-                  <div className="absolute bottom-1/3 left-[38%] opacity-0 group-hover:opacity-100 transition-all duration-700 group-hover:-translate-y-60 group-hover:translate-x-6" style={{ transitionDelay: '0ms' }}>
+                <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-[15px] max-w-full">
+                  <div className="absolute bottom-1/3 left-1/3 sm:left-[38%] opacity-0 group-hover:opacity-100 transition-all duration-700 group-hover:-translate-y-60 group-hover:translate-x-6" style={{ transitionDelay: '0ms' }}>
                     <span className="text-5xl text-black">●</span>
                   </div>
-                  <div className="absolute bottom-1/3 right-[38%] opacity-0 group-hover:opacity-100 transition-all duration-700 group-hover:-translate-y-64 group-hover:-translate-x-10" style={{ transitionDelay: '200ms' }}>
+                  <div className="absolute bottom-1/3 right-1/3 sm:right-[38%] opacity-0 group-hover:opacity-100 transition-all duration-700 group-hover:-translate-y-64 group-hover:-translate-x-10" style={{ transitionDelay: '200ms' }}>
                     <span className="text-4xl text-black">●</span>
                   </div>
-                  <div className="absolute bottom-1/3 left-[50%] opacity-0 group-hover:opacity-100 transition-all duration-700 group-hover:-translate-y-72 group-hover:translate-x-3" style={{ transitionDelay: '400ms' }}>
+                  <div className="absolute bottom-1/3 left-1/2 opacity-0 group-hover:opacity-100 transition-all duration-700 group-hover:-translate-y-72 group-hover:translate-x-3" style={{ transitionDelay: '400ms' }}>
                     <span className="text-6xl text-black">○</span>
                   </div>
-                  <div className="absolute bottom-1/3 right-[50%] opacity-0 group-hover:opacity-100 transition-all duration-700 group-hover:-translate-y-56 group-hover:-translate-x-5" style={{ transitionDelay: '300ms' }}>
+                  <div className="absolute bottom-1/3 right-1/2 opacity-0 group-hover:opacity-100 transition-all duration-700 group-hover:-translate-y-56 group-hover:-translate-x-5" style={{ transitionDelay: '300ms' }}>
                     <span className="text-3xl text-black">●</span>
                   </div>
                   
                   {/* Дополнительные черные шарики */}
-                  <div className="absolute bottom-1/3 left-[35%] opacity-0 group-hover:opacity-100 transition-all duration-700 group-hover:-translate-y-54 group-hover:translate-x-8" style={{ transitionDelay: '100ms' }}>
+                  <div className="absolute bottom-1/3 left-1/3 opacity-0 group-hover:opacity-100 transition-all duration-700 group-hover:-translate-y-54 group-hover:translate-x-8" style={{ transitionDelay: '100ms' }}>
                     <span className="text-4xl text-black">○</span>
                   </div>
-                  <div className="absolute bottom-1/3 right-[35%] opacity-0 group-hover:opacity-100 transition-all duration-700 group-hover:-translate-y-62 group-hover:-translate-x-12" style={{ transitionDelay: '500ms' }}>
+                  <div className="absolute bottom-1/3 right-1/3 opacity-0 group-hover:opacity-100 transition-all duration-700 group-hover:-translate-y-62 group-hover:-translate-x-12" style={{ transitionDelay: '500ms' }}>
                     <span className="text-5xl text-black">●</span>
                   </div>
                   <div className="absolute bottom-1/3 left-[52%] opacity-0 group-hover:opacity-100 transition-all duration-700 group-hover:-translate-y-48 group-hover:translate-x-2" style={{ transitionDelay: '600ms' }}>
@@ -406,7 +406,7 @@ export default function HomePage() {
                 {/* Контент */}
                 <div className="absolute inset-0 p-12 flex flex-col items-center justify-center">
                   {/* Главный заголовок - по центру */}
-                  <div className="opacity-0 group-hover:opacity-100 group-hover:animate-[slideInFromLeft_0.8s_ease-out] transition-opacity duration-300">
+                  <div className="opacity-0 sm:opacity-100 sm:group-hover:opacity-100 sm:group-hover:animate-[slideInFromLeft_0.8s_ease-out] transition-opacity duration-300">
                     <h3 className="text-black text-4xl sm:text-6xl md:text-8xl font-extrabold leading-tight tracking-tight">
                       Замер за 1₽
                     </h3>
@@ -435,8 +435,8 @@ export default function HomePage() {
         {/* Новинки */}
         {newProducts.length > 0 && (
           <section className="py-8 bg-white">
-            <div className="max-w-[1400px] 2xl:max-w-none mx-auto px-0 md:px-3 xl:px-6 2xl:px-9">
-              <div className="mb-6 flex flex-col md:flex-row md:items-start md:justify-between gap-6">
+            <div className="max-w-[1400px] 2xl:max-w-none mx-auto px-4 md:px-3 xl:px-6 2xl:px-9">
+              <div className="mb-6 flex flex-col md:flex-row md:items-start md:justify-between gap-4 md:gap-6">
                 <div className="order-2 md:order-1 flex-1">
                   <ProductGrid products={newProducts} onlyFirstTwo />
                 </div>
@@ -464,10 +464,10 @@ export default function HomePage() {
 
       </main>
 
-      <footer className="bg-gray-800 text-white py-8 mt-12">
-        <div className="max-w-[1400px] 2xl:max-w-none mx-auto px-0 md:px-3 xl:px-6 2xl:px-9">
+      <footer className="bg-gray-800 text-white py-8 mt-12 overflow-x-hidden w-full max-w-full clip-x">
+        <div className="w-full max-w-[1400px] 2xl:max-w-none mx-auto px-4 md:px-3 xl:px-6 2xl:px-9 overflow-x-hidden">
           <div className="text-center">
-            <p>&copy; 2025 ARTECO. Все права защищены.</p>
+            <p className="break-words">&copy; 2025 ARTECO. Все права защищены.</p>
           </div>
         </div>
       </footer>
