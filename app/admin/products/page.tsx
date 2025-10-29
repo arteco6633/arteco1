@@ -28,6 +28,7 @@ interface Product {
     country?: string
   } | null
   schemes?: string[] | null
+  videos?: string[] | null
   category_id: number
   is_featured: boolean
   is_new: boolean
@@ -76,6 +77,7 @@ export default function AdminProductsPage() {
       country: ''
     } as any,
     schemes: [] as string[],
+    videos: [] as string[],
     category_id: '',
     is_featured: false,
     is_new: false,
@@ -145,6 +147,7 @@ export default function AdminProductsPage() {
         country: ''
       },
       schemes: [],
+      videos: [],
       category_id: '',
       is_featured: false,
       is_new: false,
@@ -179,6 +182,7 @@ export default function AdminProductsPage() {
         country: ''
       },
       schemes: (product.schemes as any) || [],
+      videos: (product.videos as any) || [],
       category_id: product.category_id.toString(),
       is_featured: product.is_featured,
       is_new: product.is_new,
@@ -224,6 +228,21 @@ export default function AdminProductsPage() {
       const fileExt = file.name.split('.').pop()
       const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`
       const filePath = `gallery/${fileName}`
+      const { error } = await supabase.storage.from('product').upload(filePath, file)
+      if (error) throw error
+      const { data } = supabase.storage.from('product').getPublicUrl(filePath)
+      urls.push(data.publicUrl)
+    }
+    return urls
+  }
+
+  // Загрузка видеофайлов в Storage -> массив публичных ссылок
+  async function uploadVideoFiles(files: File[]): Promise<string[]> {
+    const urls: string[] = []
+    for (const file of files) {
+      const ext = (file.name.split('.').pop() || 'mp4').toLowerCase()
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${ext}`
+      const filePath = `videos/${fileName}`
       const { error } = await supabase.storage.from('product').upload(filePath, file)
       if (error) throw error
       const { data } = supabase.storage.from('product').getPublicUrl(filePath)
@@ -360,6 +379,7 @@ export default function AdminProductsPage() {
         lighting: formData.lighting,
         specs: formData.specs,
         schemes: formData.schemes,
+        videos: formData.videos,
         category_id: parseInt(formData.category_id),
         is_featured: formData.is_featured,
         is_new: formData.is_new,
@@ -608,6 +628,39 @@ export default function AdminProductsPage() {
                         <div key={idx} className="relative">
                           <img src={url} className="w-full h-20 object-cover rounded" />
                           <button type="button" className="absolute -top-2 -right-2 bg-white rounded-full border w-6 h-6 text-xs" onClick={() => setFormData({ ...formData, schemes: formData.schemes.filter((_,i)=>i!==idx) })}>×</button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Видео товара: drag & drop + выбор файлов */}
+                <div className="mb-6">
+                  <label className="block mb-2 font-semibold">Видео кухни (Drag & Drop или выбрать файлы)</label>
+                  <div
+                    className={`w-full border-2 ${isDraggingSchemes ? 'border-blue-500 bg-blue-50' : 'border-dashed border-gray-300'} rounded-lg p-5 text-center transition-colors`}
+                    onDragOver={(e) => { e.preventDefault(); setIsDraggingSchemes(true) }}
+                    onDragLeave={() => setIsDraggingSchemes(false)}
+                    onDrop={async (e) => {
+                      e.preventDefault(); setIsDraggingSchemes(false);
+                      const files = Array.from(e.dataTransfer.files || [])
+                      if (files.length === 0) return
+                      try { setUploadingGallery(true); const urls = await uploadVideoFiles(files); setFormData({ ...formData, videos: [...formData.videos, ...urls] }) } catch(err){ console.error(err); alert('Не удалось загрузить видео') } finally { setUploadingGallery(false) }
+                    }}
+                  >
+                    <p className="mb-2">Перетащите видео (mp4/mov) или</p>
+                    <button type="button" className="px-4 py-2 border rounded-lg hover:bg-gray-50" onClick={() => document.getElementById('videoInputHidden')?.click()} disabled={uploadingGallery}>
+                      Выбрать файлы
+                    </button>
+                    <input id="videoInputHidden" type="file" accept="video/*" multiple className="hidden" onChange={async (e)=>{ const files = Array.from(e.target.files||[]); if(files.length===0) return; try{ setUploadingGallery(true); const urls= await uploadVideoFiles(files); setFormData({ ...formData, videos: [...formData.videos, ...urls] }) }catch(err){ console.error(err); alert('Не удалось загрузить видео') } finally { setUploadingGallery(false); (e.target as HTMLInputElement).value='' } }} />
+                    {uploadingGallery && <div className="mt-2 text-sm text-gray-500">Загрузка...</div>}
+                  </div>
+                  {formData.videos.length > 0 && (
+                    <div className="mt-3 grid grid-cols-2 md:grid-cols-3 gap-3">
+                      {formData.videos.map((url, idx) => (
+                        <div key={idx} className="relative">
+                          <video src={url} className="w-full rounded" controls muted />
+                          <button type="button" className="absolute -top-2 -right-2 bg-white rounded-full border w-6 h-6 text-xs" onClick={() => setFormData({ ...formData, videos: formData.videos.filter((_,i)=>i!==idx) })}>×</button>
                         </div>
                       ))}
                     </div>

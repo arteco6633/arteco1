@@ -32,6 +32,7 @@ interface Product {
     country?: string
   } | null
   schemes?: string[] | null
+  videos?: string[] | null
   category_id: number
   is_featured: boolean
   is_new: boolean
@@ -71,7 +72,7 @@ export default function ProductPage() {
   const [openHinge, setOpenHinge] = useState(false)
   const [openDrawer, setOpenDrawer] = useState(false)
   const [openLighting, setOpenLighting] = useState(false)
-  const [activeTab, setActiveTab] = useState<'schemes' | 'specs'>('schemes')
+  const [activeTab, setActiveTab] = useState<'schemes' | 'specs' | 'videos'>('schemes')
   const [related, setRelated] = useState<any[]>([])
   // Квиз «Рассчитать под мои размеры»
   const [isCalcOpen, setIsCalcOpen] = useState(false)
@@ -212,7 +213,7 @@ export default function ProductPage() {
           <div>
             {/* Главное фото с кнопками навигации */}
             <div ref={leftMainImageRef} className="rounded-lg overflow-hidden shadow-lg relative aspect-square">
-                <img
+            <img
                   src={(product.images && product.images[activeImageIdx]) || (product.images && product.images[0]) || product.image_url || '/placeholder.jpg'}
               alt={product.name}
                   className="w-full h-full object-cover"
@@ -345,7 +346,7 @@ export default function ProductPage() {
                       </div>
                     </div>
                   )}
-                </div>
+              </div>
               )}
 
               {/* Опция петель — Аккордеон */}
@@ -474,8 +475,8 @@ export default function ProductPage() {
               </div>
               )}
 
+                </div>
               </div>
-            </div>
 
             {/* Низ блока: количество и кнопка, закреплены вне скролла */}
             <div className="mt-4 flex items-center justify-end gap-3">
@@ -506,8 +507,8 @@ export default function ProductPage() {
           </div>
 
             {/* Характеристики перенесены во вкладку ниже */}
-          </div>
-        
+            </div>
+
 
         {/* Вкладки: Размеры / Характеристики */}
         <section className="mt-12 w-full">
@@ -525,6 +526,13 @@ export default function ProductPage() {
               className={`px-4 py-2 -mb-[1px] border-b-2 ${activeTab==='specs' ? 'border-black font-semibold' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
             >
               Характеристики
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('videos')}
+              className={`px-4 py-2 -mb-[1px] border-b-2 ${activeTab==='videos' ? 'border-black font-semibold' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+            >
+              Видео кухни
             </button>
           </div>
 
@@ -602,6 +610,64 @@ export default function ProductPage() {
                 <div className="col-span-full text-gray-500 text-center py-8">Характеристики отсутствуют</div>
               )}
             </div>
+          )}
+          {activeTab === 'videos' && (
+            <div className="w-full grid grid-cols-1 md:grid-cols-12 gap-6">
+              <div className="w-full md:col-span-5 flex items-start justify-center">
+                {(product.videos && product.videos.length > 0) ? (
+                  <div className="w-full rounded-lg overflow-hidden">
+                    <video
+                      src={product.videos[0]}
+                      className="w-full h-[70vh] object-cover bg-transparent"
+                      autoPlay
+                      muted
+                      playsInline
+                      loop
+                      controls
+                      poster={product.images?.[0] || product.image_url}
+                    />
+                  </div>
+                ) : (
+                  <div className="text-gray-500">Видео отсутствуют</div>
+                )}
+              </div>
+
+              <div className="md:col-span-7 md:sticky md:top-24 max-h-[70vh] overflow-auto pr-1">
+                <h3 className="text-lg font-semibold mb-4">Характеристики</h3>
+                <div className="grid grid-cols-1 gap-3 text-sm text-gray-700">
+                  {product.specs?.body_material && (
+                    <div className="p-3 bg-gray-50 rounded-lg"><span className="font-semibold block mb-1">Материал корпуса</span><span>{product.specs.body_material}</span></div>
+                  )}
+                  {product.specs?.facade_material && (
+                    <div className="p-3 bg-gray-50 rounded-lg"><span className="font-semibold block mb-1">Материал фасадов</span><span>{product.specs.facade_material}</span></div>
+                  )}
+                  {product.specs?.additional && (
+                    <div className="p-3 bg-gray-50 rounded-lg"><span className="font-semibold block mb-1">Дополнительно</span><span>{product.specs.additional}</span></div>
+                  )}
+                  {product.specs?.handles && (
+                    <div className="p-3 bg-gray-50 rounded-lg"><span className="font-semibold block mb-1">Ручки</span><span>{product.specs.handles}</span></div>
+                  )}
+                  {product.specs?.handle_material && (
+                    <div className="p-3 bg-gray-50 rounded-lg"><span className="font-semibold block mb-1">Материал ручек</span><span>{product.specs.handle_material}</span></div>
+                  )}
+                  {product.specs?.back_wall_material && (
+                    <div className="p-3 bg-gray-50 rounded-lg"><span className="font-semibold block mb-1">Материал задней стенки</span><span>{product.specs.back_wall_material}</span></div>
+                  )}
+                  {product.specs?.delivery_option && (
+                    <div className="p-3 bg-gray-50 rounded-lg"><span className="font-semibold block mb-1">Вариант доставки</span><span>{product.specs.delivery_option}</span></div>
+                  )}
+                  {product.specs?.feet && (
+                    <div className="p-3 bg-gray-50 rounded-lg"><span className="font-semibold block mb-1">Подпятники</span><span>{product.specs.feet}</span></div>
+                  )}
+                  {product.specs?.country && (
+                    <div className="p-3 bg-gray-50 rounded-lg"><span className="font-semibold block mb-1">Страна производства</span><span>{product.specs.country}</span></div>
+                  )}
+                  {!product.specs || Object.keys(product.specs).length === 0 && (
+                    <div className="text-gray-500">Характеристики отсутствуют</div>
+                  )}
+            </div>
+          </div>
+        </div>
           )}
         </section>
 
