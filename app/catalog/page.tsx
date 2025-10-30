@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
-import Navbar from '@/components/Navbar'
 import Link from 'next/link'
 
 interface Category {
@@ -40,7 +39,6 @@ export default function CatalogPage() {
   if (loading) {
     return (
       <div className="min-h-screen">
-        <Navbar />
         <div className="flex items-center justify-center min-h-[50vh]">
           <div className="text-xl">Загрузка...</div>
         </div>
@@ -50,8 +48,6 @@ export default function CatalogPage() {
 
   return (
     <div className="min-h-screen">
-      <Navbar />
-      
       <main className="mx-auto max-w-[1680px] px-1 md:px-2 xl:px-4 2xl:px-6 py-8">
         <h1 className="text-4xl font-bold mb-8">Каталог товаров</h1>
 
@@ -80,12 +76,6 @@ export default function CatalogPage() {
           ))}
         </div>
       </main>
-
-      <footer className="bg-gray-800 text-white py-8 mt-12">
-        <div className="container mx-auto px-4 text-center">
-          <p>&copy; 2025 ARTECO. Все права защищены.</p>
-        </div>
-      </footer>
     </div>
   )
 }

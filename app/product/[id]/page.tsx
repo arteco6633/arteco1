@@ -4,7 +4,6 @@ import { useEffect, useState, useRef, useMemo } from 'react'
 import { useCart } from '@/components/CartContext'
 import { useParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
-import Navbar from '@/components/Navbar'
 import ProductGrid from '@/components/ProductGrid'
 import KitchenQuiz from '@/components/KitchenQuiz'
 import Link from 'next/link'
@@ -222,7 +221,6 @@ export default function ProductPage() {
   if (loading) {
     return (
       <div className="min-h-screen">
-        <Navbar />
         <div className="flex items-center justify-center min-h-[50vh]">
           <div className="text-xl">Загрузка...</div>
         </div>
@@ -233,7 +231,6 @@ export default function ProductPage() {
   if (!product) {
     return (
       <div className="min-h-screen">
-        <Navbar />
         <div className="container mx-auto px-4 py-12">
           <h1 className="text-3xl font-bold mb-4">Товар не найден</h1>
           <Link href="/" className="text-blue-600 hover:underline">
@@ -246,8 +243,6 @@ export default function ProductPage() {
 
   return (
     <div className="min-h-screen">
-      <Navbar />
-      
       <main className="max-w-[1680px] 2xl:max-w-[1880px] mx-auto px-1 md:px-2 xl:px-4 2xl:px-6 py-8">
         {/* Хлебные крошки */}
         <nav className="flex mb-4 md:mb-6 text-xs sm:text-sm text-gray-500 flex-wrap items-center gap-1">
@@ -796,12 +791,6 @@ export default function ProductPage() {
         )}
 
       </main>
-
-      <footer className="bg-gray-800 text-white py-8 mt-12">
-        <div className="container mx-auto px-4 text-center">
-          <p>&copy; 2025 ARTECO. Все права защищены.</p>
-        </div>
-      </footer>
     </div>
   )
 }
