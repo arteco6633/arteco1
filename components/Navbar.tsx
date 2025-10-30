@@ -136,26 +136,28 @@ export default function Navbar() {
     <>
     <header className={`bg-white fixed top-0 left-0 right-0 z-50 transition-transform duration-600 ease-in-out will-change-transform ${hideOnScroll ? '-translate-y-full' : 'translate-y-0'} ${hasShadow ? 'border-b shadow-sm' : 'border-b border-transparent'}`}>
       <div className="max-w-[1400px] mx-auto px-3" ref={searchRef}>
-        <div className="flex items-center justify-between h-20">
-          {/* Логотип */}
-          <Link href="/" className="flex items-center gap-1 text-2xl font-bold text-black select-none">
-            <span>ART</span>
-            {/* Буква E стилизована как гамбургер-иконка с морфом X ↔︎ ≡ при появлении хэдера */}
-            <span aria-hidden className="relative w-5 h-4 mx-0.5">
-              <span
-                className={`absolute left-0 right-0 h-[2px] bg-black rounded origin-center transition-all duration-1000 ease-in-out ${isCross ? 'top-1/2 -translate-y-1/2 rotate-45' : 'top-0 rotate-0'}`}
-              />
-              <span
-                className={`absolute left-0 right-0 h-[2px] bg-black rounded origin-center transition-all duration-1000 ease-in-out ${isCross ? 'opacity-0' : 'top-1/2 -translate-y-1/2 opacity-100'}`}
-              />
-              <span
-                className={`absolute left-0 right-0 h-[2px] bg-black rounded origin-center transition-all duration-1000 ease-in-out ${isCross ? 'top-1/2 -translate-y-1/2 -rotate-45' : 'bottom-0 rotate-0'}`}
-              />
-            </span>
-            <span>CO</span>
-          </Link>
+        <div className="relative h-20 flex items-center justify-between">
+          {/* Лого: абсолютный центр на мобайле, обычный поток на десктопе */}
+          <div className="absolute left-1/2 -translate-x-1/2 xl:static xl:translate-x-0">
+            <Link href="/" className="flex items-center gap-1 text-2xl font-bold text-black select-none">
+              <span>ART</span>
+              {/* Буква E стилизована как гамбургер-иконка с морфом X ↔︎ ≡ при появлении хэдера */}
+              <span aria-hidden className="relative w-5 h-4 mx-0.5">
+                <span
+                  className={`absolute left-0 right-0 h-[2px] bg-black rounded origin-center transition-all duration-1000 ease-in-out ${isCross ? 'top-1/2 -translate-y-1/2 rotate-45' : 'top-0 rotate-0'}`}
+                />
+                <span
+                  className={`absolute left-0 right-0 h-[2px] bg-black rounded origin-center transition-all duration-1000 ease-in-out ${isCross ? 'opacity-0' : 'top-1/2 -translate-y-1/2 opacity-100'}`}
+                />
+                <span
+                  className={`absolute left-0 right-0 h-[2px] bg-black rounded origin-center transition-all duration-1000 ease-in-out ${isCross ? 'top-1/2 -translate-y-1/2 -rotate-45' : 'bottom-0 rotate-0'}`}
+                />
+              </span>
+              <span>CO</span>
+            </Link>
+          </div>
 
-          {/* Мобильный бургер (поиск перенесён в нижнее меню) */}
+          {/* Мобильный бургер (поиск перенесён в нижнее меню) - слева */}
           <div className="flex items-center gap-2 xl:hidden">
             <button
               aria-label="Открыть меню"
@@ -237,7 +239,7 @@ export default function Navbar() {
             </div>
           </div>
 
-          {/* Иконки */}
+          {/* Иконки справа */}
           <div className="flex items-center gap-4 relative">
             {/* Вход/профиль скрыт на мобайле */}
             <button
