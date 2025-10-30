@@ -57,6 +57,7 @@ interface Category {
 }
 
 export default function HomePage() {
+  const NEW_PRODUCTS_LIMIT = 8
   const [gameOpen, setGameOpen] = useState(false)
   const [banners, setBanners] = useState<Banner[]>([])
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([])
@@ -105,11 +106,11 @@ export default function HomePage() {
         .eq('is_featured', 'true')
         .limit(8)
 
-      // Загружаем новые товары - пока без фильтра
+      // Загружаем новые товары: фиксируем лимит карточек
       const { data: newData } = await supabase
         .from('products')
         .select('*')
-        .limit(8)
+        .limit(NEW_PRODUCTS_LIMIT)
 
       // Загружаем категории
       const { data: categoriesData } = await supabase
@@ -458,7 +459,7 @@ export default function HomePage() {
             <div className="max-w-[1400px] 2xl:max-w-none mx-auto px-4 md:px-3 xl:px-6 2xl:px-9">
               <div className="mb-6 flex flex-col md:flex-row md:items-start md:justify-between gap-4 md:gap-6">
                 <div className="order-2 md:order-1 flex-1">
-                  <ProductGrid products={newProducts} onlyFirstTwo />
+                  <ProductGrid products={newProducts.slice(0, NEW_PRODUCTS_LIMIT)} onlyFirstTwo />
                 </div>
                 <div className="order-1 md:order-2 w-full md:w-[420px] lg:w-[480px]">
                   <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4">Каталог новинок</h2>
@@ -473,9 +474,41 @@ export default function HomePage() {
                 </div>
               </div>
               {/* Остальные товары во всю ширину */}
-              {newProducts.length > 2 && (
+              {newProducts.slice(0, NEW_PRODUCTS_LIMIT).length > 2 && (
                 <div className="mt-6">
-                  <ProductGrid products={newProducts.slice(2)} />
+                  <ProductGrid
+                    products={newProducts.slice(2, NEW_PRODUCTS_LIMIT)}
+                    ctaRight={(
+                      <a
+                        href="/catalog"
+                        className="hidden lg:flex lg:col-span-2 lg:col-start-3 relative rounded-[18px] text-white items-center justify-center min-h-[300px] shadow-xl transition-all group px-10 overflow-hidden"
+                      >
+                        {/* Градиентный современный фон */}
+                        <div className="absolute inset-0 bg-gradient-to-br from-[#0b2e6b] via-[#123b85] to-[#1a49a4]" />
+                        {/* Неоновая аура по краям */}
+                        <div className="absolute -inset-1 rounded-[22px] bg-[conic-gradient(from_180deg,rgba(255,255,255,.25),rgba(120,180,255,.55),rgba(255,255,255,.25))] opacity-40 blur-2xl" />
+                        {/* Тонкий бликовый градиент сверху-слева */}
+                        <div className="pointer-events-none absolute -top-24 -left-24 h-64 w-64 rounded-full bg-white/10 blur-3xl group-hover:opacity-70 opacity-40 transition-opacity duration-500" />
+                        {/* Лёгкая сетка-узор */}
+                        <div className="absolute inset-0 opacity-[0.06] [background-image:radial-gradient(circle,#fff_1px,transparent_1px)] [background-size:16px_16px]" />
+
+                        <div className="relative flex items-center justify-center gap-4 group-hover:translate-x-2 transition-transform duration-300">
+                          <h2 className="text-2xl font-semibold leading-tight drop-shadow-[0_1px_0_rgba(0,0,0,0.3)]">
+                            Перейти в каталог
+                          </h2>
+                          <div className="w-14 h-14 bg-white rounded-full flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-300 shadow-lg">
+                            <span className="text-black text-xl">→</span>
+                          </div>
+                        </div>
+                      </a>
+                    )}
+                  />
+                  {/* Кнопка на мобилке под всеми карточками */}
+                  <a href="/catalog" className="lg:hidden mt-4 block w-full rounded-[16px] text-white text-center py-5 font-semibold shadow-lg transition-all relative overflow-hidden">
+                    <span className="absolute inset-0 bg-gradient-to-br from-[#0b2e6b] via-[#123b85] to-[#1a49a4]" />
+                    <span className="absolute -inset-1 rounded-[20px] bg-[conic-gradient(from_180deg,rgba(255,255,255,.25),rgba(120,180,255,.55),rgba(255,255,255,.25))] opacity-30 blur-xl" />
+                    <span className="relative">Перейти в каталог</span>
+                  </a>
                 </div>
               )}
             </div>

@@ -16,6 +16,7 @@ type Props = {
   products: Product[]
   splitTwoFirst?: boolean
   onlyFirstTwo?: boolean
+  ctaRight?: React.ReactNode
 }
 
 function Card({ product }: { product: Product }) {
@@ -74,7 +75,7 @@ function Card({ product }: { product: Product }) {
   )
 }
 
-export default function ProductGrid({ products, splitTwoFirst = false, onlyFirstTwo = false }: Props) {
+export default function ProductGrid({ products, splitTwoFirst = false, onlyFirstTwo = false, ctaRight }: Props) {
   if (onlyFirstTwo) {
     const firstTwoOnly = products.slice(0, 2)
     return (
@@ -92,6 +93,7 @@ export default function ProductGrid({ products, splitTwoFirst = false, onlyFirst
         {products.map((p) => (
           <Card key={p.id} product={p} />
         ))}
+        {ctaRight}
       </div>
     )
   }
