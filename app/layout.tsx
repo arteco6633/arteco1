@@ -7,6 +7,7 @@ import MobileBottomNav from '@/components/MobileBottomNav'
 import Navbar from '@/components/Navbar'
 import { Suspense } from 'react'
 import PageLoader from '@/components/PageLoader'
+import BootLoader from '@/components/BootLoader'
 
 export const metadata: Metadata = {
   title: 'ARTECO - Интернет-магазин',
@@ -24,6 +25,14 @@ export default function RootLayout({
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </head>
       <body className="bg-white overflow-x-hidden">
+        {/* Прелоадер до гидрации (виден и на жёстком обновлении, и на мобилках) */}
+        <div id="arteco-boot-loader" className="fixed inset-0 z-[1000] bg-white grid place-items-center">
+          <div className="flex flex-col items-center gap-4">
+            <div className="text-3xl font-bold tracking-wide">ART × CO</div>
+            <div className="w-8 h-8 rounded-full border-2 border-black/20 border-t-black animate-spin" />
+          </div>
+        </div>
+        <BootLoader />
         {/* Более широкая контентная ширина и адаптивные боковые отступы */}
         <Providers>
           <CartProvider>
