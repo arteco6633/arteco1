@@ -134,7 +134,7 @@ export default function Navbar() {
 
   return (
     <>
-    <header className={`bg-white fixed top-0 left-0 right-0 z-50 transition-transform duration-600 ease-in-out will-change-transform ${hideOnScroll ? '-translate-y-full' : 'translate-y-0'} ${hasShadow ? 'border-b shadow-sm' : 'border-b border-transparent'}`}>
+    <header className={`bg-white fixed top-0 left-0 right-0 z-[60] transition-transform duration-600 ease-in-out will-change-transform ${hideOnScroll ? '-translate-y-full' : 'translate-y-0'} ${hasShadow ? 'border-b shadow-sm' : 'border-b border-transparent'}`}>
       <div className="max-w-[1400px] mx-auto px-3" ref={searchRef}>
         <div className="relative h-20 flex items-center justify-between">
           {/* Лого: абсолютный центр на мобайле, обычный поток на десктопе */}
@@ -161,12 +161,20 @@ export default function Navbar() {
           <div className="flex items-center gap-2 xl:hidden">
             <button
               aria-label="Открыть меню"
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-              onClick={() => setIsMobileOpen((v) => !v)}
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors relative z-[70]"
+              onClick={(e) => { e.stopPropagation(); setIsMobileOpen((v) => !v) }}
             >
-              <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
+              <span aria-hidden className="relative block w-7 h-5">
+                <span
+                  className={`absolute left-0 right-0 top-0 h-[2px] bg-black rounded transition-all duration-500 ease-in-out ${isMobileOpen ? 'translate-y-2.5 rotate-45' : 'translate-y-0 rotate-0'}`}
+                />
+                <span
+                  className={`absolute left-0 right-0 top-1/2 -translate-y-1/2 h-[2px] bg-black rounded transition-all duration-500 ease-in-out ${isMobileOpen ? 'opacity-0' : 'opacity-100'}`}
+                />
+                <span
+                  className={`absolute left-0 right-0 bottom-0 h-[2px] bg-black rounded transition-all duration-500 ease-in-out ${isMobileOpen ? '-translate-y-2.5 -rotate-45' : 'translate-y-0 rotate-0'}`}
+                />
+              </span>
             </button>
           </div>
 
@@ -311,38 +319,48 @@ export default function Navbar() {
           </div>
         )}
 
-        {/* Мобильное выпадающее меню */}
+        {/* Мобильное выпадающее меню (оверлей) */}
         {isMobileOpen && (
-          <div className="xl:hidden absolute top-20 left-0 right-0 bg-white border-t shadow-lg">
-            <div className="max-w-[1400px] mx-auto px-3 py-4 space-y-4">
-              {/* Поиск вынесен в нижнее меню */}
-
-              {/* Быстрые ссылки */}
-              <div className="grid grid-cols-2 gap-3">
-                <Link href="/catalog" className="px-4 py-2 border rounded-lg text-center" onClick={() => setIsMobileOpen(false)}>Каталог</Link>
-                <a href="#promotions" className="px-4 py-2 border rounded-lg text-center" onClick={() => setIsMobileOpen(false)}>Акции</a>
-                <a href="#journal" className="px-4 py-2 border rounded-lg text-center" onClick={() => setIsMobileOpen(false)}>Журнал</a>
-                <a href="#showrooms" className="px-4 py-2 border rounded-lg text-center" onClick={() => setIsMobileOpen(false)}>Шоурумы</a>
-              </div>
-
-              {/* Категории списком */}
-              {categories.length > 0 && (
-                <div>
-                  <div className="text-sm text-gray-500 mb-2">Категории</div>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 max-h-[50vh] overflow-y-auto">
-                    {categories.map((category) => (
-                      <Link
-                        key={category.id}
-                        href={`/catalog/${category.slug}`}
-                        className="p-3 border border-gray-200 rounded-lg hover:bg-gray-50"
-                        onClick={() => setIsMobileOpen(false)}
-                      >
-                        <div className="text-sm font-medium">{category.name}</div>
-                      </Link>
-                    ))}
+          <div className="xl:hidden fixed inset-0 z-50">
+            {/* затемнение: блюрим всё КРОМЕ хэдера */}
+            <div className="absolute left-0 right-0 bottom-0 top-20 bg-black/40 backdrop-blur-sm" onClick={() => setIsMobileOpen(false)} />
+            {/* панель */}
+            <div className="absolute top-0 left-0 right-0 mt-20">{/* ниже хэдера */}
+              <div className="mx-auto max-w-[1680px] 2xl:max-w-[1880px] px-1 md:px-2 xl:px-4 2xl:px-6">
+                <div className="bg-white rounded-b-2xl shadow-xl p-4 pb-6 border">
+                  {/* Быстрые ссылки */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <Link href="/catalog" className="px-4 py-3 rounded-[50px] border bg-white hover:bg-gray-50 text-center font-medium" onClick={() => setIsMobileOpen(false)}>Каталог</Link>
+                    <a href="#promotions" className="px-4 py-3 rounded-[50px] border bg-white hover:bg-gray-50 text-center font-medium" onClick={() => setIsMobileOpen(false)}>Акции</a>
+                    <a href="#journal" className="px-4 py-3 rounded-[50px] border bg-white hover:bg-gray-50 text-center font-medium" onClick={() => setIsMobileOpen(false)}>Журнал</a>
+                    <a href="#showrooms" className="px-4 py-3 rounded-[50px] border bg-white hover:bg-gray-50 text-center font-medium" onClick={() => setIsMobileOpen(false)}>Шоурумы</a>
                   </div>
+
+                  {/* Категории */}
+                  {categories.length > 0 && (
+                    <div className="mt-5">
+                      <div className="text-sm text-gray-500 mb-3">Категории</div>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 max-h-[50vh] overflow-y-auto pr-1">
+                        {categories.map((category) => (
+                          <Link
+                            key={category.id}
+                            href={`/catalog/${category.slug}`}
+                            className="flex items-center gap-3 p-3 rounded-xl border bg-white hover:bg-gray-50"
+                            onClick={() => setIsMobileOpen(false)}
+                          >
+                            <div className="w-12 h-12 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
+                              {category.image_url ? (
+                                <img src={category.image_url} alt={category.name} className="w-full h-full object-cover" />
+                              ) : null}
+                            </div>
+                            <div className="text-sm font-medium line-clamp-2">{category.name}</div>
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
-              )}
+              </div>
             </div>
           </div>
         )}
