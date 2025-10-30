@@ -160,6 +160,7 @@ export default function AdminProductsPage() {
       category_id: '',
       is_featured: false,
       is_new: false,
+      related_products: [],
     })
     setShowModal(true)
   }
