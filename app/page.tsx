@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react'
 import GameModal from '@/components/GameModal'
 import { supabase } from '@/lib/supabase'
-import Navbar from '@/components/Navbar'
 import HeroBanners from '@/components/HeroBanners'
 import ProductGrid from '@/components/ProductGrid'
 import Categories from '@/components/Categories'
@@ -171,7 +170,6 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen overflow-x-hidden max-w-full">
-      <Navbar />
       <main className="overflow-x-hidden contain-inline">
         {/* Первый блок: Один большой банер слева + кнопка справа */}
         {!hideSet.has('top') && topBanner && (
@@ -519,14 +517,6 @@ export default function HomePage() {
 
         <GameModal open={gameOpen} onClose={() => setGameOpen(false)} />
       </main>
-
-      <footer className="bg-gray-800 text-white py-8 mt-12 overflow-x-hidden w-full max-w-full clip-x">
-        <div className="w-full max-w-[1400px] 2xl:max-w-none mx-auto px-4 md:px-3 xl:px-6 2xl:px-9 overflow-x-hidden">
-          <div className="text-center">
-            <p className="break-words">&copy; 2025 ARTECO. Все права защищены.</p>
-          </div>
-        </div>
-      </footer>
     </div>
   )
 }
