@@ -110,6 +110,8 @@ export default function HomePage() {
       const { data: newData } = await supabase
         .from('products')
         .select('*')
+        .eq('is_new', 'true')
+        .order('id', { ascending: false })
         .limit(NEW_PRODUCTS_LIMIT)
 
       // Загружаем категории
