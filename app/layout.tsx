@@ -8,6 +8,7 @@ import Navbar from '@/components/Navbar'
 import { Suspense } from 'react'
 import PageLoader from '@/components/PageLoader'
 import BootLoader from '@/components/BootLoader'
+import NetworkLoader from '@/components/NetworkLoader'
 
 export const metadata: Metadata = {
   title: 'ARTECO - Интернет-магазин',
@@ -39,6 +40,7 @@ export default function RootLayout({
             <div className="max-w-[1680px] 2xl:max-w-[1880px] mx-auto w-full overflow-x-hidden px-1 md:px-2 xl:px-4 2xl:px-6">
               <Navbar />
               <PageLoader />
+              <NetworkLoader />
               <Suspense fallback={<div className="min-h-[50vh] w-full grid place-items-center"><div className="flex flex-col items-center gap-4"><div className="text-3xl font-bold tracking-wide">ART × CO</div><div className="w-8 h-8 rounded-full border-2 border-black/20 border-t-black animate-spin" /></div></div>}>
                 {children}
               </Suspense>
