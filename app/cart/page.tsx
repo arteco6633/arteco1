@@ -99,17 +99,14 @@ export default function CartPage() {
       alert('Укажите имя и телефон')
       return
     }
-    if (deliveryType === 'courier' && !address) {
-      alert('Укажите адрес доставки')
-      return
-    }
+    // Адрес не обязателен: если пусто и выбран курьер, отправим без адреса — уточним по звонку
     try {
       setPlacing(true)
       const payload = {
         contact,
         items: items.map(it => ({ id: it.id, name: it.name, qty: it.qty, price: it.price, color: it.color || null, options: it.options || null })),
         total,
-        delivery: { type: deliveryType, address, needAssembly, needUtilization },
+        delivery: { type: deliveryType, address: address || null, needAssembly, needUtilization },
         payment: { method: paymentMethod },
       }
       const resp = await fetch('/api/orders', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
