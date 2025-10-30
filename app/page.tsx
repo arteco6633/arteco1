@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import GameModal from '@/components/GameModal'
 import { supabase } from '@/lib/supabase'
 import Navbar from '@/components/Navbar'
 import HeroBanners from '@/components/HeroBanners'
@@ -56,6 +57,7 @@ interface Category {
 }
 
 export default function HomePage() {
+  const [gameOpen, setGameOpen] = useState(false)
   const [banners, setBanners] = useState<Banner[]>([])
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([])
   const [newProducts, setNewProducts] = useState<Product[]>([])
@@ -79,6 +81,12 @@ export default function HomePage() {
     const params = new URLSearchParams(window.location.search)
     const hidden = params.get('hide')?.split(',').map(s => s.trim()) || []
     setHideSet(new Set(hidden))
+  }, [])
+
+  useEffect(() => {
+    const openGame = () => setGameOpen(true)
+    window.addEventListener('arteco:open-game', openGame as any)
+    return () => window.removeEventListener('arteco:open-game', openGame as any)
   }, [])
 
   async function loadData() {
@@ -378,11 +386,12 @@ export default function HomePage() {
           <section className="py-2 clip-x overflow-x-hidden">
             <div className="max-w-[1680px] 2xl:max-w-none mx-auto px-1 md:px-2 xl:px-4 2xl:px-6 max-w-full">
               <a
-                href={bottomBanner2.link_url || '/catalog'}
+                href={bottomBanner2.link_url || '#'}
                 className="block w-full h-[600px] md:h-[700px] relative overflow-hidden rounded-[15px] group cursor-pointer max-w-full contain-inline"
                 style={{ 
                   background: '#FFA94D',
                 }}
+                onClick={(e) => { e.preventDefault(); window.dispatchEvent(new Event('arteco:open-game')) }}
               >
                 {/* Черные шарики (анимация из центра вверх) */}
                 <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-[15px] max-w-full">
@@ -432,7 +441,7 @@ export default function HomePage() {
                     {/* Кнопка с анимацией стрелки */}
                     <div className="flex items-center">
                       <span className="w-0 overflow-hidden opacity-0 group-hover:w-6 group-hover:opacity-100 transition-[width,opacity,transform] duration-300 -translate-x-2 group-hover:translate-x-0 text-3xl text-black mr-0 group-hover:mr-2">→</span>
-                      <span className="text-black font-semibold text-2xl">
+                      <span className="text-black font-semibold text-2xl" onClick={(e) => { e.preventDefault(); window.dispatchEvent(new Event('arteco:open-game')) }}>
                         Играть
                       </span>
                     </div>
@@ -473,6 +482,7 @@ export default function HomePage() {
           </section>
         )}
 
+        <GameModal open={gameOpen} onClose={() => setGameOpen(false)} />
       </main>
 
       <footer className="bg-gray-800 text-white py-8 mt-12 overflow-x-hidden w-full max-w-full clip-x">
