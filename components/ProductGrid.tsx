@@ -17,6 +17,7 @@ type Props = {
   splitTwoFirst?: boolean
   onlyFirstTwo?: boolean
   ctaRight?: React.ReactNode
+  horizontal?: boolean
 }
 
 function Card({ product }: { product: Product }) {
@@ -75,7 +76,20 @@ function Card({ product }: { product: Product }) {
   )
 }
 
-export default function ProductGrid({ products, splitTwoFirst = false, onlyFirstTwo = false, ctaRight }: Props) {
+export default function ProductGrid({ products, splitTwoFirst = false, onlyFirstTwo = false, ctaRight, horizontal = false }: Props) {
+  if (horizontal) {
+    return (
+      <div className="overflow-x-auto touch-pan-x -mx-4 px-4">
+        <div className="flex gap-4 sm:gap-6">
+          {products.map((p) => (
+            <div key={p.id} className="w-[260px] sm:w-[300px] flex-shrink-0">
+              <Card product={p} />
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
   if (onlyFirstTwo) {
     const firstTwoOnly = products.slice(0, 2)
     return (

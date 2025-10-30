@@ -1,0 +1,319 @@
+"use client"
+
+import Link from 'next/link'
+import { useCart } from '@/components/CartContext'
+import { useEffect, useMemo, useState } from 'react'
+import { supabase } from '@/lib/supabase'
+import ProductGrid from '@/components/ProductGrid'
+import clsx from 'clsx'
+
+export default function CartPage() {
+  const { items, total, updateQty, remove, clear } = useCart()
+  const [suggested, setSuggested] = useState<Array<{id:number; name:string; price:number; image_url:string}>>([])
+  const [suggestedOpen, setSuggestedOpen] = useState(false)
+  const [acceptAll, setAcceptAll] = useState(false)
+  const [consents, setConsents] = useState({ privacy: false, marketing: false, calls: false })
+  const [contact, setContact] = useState({ name: '', phone: '', email: '' })
+  const [deliveryType, setDeliveryType] = useState<'courier'|'pickup'>('courier')
+  const [address, setAddress] = useState('')
+  const [needAssembly, setNeedAssembly] = useState(false)
+  const [needUtilization, setNeedUtilization] = useState(false)
+  const [addrQuery, setAddrQuery] = useState('')
+  const [addrSuggests, setAddrSuggests] = useState<string[]>([])
+  const [addrOpen, setAddrOpen] = useState(false)
+  const [addrLoading, setAddrLoading] = useState(false)
+  const [paymentMethod, setPaymentMethod] = useState<string>('cod')
+
+  function toggleAcceptAll() {
+    const next = !acceptAll
+    setAcceptAll(next)
+    setConsents({ privacy: next, marketing: next, calls: next })
+  }
+
+  // Адрес: дебаунс‑подсказки (Яндекс Геокодер)
+  useEffect(() => {
+    const token = process.env.NEXT_PUBLIC_YANDEX_API_KEY
+    if (!addrQuery || addrQuery.length < 3 || !token) {
+      setAddrSuggests([])
+      return
+    }
+    setAddrLoading(true)
+    const id = setTimeout(async () => {
+      try {
+        const url = `https://geocode-maps.yandex.ru/1.x/?apikey=${encodeURIComponent(token as string)}&format=json&geocode=${encodeURIComponent(addrQuery)}&lang=ru_RU&results=7`
+        const resp = await fetch(url)
+        if (!resp.ok) throw new Error('suggest error')
+        const data = await resp.json()
+        const members = data?.response?.GeoObjectCollection?.featureMember || []
+        const list = members.map((m: any) => {
+          const g = m?.GeoObject
+          const name = g?.name || ''
+          const desc = g?.description || ''
+          return [desc, name].filter(Boolean).join(', ')
+        }).filter((s: string) => !!s)
+        setAddrSuggests(list)
+        setAddrOpen(true)
+      } catch (e) {
+        setAddrSuggests([])
+      } finally {
+        setAddrLoading(false)
+      }
+    }, 300)
+    return () => clearTimeout(id)
+  }, [addrQuery])
+
+  useEffect(() => {
+    async function loadSuggestions() {
+      try {
+        const productIds = Array.from(new Set(items.map(i => i.id)))
+        if (productIds.length === 0) { setSuggested([]); return }
+        // 1) Получаем related_products для товаров в корзине
+        const { data: rel, error } = await supabase
+          .from('products')
+          .select('id, related_products')
+          .in('id', productIds)
+        if (error) throw error
+        const ids = Array.from(new Set((rel||[]).flatMap(r => (r as any).related_products || [])))
+        if (ids.length === 0) { setSuggested([]); return }
+        // 2) Загружаем сами товары
+        const { data: prods, error: err2 } = await supabase
+          .from('products')
+          .select('id, name, price, image_url')
+          .in('id', ids)
+          .limit(20)
+        if (err2) throw err2
+        setSuggested((prods as any) || [])
+      } catch (e) {
+        console.error('suggestions load error', e)
+      }
+    }
+    loadSuggestions()
+  }, [items])
+
+  return (
+    <div className="max-w-[1400px] mx-auto px-4 md:px-3 xl:px-6 2xl:px-9 py-10">
+      <h1 className="text-2xl md:text-3xl font-bold mb-6">Корзина</h1>
+      {items.length === 0 ? (
+        <div className="bg-white border rounded-xl p-8 text-center">
+          <div className="mb-3">Ваша корзина пуста</div>
+          <Link href="/catalog" className="inline-flex items-center gap-2 px-5 py-3 rounded-full bg-black text-white">Перейти в каталог →</Link>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 space-y-4 lg:max-h-[calc(100vh-140px)] lg:overflow-y-auto lg:pr-2">
+            {items.map((it) => {
+              const key = `${it.id}|${it.color || ''}|${it.options ? JSON.stringify(it.options) : ''}`
+              return (
+                <div key={key} className="bg-white border rounded-xl p-4 flex gap-4">
+                  <img src={it.image_url || '/placeholder.jpg'} alt={it.name} className="w-24 h-24 rounded object-cover" />
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium line-clamp-2">{it.name}</div>
+                    {it.color && <div className="text-xs text-gray-500 mt-0.5">Цвет: {it.color}</div>}
+                    {/* Опции */}
+                    {it.options && (
+                      <div className="mt-1 space-y-0.5 text-xs text-gray-500">
+                        {it.options.filling && <div>Наполнение: {it.options.filling.name} {it.options.filling.delta_price ? `(+${it.options.filling.delta_price.toLocaleString('ru-RU')} ₽)` : ''}</div>}
+                        {it.options.hinge && <div>Петли: {it.options.hinge.name} {it.options.hinge.delta_price ? `(+${it.options.hinge.delta_price.toLocaleString('ru-RU')} ₽)` : ''}</div>}
+                        {it.options.drawer && <div>Ящики: {it.options.drawer.name} {it.options.drawer.delta_price ? `(+${it.options.drawer.delta_price.toLocaleString('ru-RU')} ₽)` : ''}</div>}
+                        {it.options.lighting && <div>Подсветка: {it.options.lighting.name} {it.options.lighting.delta_price ? `(+${it.options.lighting.delta_price.toLocaleString('ru-RU')} ₽)` : ''}</div>}
+                      </div>
+                    )}
+                    <div className="mt-3 flex items-center gap-2">
+                      <button className="w-8 h-8 border rounded" onClick={() => updateQty(it.id, it.qty - 1, key)}>-</button>
+                      <div className="px-2 text-sm">{it.qty}</div>
+                      <button className="w-8 h-8 border rounded" onClick={() => updateQty(it.id, it.qty + 1, key)}>+</button>
+                      <button className="ml-3 text-sm text-red-600" onClick={() => remove(it.id, key)}>Удалить</button>
+                    </div>
+                  </div>
+                  <div className="text-right font-semibold">{(it.price * it.qty).toLocaleString('ru-RU')} ₽</div>
+                </div>
+              )
+            })}
+            <button className="text-sm text-gray-500 hover:text-black" onClick={clear}>Очистить корзину</button>
+
+            {/* Рекомендации над формой */}
+            {suggested.length > 0 && (
+              <div className="mt-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <h2 className="text-xl md:text-2xl font-bold">Вам может подойти</h2>
+                  <button
+                    className="text-gray-700 hover:text-black text-sm md:text-base flex items-center gap-2 select-none"
+                    onClick={() => setSuggestedOpen(v => !v)}
+                  >
+                    {suggestedOpen ? 'Свернуть' : 'Развернуть'}
+                    <span
+                      className={`ml-0 inline-grid place-items-center w-6 h-6 rounded-full text-white bg-black shadow-sm ring-1 ring-black/10 transition-all duration-300 ${suggestedOpen ? 'rotate-180 scale-100 opacity-100' : 'scale-110 opacity-95 animate-pulse'}`}
+                      aria-hidden
+                    >
+                      ▾
+                    </span>
+                  </button>
+                </div>
+
+                <div className={`transition-all duration-500 ease-in-out ${suggestedOpen ? 'opacity-0 -translate-y-1 h-0 max-h-0 overflow-hidden' : 'opacity-100 translate-y-0 h-auto'}`}>
+                  <div className="overflow-x-auto -mx-4 px-4">
+                    <div className="flex gap-3">
+                      {(suggested.slice(0, 8)).map((p) => (
+                        <a key={p.id} href={`/product/${p.id}`} className="block w-24 h-24 rounded-xl overflow-hidden bg-white border flex-shrink-0">
+                          <img src={p.image_url || '/placeholder.jpg'} alt={p.name} className="w-full h-full object-cover" />
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                <div className={`transition-all duration-500 ease-in-out overflow-hidden ${suggestedOpen ? 'max-h-[1200px] opacity-100 translate-y-0' : 'max-h-0 opacity-0 -translate-y-1'}`}>
+                  <ProductGrid products={suggested as any} horizontal />
+                </div>
+              </div>
+            )}
+
+            {/* Заполните информацию о себе */}
+            <section className="bg-white border rounded-xl p-5">
+              <div className="text-lg font-semibold mb-4">Заполните информацию о себе</div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <input
+                  className="w-full border rounded-lg px-3 py-2"
+                  placeholder="Имя"
+                  value={contact.name}
+                  onChange={e => setContact({ ...contact, name: e.target.value })}
+                />
+                <input
+                  className="w-full border rounded-lg px-3 py-2"
+                  placeholder="Телефон"
+                  value={contact.phone}
+                  onChange={e => setContact({ ...contact, phone: e.target.value })}
+                />
+                <input
+                  className="w-full border rounded-lg px-3 py-2 sm:col-span-2"
+                  placeholder="Почта"
+                  value={contact.email}
+                  onChange={e => setContact({ ...contact, email: e.target.value })}
+                />
+              </div>
+              <div className="mt-4 text-sm text-gray-600">Чтобы оформить заказ, нам нужно разрешение на использование ваших данных:</div>
+              <div className="mt-3 space-y-3">
+                <label className="flex items-center gap-2">
+                  <input type="checkbox" checked={acceptAll} onChange={toggleAcceptAll} />
+                  <span>Принять все</span>
+                </label>
+                <label className="flex items-center gap-2">
+                  <input type="checkbox" checked={consents.privacy} onChange={() => setConsents(v => ({ ...v, privacy: !v.privacy }))} />
+                  <span>Согласен на обработку персональных данных на условиях Политики конфиденциальности</span>
+                </label>
+                <label className="flex items-center gap-2">
+                  <input type="checkbox" checked={consents.marketing} onChange={() => setConsents(v => ({ ...v, marketing: !v.marketing }))} />
+                  <span>Согласен на получение рассылок рекламно-информационного характера</span>
+                </label>
+                <label className="flex items-center gap-2">
+                  <input type="checkbox" checked={consents.calls} onChange={() => setConsents(v => ({ ...v, calls: !v.calls }))} />
+                  <span>Согласен на получение массовых и автоматических звонков</span>
+                </label>
+              </div>
+            </section>
+
+            {/* Выберите способ доставки */}
+            <section className="bg-white border rounded-xl p-5">
+              <div className="text-lg font-semibold mb-4">Выберите способ доставки</div>
+              <div className="flex items-center gap-2 text-sm mb-4">
+                <button type="button" className={`px-4 py-2 rounded-full border ${deliveryType==='courier' ? 'bg-black text-white border-black' : 'bg-white'}`} onClick={()=>setDeliveryType('courier')}>Курьер</button>
+                <button type="button" className={`px-4 py-2 rounded-full border ${deliveryType==='pickup' ? 'bg-black text-white border-black' : 'bg-white'}`} onClick={()=>setDeliveryType('pickup')}>Самовывоз</button>
+              </div>
+              {deliveryType === 'courier' && (
+                <div className="relative mb-4">
+                  <input
+                    className="w-full border rounded-lg px-3 py-2"
+                    placeholder="Адрес"
+                    value={address}
+                    onChange={e=>{ setAddress(e.target.value); setAddrQuery(e.target.value) }}
+                    onFocus={()=>{ if (addrSuggests.length>0) setAddrOpen(true) }}
+                    onBlur={()=> setTimeout(()=> setAddrOpen(false), 150)}
+                  />
+                  {addrOpen && (addrLoading || addrSuggests.length>0) && (
+                    <div className="absolute left-0 right-0 mt-1 bg-white border rounded-lg shadow-lg z-40 max-h-64 overflow-auto">
+                      {addrLoading && <div className="px-3 py-2 text-sm text-gray-500">Загрузка…</div>}
+                      {!addrLoading && addrSuggests.map((s) => (
+                        <button
+                          type="button"
+                          key={s}
+                          className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50"
+                          onMouseDown={(e)=> e.preventDefault()}
+                          onClick={()=>{ setAddress(s); setAddrQuery(s); setAddrOpen(false) }}
+                        >
+                          {s}
+                        </button>
+                      ))}
+                      {!addrLoading && addrSuggests.length===0 && addrQuery.length>=3 && (
+                        <div className="px-3 py-2 text-sm text-gray-500">Ничего не найдено</div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+              <div className="space-y-3 text-sm">
+                <label className="flex items-center gap-2">
+                  <input type="checkbox" checked={needAssembly} onChange={()=>setNeedAssembly(v=>!v)} />
+                  <span>Необходима сборка мебели</span>
+                </label>
+                <label className="flex items-center gap-2">
+                  <input type="checkbox" checked={needUtilization} onChange={()=>setNeedUtilization(v=>!v)} />
+                  <span>Необходима утилизация мебели</span>
+                </label>
+              </div>
+            </section>
+
+            {/* Выберите способ оплаты */}
+            <section className="bg-white border rounded-xl p-5">
+              <div className="text-lg font-semibold mb-4">Выберите способ оплаты</div>
+              <div className="space-y-3 text-sm">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input type="radio" name="pay" checked={paymentMethod==='cod'} onChange={()=>setPaymentMethod('cod')} />
+                  <span>Наличными при получении</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input type="radio" name="pay" checked={paymentMethod==='yap'} onChange={()=>setPaymentMethod('yap')} />
+                  <span>Оплата Яндекс Пэй</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input type="radio" name="pay" checked={paymentMethod==='card'} onChange={()=>setPaymentMethod('card')} />
+                  <span>Оплата картой онлайн или через СБП</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input type="radio" name="pay" checked={paymentMethod==='invoice'} onChange={()=>setPaymentMethod('invoice')} />
+                  <span>Безналичная оплата по счёту</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input type="radio" name="pay" checked={paymentMethod==='sberpay'} onChange={()=>setPaymentMethod('sberpay')} />
+                  <span>Оплатить онлайн через SberPay</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input type="radio" name="pay" checked={paymentMethod==='split'} onChange={()=>setPaymentMethod('split')} />
+                  <span>Частями с Яндекс Сплит</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input type="radio" name="pay" checked={paymentMethod==='installment'} onChange={()=>setPaymentMethod('installment')} />
+                  <span>В рассрочку</span>
+                </label>
+              </div>
+            </section>
+
+            
+          </div>
+          <div className="bg-white border rounded-xl p-5 h-max sticky top-24">
+            <div className="flex items-center justify-between mb-4">
+              <div>Итого</div>
+              <div className="text-2xl font-bold">{total.toLocaleString('ru-RU')} ₽</div>
+            </div>
+            <div className="text-sm text-gray-500 mb-4">Доставка и сборка будут рассчитаны менеджером после подтверждения заказа.</div>
+            <button className="block w-full text-center py-3 rounded-full bg-black text-white font-semibold">Оформить заказ</button>
+            <div className="mt-3 text-xs text-gray-500">Нажимая кнопку, вы принимаете условия оферты.</div>
+          </div>
+        </div>
+      )}
+
+      
+    </div>
+  )
+}
+
+

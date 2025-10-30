@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useRef, useMemo } from 'react'
+import { useCart } from '@/components/CartContext'
 import { useParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import Navbar from '@/components/Navbar'
@@ -37,6 +38,7 @@ interface Product {
   category_id: number
   is_featured: boolean
   is_new: boolean
+  related_products?: number[] | null
 }
 
 interface Category {
@@ -48,6 +50,7 @@ interface Category {
 export default function ProductPage() {
   const params = useParams()
   const id = params?.id as string
+  const { add } = useCart()
   
   const [product, setProduct] = useState<Product | null>(null)
   const [category, setCategory] = useState<Category | null>(null)
@@ -118,18 +121,31 @@ export default function ProductPage() {
 
   useEffect(() => {
     const loadRelated = async () => {
-      if (!product?.category_id) return
-      const { data, error } = await supabase
+      if (!product) return
+      // 1) Если в товаре заданы related_products — показываем их
+      const relIds: number[] = ((product as any).related_products || []) as number[]
+      if (Array.isArray(relIds) && relIds.length > 0) {
+        const { data } = await supabase
+          .from('products')
+          .select('*')
+          .in('id', relIds)
+          .limit(12)
+        // Сохранить исходный порядок relIds
+        const byId: Record<number, any> = {}
+        ;(data || []).forEach((p: any) => { byId[p.id] = p })
+        setRelated(relIds.map(id => byId[id]).filter(Boolean))
+        return
+      }
+      // 2) Иначе — подбор по категории
+      if (!product.category_id) return
+      const { data } = await supabase
         .from('products')
         .select('*')
         .eq('category_id', product.category_id)
         .neq('id', product.id)
         .limit(8)
-      if (!error && data && data.length > 0) {
-        setRelated(data)
-        return
-      }
-      // Фоллбек: если по категории пусто/ошибка, показываем любые товары
+      if (data && data.length > 0) { setRelated(data); return }
+      // 3) Фоллбек: любые товары
       const { data: fallback } = await supabase
         .from('products')
         .select('*')
@@ -138,7 +154,7 @@ export default function ProductPage() {
       setRelated(fallback || [])
     }
     loadRelated()
-  }, [product?.category_id, product?.id])
+  }, [product?.id, product?.category_id, (product as any)?.related_products])
 
   async function loadProduct() {
     try {
@@ -171,8 +187,36 @@ export default function ProductPage() {
   }
 
   function addToCart() {
-    // TODO: Реализовать добавление в корзину
-    alert(`Добавлено в корзину: ${quantity} шт.`)
+    if (!product) return
+    const activeImage = (product.images && product.images[activeImageIdx]) || product.image_url
+    let colorLabel: string | null = null
+    if (product.colors && selectedColorIdx != null) {
+      const c: any = (product.colors as any[])[selectedColorIdx]
+      if (typeof c === 'string') colorLabel = c
+      else if (c && typeof c === 'object') {
+        const value = c.value ?? ''
+        const name = c.name && String(c.name).trim()
+        colorLabel = name || (typeof value === 'string' && value.startsWith('http') ? 'Цвет по фото' : value)
+      }
+    }
+    const options: Record<string, any> = {}
+    if (product.fillings && selectedFillingIdx != null) {
+      const f = product.fillings[selectedFillingIdx]
+      if (f) options.filling = { name: f.name, delta_price: f.delta_price || 0 }
+    }
+    if (product.hinges && selectedHingeIdx != null) {
+      const h = product.hinges[selectedHingeIdx]
+      if (h) options.hinge = { name: h.name, delta_price: h.delta_price || 0 }
+    }
+    if (product.drawers && selectedDrawerIdx != null) {
+      const d = product.drawers[selectedDrawerIdx]
+      if (d) options.drawer = { name: d.name, delta_price: d.delta_price || 0 }
+    }
+    if (product.lighting && selectedLightingIdx != null) {
+      const l = product.lighting[selectedLightingIdx]
+      if (l) options.lighting = { name: l.name, delta_price: l.delta_price || 0 }
+    }
+    add({ id: product.id, name: product.name, price: finalPrice, image_url: activeImage, color: colorLabel, options }, quantity)
   }
 
   if (loading) {
@@ -250,7 +294,7 @@ export default function ProductPage() {
                 <div ref={leftMainImageRef} className="rounded-lg overflow-hidden shadow-lg relative aspect-square">
                   <img
                     src={(product.images && product.images[activeImageIdx]) || (product.images && product.images[0]) || product.image_url || '/placeholder.jpg'}
-                    alt={product.name}
+              alt={product.name}
                     className="w-full h-full object-cover"
                   />
                   {product.images && product.images.length > 1 && (
@@ -747,7 +791,7 @@ export default function ProductPage() {
         {related.length > 0 && (
           <section className="mt-8 md:mt-12">
             <h2 className="text-xl sm:text-2xl md:text-3xl font-bold mb-4 md:mb-6">Вам понравится</h2>
-            <ProductGrid products={related as any} />
+            <ProductGrid products={related as any} horizontal />
           </section>
         )}
 

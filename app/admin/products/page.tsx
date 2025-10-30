@@ -33,6 +33,7 @@ interface Product {
   category_id: number
   is_featured: boolean
   is_new: boolean
+  related_products?: number[] | null
 }
 
 export default function AdminProductsPage() {
@@ -87,6 +88,7 @@ export default function AdminProductsPage() {
     category_id: '',
     is_featured: false,
     is_new: false,
+    related_products: [] as number[],
   })
 
   useEffect(() => {
@@ -173,7 +175,10 @@ export default function AdminProductsPage() {
       image_url: product.image_url,
       images: (product.images as any) || [],
       colors: Array.isArray(product.colors) && product.colors.length > 0
-        ? (product.colors as any[]).map(c => typeof c === 'string' ? { value: c, imageIndex: null } : c)
+        ? (product.colors as any[]).map(c => {
+            if (typeof c === 'string') return { value: c, name: '', imageIndex: null }
+            return { value: (c as any).value, name: (c as any).name || '', imageIndex: (c as any).imageIndex ?? null }
+          })
         : [],
       fillings: (product.fillings as any) || [],
       hinges: (product.hinges as any) || [],
@@ -196,6 +201,7 @@ export default function AdminProductsPage() {
       category_id: product.category_id.toString(),
       is_featured: product.is_featured,
       is_new: product.is_new,
+      related_products: (product as any).related_products || [],
     })
     setShowModal(true)
   }
@@ -351,7 +357,7 @@ export default function AdminProductsPage() {
       setUploadingColors(true)
       const urls = await uploadColorFiles(files)
       const current = Array.isArray(formData.colors) ? formData.colors : []
-      const newColors = urls.map(url => ({ value: url, imageIndex: null as number | null }))
+      const newColors = urls.map(url => ({ value: url, name: '', imageIndex: null as number | null }))
       setFormData({ ...formData, colors: [...current, ...newColors] })
     } catch (err) {
       console.error('Ошибка загрузки цветов:', err)
@@ -371,7 +377,7 @@ export default function AdminProductsPage() {
       setUploadingColors(true)
       const urls = await uploadColorFiles(files)
       const current = Array.isArray(formData.colors) ? formData.colors : []
-      const newColors = urls.map(url => ({ value: url, imageIndex: null as number | null }))
+      const newColors = urls.map(url => ({ value: url, name: '', imageIndex: null as number | null }))
       setFormData({ ...formData, colors: [...current, ...newColors] })
     } catch (err) {
       console.error('Ошибка dnd цветов:', err)
@@ -411,6 +417,7 @@ export default function AdminProductsPage() {
         category_id: parseInt(formData.category_id),
         is_featured: formData.is_featured,
         is_new: formData.is_new,
+        related_products: formData.related_products,
       }
 
       if (editingProduct) {
@@ -780,7 +787,7 @@ export default function AdminProductsPage() {
                       placeholder="#000000, #ffffff, red"
                       onChange={(e) => {
                         const hexValues = e.target.value.split(',').map(s=>s.trim()).filter(Boolean)
-                        const newColors = hexValues.map(val => ({ value: val, imageIndex: null as number | null }))
+                        const newColors = hexValues.map(val => ({ value: val, name: '', imageIndex: null as number | null }))
                         // Сохраняем существующие цвета (с изображениями) и добавляем новые hex
                         const existing = Array.isArray(formData.colors) ? formData.colors.filter((c: any) => 
                           typeof c === 'object' && c.value && c.value.startsWith('http')
@@ -796,6 +803,7 @@ export default function AdminProductsPage() {
                       {(formData.colors as any[]).map((colorItem, idx) => {
                         // Обработка старого формата (строка) и нового (объект)
                         const colorValue = typeof colorItem === 'string' ? colorItem : (colorItem?.value || colorItem)
+                        const colorName = typeof colorItem === 'object' ? (colorItem?.name ?? '') : ''
                         const imageIndex = typeof colorItem === 'object' ? (colorItem?.imageIndex ?? null) : null
                         const isImageUrl = typeof colorValue === 'string' && (colorValue.startsWith('http') || colorValue.startsWith('/'))
                         return (
@@ -810,8 +818,37 @@ export default function AdminProductsPage() {
                               </div>
                               <div className="flex-1">
                                 <div className="text-sm font-medium mb-1">Цвет #{idx + 1}</div>
-                                <div className="text-xs text-gray-600">{isImageUrl ? 'Изображение свотча' : colorValue}</div>
+                                <div className="text-xs text-gray-600">{colorName || (isImageUrl ? 'Изображение свотча' : colorValue)}</div>
                               </div>
+                            <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-2">
+                              <div className="md:col-span-2">
+                                <label className="block text-xs text-gray-600 mb-1">Название цвета (для клиента)</label>
+                                <input
+                                  className="w-full px-2 py-1 border rounded text-sm"
+                                  placeholder="Напр. Белая шагрень"
+                                  value={colorName}
+                                  onChange={(e) => {
+                                    const arr = [...(formData.colors as any[])]
+                                    const prev = typeof arr[idx] === 'object' ? arr[idx] : { value: arr[idx] }
+                                    arr[idx] = { ...prev, name: e.target.value }
+                                    setFormData({ ...formData, colors: arr })
+                                  }}
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-xs text-gray-600 mb-1">Значение (HEX/URL)</label>
+                                <input
+                                  className="w-full px-2 py-1 border rounded text-sm"
+                                  value={colorValue}
+                                  onChange={(e) => {
+                                    const arr = [...(formData.colors as any[])]
+                                    const prev = typeof arr[idx] === 'object' ? arr[idx] : { value: arr[idx] }
+                                    arr[idx] = { ...prev, value: e.target.value }
+                                    setFormData({ ...formData, colors: arr })
+                                  }}
+                                />
+                              </div>
+                            </div>
                               <button type="button" className="text-red-600 hover:text-red-800" onClick={() => {
                                 const arr = [...(formData.colors as any[])]
                                 arr.splice(idx, 1)
@@ -826,7 +863,8 @@ export default function AdminProductsPage() {
                                 onChange={(e) => {
                                   const arr = [...(formData.colors as any[])]
                                   const val = e.target.value === '' ? null : parseInt(e.target.value)
-                                  arr[idx] = typeof arr[idx] === 'object' ? { ...arr[idx], imageIndex: val } : { value: arr[idx], imageIndex: val }
+                                  const prev = typeof arr[idx] === 'object' ? arr[idx] : { value: arr[idx] }
+                                  arr[idx] = { ...prev, imageIndex: val }
                                   setFormData({ ...formData, colors: arr })
                                 }}
                               >
@@ -1065,6 +1103,33 @@ export default function AdminProductsPage() {
                     />
                     <span className="font-semibold">Новинка</span>
                   </label>
+                </div>
+
+                {/* Дополнительные товары (для рекомендаций в корзине) */}
+                <div className="mb-6">
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="font-semibold">Дополнительные товары (рекомендации)</label>
+                    <span className="text-xs text-gray-500">Отмеченные товары покажутся внизу корзины</span>
+                  </div>
+                  <div className="max-h-64 overflow-auto border rounded-lg p-3 grid grid-cols-1 sm:grid-cols-2 gap-2 bg-gray-50">
+                    {products.map(p => (
+                      <label key={p.id} className="flex items-center gap-2 p-2 bg-white rounded border">
+                        <input
+                          type="checkbox"
+                          checked={formData.related_products.includes(p.id)}
+                          onChange={(e) => {
+                            const exists = formData.related_products.includes(p.id)
+                            const next = exists
+                              ? formData.related_products.filter(id => id !== p.id)
+                              : [...formData.related_products, p.id]
+                            setFormData({ ...formData, related_products: next })
+                          }}
+                        />
+                        <img src={p.image_url} className="w-10 h-10 rounded object-cover" />
+                        <span className="text-sm line-clamp-1">{p.name}</span>
+                      </label>
+                    ))}
+                  </div>
                 </div>
 
                 {/* Кнопки действий - закреплены внизу */}
