@@ -3,11 +3,13 @@
 import Link from 'next/link'
 import { useCart } from '@/components/CartContext'
 import { useEffect, useMemo, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import ProductGrid from '@/components/ProductGrid'
 
 export default function CartPage() {
   const { items, total, updateQty, remove, clear } = useCart()
+  const router = useRouter()
   const [suggested, setSuggested] = useState<Array<{id:number; name:string; price:number; image_url:string}>>([])
   const [suggestedOpen, setSuggestedOpen] = useState(false)
   const [acceptAll, setAcceptAll] = useState(false)
@@ -22,6 +24,7 @@ export default function CartPage() {
   const [addrOpen, setAddrOpen] = useState(false)
   const [addrLoading, setAddrLoading] = useState(false)
   const [paymentMethod, setPaymentMethod] = useState<string>('cod')
+  const [placing, setPlacing] = useState(false)
 
   function toggleAcceptAll() {
     const next = !acceptAll
@@ -88,6 +91,38 @@ export default function CartPage() {
     }
     loadSuggestions()
   }, [items])
+
+  async function placeOrder() {
+    if (placing) return
+    // простая валидация
+    if (!contact.name || !contact.phone) {
+      alert('Укажите имя и телефон')
+      return
+    }
+    if (deliveryType === 'courier' && !address) {
+      alert('Укажите адрес доставки')
+      return
+    }
+    try {
+      setPlacing(true)
+      const payload = {
+        contact,
+        items: items.map(it => ({ id: it.id, name: it.name, qty: it.qty, price: it.price, color: it.color || null, options: it.options || null })),
+        total,
+        delivery: { type: deliveryType, address, needAssembly, needUtilization },
+        payment: { method: paymentMethod },
+      }
+      const resp = await fetch('/api/orders', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
+      const data = await resp.json()
+      if (!resp.ok || !data?.success) throw new Error(data?.error || 'Order error')
+      clear()
+      router.push(`/order/success?order=${data.id}`)
+    } catch (e: any) {
+      alert(e?.message || 'Не удалось оформить заказ')
+    } finally {
+      setPlacing(false)
+    }
+  }
 
   return (
     <div className="max-w-[1400px] mx-auto px-4 md:px-3 xl:px-6 2xl:px-9 py-10">
@@ -304,7 +339,9 @@ export default function CartPage() {
               <div className="text-2xl font-bold">{total.toLocaleString('ru-RU')} ₽</div>
             </div>
             <div className="text-sm text-gray-500 mb-4">Доставка и сборка будут рассчитаны менеджером после подтверждения заказа.</div>
-            <button className="block w-full text-center py-3 rounded-full bg-black text-white font-semibold">Оформить заказ</button>
+            <button onClick={placeOrder} disabled={placing} className="block w-full text-center py-3 rounded-full bg-black text-white font-semibold disabled:opacity-60">
+              {placing ? 'Оформляем…' : 'Оформить заказ'}
+            </button>
             <div className="mt-3 text-xs text-gray-500">Нажимая кнопку, вы принимаете условия оферты.</div>
           </div>
         </div>
