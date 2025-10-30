@@ -24,10 +24,12 @@ export async function POST(request: Request) {
       created_at: new Date().toISOString(),
     }
 
-    const { data, error } = await supabase.from('orders').insert([payload]).select('id').single()
+    // Use RPC to avoid PostgREST schema cache mismatches
+    const { data, error } = await supabase.rpc('create_order', { payload })
     if (error) return NextResponse.json({ success: false, error: error.message }, { status: 500 })
+    const orderId = Array.isArray(data) ? (data[0] as any)?.id : (data as any)?.id
 
-    return NextResponse.json({ success: true, id: data.id })
+    return NextResponse.json({ success: true, id: orderId })
   } catch (e: any) {
     return NextResponse.json({ success: false, error: e?.message || 'Unknown' }, { status: 500 })
   }

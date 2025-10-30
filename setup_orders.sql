@@ -26,4 +26,33 @@ do $$ begin
   end if;
 end $$;
 
+-- Helper RPC to bypass schema cache issues and insert safely
+create or replace function public.create_order(payload jsonb)
+returns table(id bigint) as $$
+declare
+  v_id bigint;
+begin
+  insert into public.orders (
+    user_id,
+    contact,
+    items,
+    total,
+    delivery,
+    payment,
+    status
+  ) values (
+    (payload->>'user_id')::uuid,
+    coalesce(payload->'contact', '{}'::jsonb),
+    coalesce(payload->'items', '[]'::jsonb),
+    coalesce((payload->>'total')::numeric, 0),
+    coalesce(payload->'delivery', '{}'::jsonb),
+    coalesce(payload->'payment', '{}'::jsonb),
+    'new'
+  ) returning orders.id into v_id;
+  return query select v_id;
+end;
+$$ language plpgsql security definer;
+
+grant execute on function public.create_order(jsonb) to anon, authenticated;
+
 
