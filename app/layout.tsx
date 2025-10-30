@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import './globals.css'
 import Providers from '@/components/Providers'
+import MobileBottomNav from '@/components/MobileBottomNav'
 
 export const metadata: Metadata = {
   title: 'ARTECO - Интернет-магазин',
@@ -23,6 +24,7 @@ export default function RootLayout({
           <div className="max-w-[1680px] 2xl:max-w-[1880px] mx-auto w-full overflow-x-hidden px-1 md:px-2 xl:px-4 2xl:px-6">
             {children}
           </div>
+          <MobileBottomNav />
         </Providers>
       </body>
     </html>
