@@ -5,7 +5,6 @@ import { useCart } from '@/components/CartContext'
 import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import ProductGrid from '@/components/ProductGrid'
-import clsx from 'clsx'
 
 export default function CartPage() {
   const { items, total, updateQty, remove, clear } = useCart()
