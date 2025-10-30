@@ -13,13 +13,14 @@ export default function Categories({ categories }: { categories: Category[] }) {
 
   return (
     <section className="pt-12 pb-2 overflow-x-hidden max-w-full">
-      <div className="max-w-[1400px] 2xl:max-w-[1600px] mx-auto px-4 md:px-3 xl:px-6 2xl:px-9 max-w-full">
+      <div className="max-w-[1680px] 2xl:max-w-none mx-auto px-4 md:px-2 xl:px-4 2xl:px-6 max-w-full">
         <div className="md:hidden flex items-center gap-2 text-gray-500 text-sm px-0 mb-3">
           <span>Прокрутите категории</span>
           <span className="inline-block animate-pulse">→</span>
         </div>
-        <div className="x-scroll-guard w-full max-w-full">
-          <div className="flex gap-4 sm:gap-4 overflow-x-auto sm:overflow-visible snap-x snap-mandatory px-0 no-scrollbar max-w-full">
+        {/* Ширина дорожки ровно равна ширине вьюпорта, независимо от паддингов контейнера */}
+        <div className="relative md:static left-1/2 right-1/2 md:left-auto md:right-auto -ml-[50vw] -mr-[50vw] md:ml-0 md:mr-0 w-screen md:w-full px-4 md:px-0 overflow-x-hidden">
+          <div className="flex gap-4 sm:gap-4 overflow-x-auto sm:overflow-visible snap-x snap-mandatory no-scrollbar w-screen md:w-full touch-pan-y overscroll-x-none">
           {categories.map((category) => (
             <Link
               key={category.id}

@@ -61,6 +61,10 @@ export default function HomePage() {
   const [newProducts, setNewProducts] = useState<Product[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
+  // Debug: скрытие секций через параметр ?hide=top,middle,bottom,categories,middle2,bottom2,new
+  const [hideSet, setHideSet] = useState<Set<string>>(new Set())
+  // Временное скрытие блока категорий (выключено)
+  const debugHideCategories = false
 
   // ref для первого баннера (стрелка появления при скролле)
   const firstBannerRef = useState<HTMLElement | null>(null)[0] as any
@@ -68,6 +72,13 @@ export default function HomePage() {
 
   useEffect(() => {
     loadData()
+  }, [])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const params = new URLSearchParams(window.location.search)
+    const hidden = params.get('hide')?.split(',').map(s => s.trim()) || []
+    setHideSet(new Set(hidden))
   }, [])
 
   async function loadData() {
@@ -152,10 +163,10 @@ export default function HomePage() {
       <Navbar />
       <main className="overflow-x-hidden contain-inline">
         {/* Первый блок: Один большой банер слева + кнопка справа */}
-        {topBanner && (
-          <section className="py-2 clip-x">
+        {!hideSet.has('top') && topBanner && (
+          <section className="py-2 clip-x overflow-x-hidden">
             <div className="max-w-[1680px] 2xl:max-w-none mx-auto px-1 md:px-2 xl:px-4 2xl:px-6 max-w-full">
-              <div className="grid grid-cols-10 gap-4 max-w-full">
+              <div className="grid grid-cols-10 gap-4 w-full max-w-full">
                 {/* Большой банер - 7 колонок (70%) */}
                 <div ref={firstBannerRef} className={`relative h-[440px] sm:h-[520px] md:h-[600px] col-span-10 md:col-span-7 overflow-hidden rounded-[15px] group reveal-on-scroll ${firstBannerInView ? 'in-view' : ''} max-w-full`}>
                   <img
@@ -163,22 +174,22 @@ export default function HomePage() {
                     alt={topBanner.title}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent flex flex-col justify-end p-8 sm:p-12">
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent flex flex-col justify-end p-6 sm:p-8">
                     <h3 className="text-white text-2xl sm:text-3xl font-bold mb-3">
                       {topBanner.title}
                     </h3>
                     {topBanner.description && (
-                      <p className="text-white/90 text-sm sm:text-base mb-6">
+                      <p className="text-white/90 text-sm sm:text-base mb-5">
                         {topBanner.description}
                       </p>
                     )}
-                    {topBanner.link_url && (
+                    {(topBanner.button_text || topBanner.link_url) && (
                       <div className="group">
                         <a
-                          href={topBanner.link_url}
-                          className="inline-flex items-center text-white font-semibold text-base sm:text-lg group-hover:translate-x-4 transition-all duration-300 cursor-pointer"
+                          href={topBanner.link_url || '/catalog'}
+                          className="inline-flex items-center gap-2 bg-white text-black font-semibold text-sm sm:text-base px-4 py-2 rounded-full shadow-md hover:shadow-lg transition-all duration-300 cursor-pointer hover:scale-[1.03]"
                         >
-                          <span className="scroll-arrow opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-300 mr-2 text-2xl">→</span>
+                          <span className="text-lg -translate-x-1 opacity-70 transition-all duration-300 group-hover:translate-x-0 group-hover:opacity-100">→</span>
                           <span>{topBanner.button_text || 'Перейти'}</span>
                         </a>
                       </div>
@@ -212,10 +223,10 @@ export default function HomePage() {
         )}
 
         {/* Второй блок: Два промо-баннера */}
-        {middleBanners.length > 0 && (
-          <section className="py-2 clip-x">
+        {!hideSet.has('middle') && middleBanners.length > 0 && (
+          <section className="py-2 clip-x overflow-x-hidden">
             <div className="max-w-[1680px] 2xl:max-w-none mx-auto px-1 md:px-2 xl:px-4 2xl:px-6 max-w-full">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-full">
                 {middleBanners.map((banner) => (
                   <div key={banner.id} className="relative h-[360px] sm:h-[420px] md:h-[500px] overflow-hidden rounded-[15px] group max-w-full">
                     <img
@@ -235,9 +246,9 @@ export default function HomePage() {
                       <div className="group">
                         <a
                           href={banner.link_url || '/'}
-                          className="inline-flex items-center text-white font-semibold text-base sm:text-lg transition-all duration-300 cursor-pointer"
+                          className="inline-flex items-center gap-2 bg-white text-black font-semibold text-sm sm:text-base px-4 py-2 rounded-full shadow-md hover:shadow-lg transition-all duration-300 cursor-pointer hover:scale-[1.03]"
                         >
-                          <span className="w-0 overflow-hidden opacity-0 group-hover:w-6 group-hover:opacity-100 transition-[width,opacity,transform] duration-300 -translate-x-2 group-hover:translate-x-0 mr-0 group-hover:mr-2 text-3xl">→</span>
+                          <span className="text-lg -translate-x-1 opacity-70 transition-all duration-300 group-hover:translate-x-0 group-hover:opacity-100">→</span>
                           <span>{banner.button_text || 'Подробнее'}</span>
                         </a>
                       </div>
@@ -250,8 +261,8 @@ export default function HomePage() {
         )}
 
         {/* Третий блок: Статический промо-баннер с анимацией */}
-        {bottomBanner && (
-          <section className="py-2 clip-x">
+        {!hideSet.has('bottom') && bottomBanner && (
+          <section className="py-2 clip-x overflow-x-hidden">
             <div className="max-w-[1680px] 2xl:max-w-none mx-auto px-1 md:px-2 xl:px-4 2xl:px-6 max-w-full">
               <a
                 href={bottomBanner.link_url || '/catalog'}
@@ -322,13 +333,13 @@ export default function HomePage() {
           </section>
         )}
 
-        <Categories categories={categories} />
+        {!debugHideCategories && !hideSet.has('categories') && <Categories categories={categories} />}
 
         {/* Дополнительные два промо-баннера (динамичные) */}
-        {middleBanners2.length > 0 && (
-          <section className="pt-12 pb-2 clip-x">
+        {!hideSet.has('middle2') && middleBanners2.length > 0 && (
+          <section className="pt-12 pb-2 clip-x overflow-x-hidden">
             <div className="max-w-[1680px] 2xl:max-w-none mx-auto px-1 md:px-2 xl:px-4 2xl:px-6 max-w-full">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-full">
                 {middleBanners2.map((banner) => (
                   <div key={banner.id} className="relative h-[360px] sm:h-[420px] md:h-[500px] overflow-hidden rounded-[15px] group max-w-full">
                     <img
@@ -336,21 +347,21 @@ export default function HomePage() {
                       alt={banner.title}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent flex flex-col justify-end px-6 pb-6 sm:px-8 sm:pb-8">
-                      <h3 className="text-white text-2xl sm:text-3xl font-bold mb-2">
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent flex flex-col justify-end p-6 sm:p-8">
+                      <h3 className="text-white text-2xl sm:text-3xl font-bold mb-3">
                         {banner.title}
                       </h3>
                       {banner.description && (
-                        <p className="text-white/90 text-sm sm:text-base mb-4">
+                        <p className="text-white/90 text-sm sm:text-base mb-5">
                           {banner.description}
                         </p>
                       )}
                       <div className="group">
                         <a
                           href={banner.link_url || '/'}
-                          className="inline-flex items-center text-white font-semibold text-base sm:text-lg group-hover:translate-x-4 transition-all duration-300 cursor-pointer"
+                          className="inline-flex items-center gap-2 bg-white text-black font-semibold text-sm sm:text-base px-4 py-2 rounded-full shadow-md hover:shadow-lg transition-all duration-300 cursor-pointer hover:scale-[1.03]"
                         >
-                          <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 mr-2">→</span>
+                          <span className="text-lg -translate-x-1 opacity-70 transition-all duration-300 group-hover:translate-x-0 group-hover:opacity-100">→</span>
                           <span>{banner.button_text || 'Подробнее'}</span>
                         </a>
                       </div>
@@ -363,8 +374,8 @@ export default function HomePage() {
         )}
 
         {/* Один статичный промо-баннер (ниже) */}
-        {bottomBanner2 && (
-          <section className="py-2 clip-x">
+        {!hideSet.has('bottom2') && bottomBanner2 && (
+          <section className="py-2 clip-x overflow-x-hidden">
             <div className="max-w-[1680px] 2xl:max-w-none mx-auto px-1 md:px-2 xl:px-4 2xl:px-6 max-w-full">
               <a
                 href={bottomBanner2.link_url || '/catalog'}
@@ -433,7 +444,7 @@ export default function HomePage() {
         )}
 
         {/* Новинки */}
-        {newProducts.length > 0 && (
+        {!hideSet.has('new') && newProducts.length > 0 && (
           <section className="py-8 bg-white">
             <div className="max-w-[1400px] 2xl:max-w-none mx-auto px-4 md:px-3 xl:px-6 2xl:px-9">
               <div className="mb-6 flex flex-col md:flex-row md:items-start md:justify-between gap-4 md:gap-6">
