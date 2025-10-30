@@ -417,7 +417,7 @@ export default function HomePage() {
                 {/* Контент */}
                 <div className="absolute inset-0 p-12 flex flex-col items-center justify-center">
                   {/* Главный заголовок - по центру */}
-                  <div className="opacity-0 sm:opacity-100 sm:group-hover:opacity-100 sm:group-hover:animate-[slideInFromLeft_0.8s_ease-out] transition-opacity duration-300">
+                  <div className="opacity-100 group-hover:animate-[slideInFromLeft_0.8s_ease-out] transition-opacity duration-300 text-center sm:text-left">
                     <h3 className="text-black text-4xl sm:text-6xl md:text-8xl font-extrabold leading-tight tracking-tight">
                       Замер за 1₽
                     </h3>

@@ -20,7 +20,7 @@ export default function Categories({ categories }: { categories: Category[] }) {
         </div>
         {/* Ширина дорожки ровно равна ширине вьюпорта, независимо от паддингов контейнера */}
         <div className="relative md:static left-1/2 right-1/2 md:left-auto md:right-auto -ml-[50vw] -mr-[50vw] md:ml-0 md:mr-0 w-screen md:w-full px-4 md:px-0 overflow-x-hidden">
-          <div className="flex gap-4 sm:gap-4 overflow-x-auto sm:overflow-visible snap-x snap-mandatory no-scrollbar w-screen md:w-full touch-pan-y overscroll-x-none">
+          <div className="flex gap-4 sm:gap-4 overflow-x-auto sm:overflow-visible snap-x snap-mandatory no-scrollbar w-screen md:w-full touch-pan-x overscroll-x-none scroll-smooth -mx-4 px-4 pr-6">
           {categories.map((category) => (
             <Link
               key={category.id}
