@@ -31,24 +31,47 @@ create or replace function public.create_order(payload jsonb)
 returns table(id bigint) as $$
 declare
   v_id bigint;
+  has_total_amount boolean;
 begin
-  insert into public.orders (
-    user_id,
-    contact,
-    items,
-    total,
-    delivery,
-    payment,
-    status
-  ) values (
-    (payload->>'user_id')::uuid,
-    coalesce(payload->'contact', '{}'::jsonb),
-    coalesce(payload->'items', '[]'::jsonb),
-    coalesce((payload->>'total')::numeric, 0),
-    coalesce(payload->'delivery', '{}'::jsonb),
-    coalesce(payload->'payment', '{}'::jsonb),
-    'new'
-  ) returning orders.id into v_id;
+  select exists (
+    select 1 from information_schema.columns
+    where table_schema='public' and table_name='orders' and column_name='total_amount'
+  ) into has_total_amount;
+
+  if has_total_amount then
+    execute $$
+      insert into public.orders (
+        user_id, contact, items, total_amount, delivery, payment, status
+      ) values ($1,$2,$3,$4,$5,$6,$7)
+      returning orders.id
+    $$
+    into v_id
+    using
+      (payload->>'user_id')::uuid,
+      coalesce(payload->'contact','{}'::jsonb),
+      coalesce(payload->'items','[]'::jsonb),
+      coalesce((payload->>'total')::numeric,0),
+      coalesce(payload->'delivery','{}'::jsonb),
+      coalesce(payload->'payment','{}'::jsonb),
+      'new';
+  else
+    execute $$
+      insert into public.orders (
+        user_id, contact, items, total, delivery, payment, status
+      ) values ($1,$2,$3,$4,$5,$6,$7)
+      returning orders.id
+    $$
+    into v_id
+    using
+      (payload->>'user_id')::uuid,
+      coalesce(payload->'contact','{}'::jsonb),
+      coalesce(payload->'items','[]'::jsonb),
+      coalesce((payload->>'total')::numeric,0),
+      coalesce(payload->'delivery','{}'::jsonb),
+      coalesce(payload->'payment','{}'::jsonb),
+      'new';
+  end if;
+
   return query select v_id;
 end;
 $$ language plpgsql security definer;
