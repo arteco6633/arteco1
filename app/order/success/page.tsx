@@ -1,8 +1,9 @@
 "use client"
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
+import { Suspense } from 'react'
 
-export default function OrderSuccessPage() {
+function SuccessContent() {
   const params = useSearchParams()
   const id = params.get('order')
   return (
@@ -30,6 +31,14 @@ export default function OrderSuccessPage() {
 
       <Link href="/catalog" className="inline-flex items-center gap-2 px-5 py-3 rounded-full bg-black text-white">Продолжить покупки →</Link>
     </div>
+  )
+}
+
+export default function OrderSuccessPage() {
+  return (
+    <Suspense fallback={<div className="max-w-[1000px] mx-auto px-4 md:px-6 py-12">Загрузка…</div>}>
+      <SuccessContent />
+    </Suspense>
   )
 }
 
