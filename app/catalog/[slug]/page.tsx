@@ -123,7 +123,7 @@ export default function CategoryPage() {
             <p className="text-gray-600">В данной категории пока нет товаров</p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 xs:grid-cols-3 lg:grid-cols-4 gap-x-3 sm:gap-x-4 md:gap-x-6 gap-y-6 sm:gap-y-8">
+          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-x-4 md:gap-x-6 gap-y-8">
             {products.map((product) => (
               <Link 
                 key={product.id} 
@@ -139,7 +139,7 @@ export default function CategoryPage() {
                         return (imgs && imgs[idx]) || (imgs && imgs[0]) || product.image_url || '/placeholder.jpg'
                       })()}
                       alt={product.name}
-                      className="w-full aspect-[4/3] object-cover group-hover:scale-[1.02] transition-transform duration-300"
+                      className="w-full aspect-[3/2] object-cover group-hover:scale-[1.02] transition-transform duration-300"
                       loading="lazy"
                     />
                     {(product.is_new || product.is_featured) && (
@@ -167,19 +167,23 @@ export default function CategoryPage() {
                     </h3>
                     {/* Свотчи цветов */}
                     {!!(product as any).colors?.length && (
-                      <div className="mt-2 flex items-center gap-1.5">
-                        {((product as any).colors as string[])?.slice(0,5).map((c, idx) => (
-                          <button
-                            type="button"
-                            key={idx}
-                            onClick={(e) => { e.preventDefault(); setSelectedVariantIndexById((prev) => ({ ...prev, [product.id]: idx })) }}
-                            className={`w-4 h-4 rounded-full border ${ (selectedVariantIndexById[product.id] || 0) === idx ? 'border-black' : 'border-black/10'}`}
-                            style={{ background: c }}
-                            title={c}
-                          />
-                        ))}
-                        {((product as any).colors as string[])?.length > 5 && (
-                          <span className="text-xs text-gray-500">+{((product as any).colors as string[]).length - 5}</span>
+                      <div className="mt-2 flex items-center gap-2">
+                        {((product as any).colors as any[])?.slice(0,5).map((c, idx) => {
+                          const value = typeof c === 'string' ? c : (c?.value ?? '')
+                          const name = typeof c === 'string' ? c : (c?.name ?? '')
+                          return (
+                            <button
+                              type="button"
+                              key={idx}
+                              onClick={(e) => { e.preventDefault(); setSelectedVariantIndexById((prev) => ({ ...prev, [product.id]: idx })) }}
+                              className={`w-5 h-5 md:w-6 md:h-6 rounded-full border shadow-sm ${ (selectedVariantIndexById[product.id] || 0) === idx ? 'border-black ring-2 ring-black/10' : 'border-black/10'}`}
+                              style={{ background: value || '#eee' }}
+                              title={name || value}
+                            />
+                          )
+                        })}
+                        {((product as any).colors as any[])?.length > 5 && (
+                          <span className="text-xs text-gray-500">+{((product as any).colors as any[]).length - 5}</span>
                         )}
                       </div>
                     )}
