@@ -123,16 +123,14 @@ export default function CategoryPage() {
             <p className="text-gray-600">В данной категории пока нет товаров</p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 xs:grid-cols-3 lg:grid-cols-4 gap-x-3 sm:gap-x-4 md:gap-x-6 gap-y-4 sm:gap-y-6">
+          <div className="grid grid-cols-2 xs:grid-cols-3 lg:grid-cols-4 gap-x-3 sm:gap-x-4 md:gap-x-6 gap-y-6 sm:gap-y-8">
             {products.map((product) => (
               <Link 
                 key={product.id} 
                 href={`/product/${product.id}`}
-                className="group block relative hover:z-10 p-3 rounded-2xl"
+                className="group block relative hover:z-10 rounded-2xl bg-white border border-gray-100 shadow-sm hover:shadow-lg transition-shadow duration-300"
               >
-                {/* Белый фон появляется только при ховере и не смещает соседей */}
-                <div className="pointer-events-none absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-white shadow-xl ring-1 ring-black/5"></div>
-                <div className="relative z-10">
+                <div className="relative z-10 p-3">
                   <div className="relative rounded-xl overflow-hidden">
                     <img
                       src={(() => {
@@ -141,7 +139,7 @@ export default function CategoryPage() {
                         return (imgs && imgs[idx]) || (imgs && imgs[0]) || product.image_url || '/placeholder.jpg'
                       })()}
                       alt={product.name}
-                      className="w-full aspect-[4/3] sm:aspect-[4/3] object-cover group-hover:scale-105 transition-transform duration-300"
+                      className="w-full aspect-[4/3] object-cover group-hover:scale-[1.02] transition-transform duration-300"
                       loading="lazy"
                     />
                     {(product.is_new || product.is_featured) && (
