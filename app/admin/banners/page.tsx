@@ -111,10 +111,6 @@ export default function AdminBannersPage() {
   function handleImageSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        alert('Размер файла не должен превышать 5MB')
-        return
-      }
       setSelectedImageFile(file)
       
       const reader = new FileReader()
