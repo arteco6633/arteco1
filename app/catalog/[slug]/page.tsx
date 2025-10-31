@@ -35,6 +35,17 @@ export default function CategoryPage() {
   // Выбранные варианты цветов/изображений по товару (индекс)
   const [selectedVariantIndexById, setSelectedVariantIndexById] = useState<Record<number, number>>({})
 
+  function createHoverScrubHandler(productId: number, imagesLength: number) {
+    return (e: React.MouseEvent<HTMLDivElement>) => {
+      if (!imagesLength || imagesLength <= 1) return
+      const rect = (e.currentTarget as HTMLDivElement).getBoundingClientRect()
+      const x = e.clientX - rect.left
+      const ratio = Math.min(Math.max(x / rect.width, 0), 1)
+      const idx = Math.min(imagesLength - 1, Math.floor(ratio * imagesLength))
+      setSelectedVariantIndexById((prev) => ({ ...prev, [productId]: idx }))
+    }
+  }
+
   useEffect(() => {
     if (slug) {
       loadCategoryData()
@@ -131,7 +142,11 @@ export default function CategoryPage() {
                 className="group block relative hover:z-10 rounded-2xl bg-white border border-gray-100 shadow-sm hover:shadow-lg transition-shadow duration-300"
               >
                 <div className="relative z-10 p-3">
-                  <div className="relative rounded-xl overflow-hidden">
+                  <div
+                    className="relative rounded-xl overflow-hidden"
+                    onMouseMove={createHoverScrubHandler(product.id, ((product as any).images as string[] | undefined)?.length || 0)}
+                    onMouseLeave={() => setSelectedVariantIndexById((prev) => ({ ...prev, [product.id]: 0 }))}
+                  >
                     <img
                       src={(() => {
                         const imgs = (product as any).images as string[] | undefined
