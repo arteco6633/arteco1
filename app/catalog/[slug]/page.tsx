@@ -134,12 +134,12 @@ export default function CategoryPage() {
             <p className="text-gray-600">В данной категории пока нет товаров</p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-x-4 md:gap-x-6 gap-y-8">
+          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-x-3 sm:gap-x-4 md:gap-x-6 gap-y-5 sm:gap-y-7">
             {products.map((product) => (
               <Link 
                 key={product.id} 
                 href={`/product/${product.id}`}
-                className="group block relative hover:z-10 rounded-2xl bg-white border border-gray-100 shadow-sm hover:shadow-lg transition-shadow duration-300 min-h-[420px] md:min-h-[460px]"
+                className="group block relative hover:z-10 rounded-2xl bg-white border border-gray-100 shadow-sm hover:shadow-lg transition-shadow duration-300 min-h-[360px] md:min-h-[460px]"
               >
                 <div className="relative z-10 p-3">
                   <div
@@ -154,7 +154,7 @@ export default function CategoryPage() {
                         return (imgs && imgs[idx]) || (imgs && imgs[0]) || product.image_url || '/placeholder.jpg'
                       })()}
                       alt={product.name}
-                      className="w-full aspect-[4/3] object-cover group-hover:scale-[1.02] transition-transform duration-300"
+                      className="w-full aspect-square md:aspect-[4/3] object-cover group-hover:scale-[1.02] transition-transform duration-300"
                       loading="lazy"
                     />
                     {(product.is_new || product.is_featured) && (
@@ -204,7 +204,7 @@ export default function CategoryPage() {
                     )}
                   </div>
                   {/* Кнопка в корзину под названием; появляется по ховеру, не сдвигая соседей */}
-                  <div className="pt-3 opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300">
+                  <div className="pt-3 md:opacity-0 md:translate-y-1 md:group-hover:opacity-100 md:group-hover:translate-y-0 transition-all duration-300">
                     <button
                       className="w-full bg-black text-white py-2.5 rounded-lg shadow-md hover:bg-gray-900"
                     >
