@@ -207,9 +207,8 @@ export default function CategoryPage() {
                   <div className="pt-3 opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300">
                     <button
                       className="w-full bg-black text-white py-2.5 rounded-lg shadow-md hover:bg-gray-900"
-                      onClick={(e) => e.preventDefault()}
                     >
-                      В корзину
+                      Подробнее о товаре
                     </button>
                   </div>
                 </div>
