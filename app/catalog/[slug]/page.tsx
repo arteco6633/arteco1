@@ -139,7 +139,7 @@ export default function CategoryPage() {
               <Link 
                 key={product.id} 
                 href={`/product/${product.id}`}
-                className="group block relative hover:z-10 rounded-2xl bg-white border border-gray-100 shadow-sm hover:shadow-lg transition-shadow duration-300"
+                className="group block relative hover:z-10 rounded-2xl bg-white border border-gray-100 shadow-sm hover:shadow-lg transition-shadow duration-300 min-h-[420px] md:min-h-[460px]"
               >
                 <div className="relative z-10 p-3">
                   <div
@@ -154,7 +154,7 @@ export default function CategoryPage() {
                         return (imgs && imgs[idx]) || (imgs && imgs[0]) || product.image_url || '/placeholder.jpg'
                       })()}
                       alt={product.name}
-                      className="w-full aspect-[3/2] object-cover group-hover:scale-[1.02] transition-transform duration-300"
+                      className="w-full aspect-[4/3] object-cover group-hover:scale-[1.02] transition-transform duration-300"
                       loading="lazy"
                     />
                     {(product.is_new || product.is_featured) && (
