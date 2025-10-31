@@ -64,6 +64,9 @@ export default function ProductPage() {
   const [selectedLightingIdx, setSelectedLightingIdx] = useState<number | null>(null)
   const [selectedColorIdx, setSelectedColorIdx] = useState<number | null>(null)
   const [isDesktop, setIsDesktop] = useState(false)
+  // touch-swipe по главному фото
+  const touchStartX = useRef<number | null>(null)
+  const touchStartY = useRef<number | null>(null)
   const finalPrice = useMemo(() => {
     if (!product) return 0
     const base = Number(product.price) || 0
@@ -286,7 +289,25 @@ export default function ProductPage() {
               
               {/* Главное фото с кнопками навигации */}
               <div className="flex-1 relative">
-                <div ref={leftMainImageRef} className="rounded-lg overflow-hidden shadow-lg relative aspect-square">
+                <div
+                  ref={leftMainImageRef}
+                  className="rounded-lg overflow-hidden shadow-lg relative aspect-square"
+                  onTouchStart={(e) => { touchStartX.current = e.touches[0].clientX; touchStartY.current = e.touches[0].clientY }}
+                  onTouchEnd={(e) => {
+                    if (!product.images || product.images.length <= 1) return
+                    const startX = touchStartX.current, startY = touchStartY.current
+                    touchStartX.current = null; touchStartY.current = null
+                    if (startX == null || startY == null) return
+                    const dx = e.changedTouches[0].clientX - startX
+                    const dy = e.changedTouches[0].clientY - startY
+                    if (Math.abs(dx) < 40 || Math.abs(dx) < Math.abs(dy)) return
+                    if (dx < 0 && activeImageIdx < product.images.length - 1) {
+                      setActiveImageIdx(activeImageIdx + 1)
+                    } else if (dx > 0 && activeImageIdx > 0) {
+                      setActiveImageIdx(activeImageIdx - 1)
+                    }
+                  }}
+                >
                   <img
                     src={(product.images && product.images[activeImageIdx]) || (product.images && product.images[0]) || product.image_url || '/placeholder.jpg'}
               alt={product.name}
@@ -611,20 +632,20 @@ export default function ProductPage() {
               </div>
 
             {/* Низ блока: количество и кнопка, закреплены вне скролла */}
-            <div className="mt-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-2 sm:gap-3">
+            <div className="mt-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3 sm:gap-4">
               {/* Вишлист на мобильных рядом с "В корзину", на десктопе отдельно */}
               <div className="flex md:hidden items-center gap-2 justify-end">
                 <button
                   type="button"
                   aria-label="Добавить в избранное"
                   onClick={() => alert('Добавлено в избранное')}
-                  className="w-10 h-10 rounded-full border border-black text-black hover:bg-black/5 transition-colors flex items-center justify-center flex-shrink-0"
+                  className="w-12 h-12 rounded-full border border-black text-black hover:bg-black/5 transition-colors flex items-center justify-center flex-shrink-0 text-lg"
                 >
                   ♥
                 </button>
                 <button
                   onClick={addToCart}
-                  className="px-6 py-2 bg-black text-white rounded-[50px] hover:bg-black/80 transition-colors font-semibold text-sm flex-1"
+                  className="px-8 py-3 bg-black text-white rounded-[50px] hover:bg-black/80 transition-colors font-semibold text-base flex-1"
                 >
                   В корзину
                 </button>
@@ -636,7 +657,7 @@ export default function ProductPage() {
                   type="button"
                   aria-label="Добавить в избранное"
                   onClick={() => alert('Добавлено в избранное')}
-                  className="w-10 h-10 rounded-full border border-black text-black hover:bg-black/5 transition-colors flex items-center justify-center flex-shrink-0"
+                  className="w-12 h-12 rounded-full border border-black text-black hover:bg-black/5 transition-colors flex items-center justify-center flex-shrink-0 text-lg"
                 >
                   ♥
                 </button>
@@ -645,7 +666,7 @@ export default function ProductPage() {
               {/* Кнопка "В корзину" на десктопе */}
               <button
                 onClick={addToCart}
-                className="hidden md:inline-block px-8 py-3 bg-black text-white rounded-[50px] hover:bg-black/80 transition-colors font-semibold text-base"
+                className="hidden md:inline-block px-9 py-3.5 bg-black text-white rounded-[50px] hover:bg-black/80 transition-colors font-semibold text-base"
               >
                 В корзину
               </button>
@@ -653,7 +674,7 @@ export default function ProductPage() {
               <button
                 type="button"
                 onClick={() => { setIsCalcOpen(true); setQuizStep(1) }}
-                className="px-4 sm:px-8 py-2 sm:py-3 border border-black text-black rounded-[50px] hover:bg-black/5 transition-colors font-semibold text-sm sm:text-base whitespace-nowrap flex-1 sm:flex-none"
+                className="px-6 sm:px-9 py-3 sm:py-3.5 border border-black text-black rounded-[50px] hover:bg-black/5 transition-colors font-semibold text-base whitespace-nowrap flex-1 sm:flex-none"
               >
                 Рассчитать под мои размеры
               </button>
@@ -742,7 +763,7 @@ export default function ProductPage() {
                 )}
               </div>
 
-              <div className="md:col-span-7 md:sticky md:top-24 max-h-[70vh] overflow-auto pr-1">
+              <div className="md:col-span-7 md:sticky md:top-24 md:max-h-[70vh] md:overflow-auto pr-1">
                 <h3 className="text-lg font-semibold mb-4">Характеристики</h3>
                 <div className="grid grid-cols-1 gap-3 text-sm text-gray-700">
                   {product.specs?.body_material && (

@@ -18,9 +18,10 @@ type Props = {
   onlyFirstTwo?: boolean
   ctaRight?: React.ReactNode
   horizontal?: boolean
+  onAdd?: (product: Product) => void
 }
 
-function Card({ product }: { product: Product }) {
+function Card({ product, onAdd }: { product: Product; onAdd?: (product: Product) => void }) {
   const discount = product.original_price
     ? Math.round(((product.original_price - product.price) / product.original_price) * 100)
     : 0
@@ -28,16 +29,16 @@ function Card({ product }: { product: Product }) {
   return (
     <Link
       href={`/product/${product.id}`}
-      className="bg-white rounded-xl shadow-md transition-all duration-300 group hover:-translate-y-1.5 hover:shadow-xl hover:ring-1 hover:ring-black/10 block cursor-pointer"
+      className="bg-white rounded-xl shadow-md transition-all duration-300 group md:hover:-translate-y-1.5 md:hover:shadow-xl md:hover:ring-1 md:hover:ring-black/10 block cursor-pointer"
     >
       {/* Обёртка для изображения с клипом только картинки, не тени */}
       <div className="relative rounded-t-xl overflow-hidden">
         <img
           src={product.image_url || '/placeholder.jpg'}
           alt={product.name}
-          className="w-full h-60 sm:h-72 object-cover transition-transform duration-300 ease-out group-hover:scale-[1.03]"
+          className="w-full h-60 sm:h-72 object-cover transition-transform duration-300 ease-out md:group-hover:scale-[1.03]"
         />
-        <button className="absolute top-3 right-3 w-10 h-10 rounded-full bg-white/90 flex items-center justify-center hover:bg-white transition-colors" onClick={(e) => e.preventDefault()}>
+        <button className="absolute top-3 right-3 w-10 h-10 rounded-full bg-white/90 flex items-center justify-center md:hover:bg-white transition-colors" onClick={(e) => e.preventDefault()}>
           <span className="text-xl">♡</span>
         </button>
         {product.is_new && (
@@ -65,25 +66,36 @@ function Card({ product }: { product: Product }) {
             </span>
           )}
         </div>
-        <span
-          className="absolute right-4 sm:right-5 top-1/2 -translate-y-1/2 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-black text-white flex items-center justify-center shadow-md transition-all duration-300 group-hover:bg-gray-900 group-hover:shadow-lg"
-          aria-hidden
-        >
-          <span className="text-lg sm:text-xl transform transition-transform duration-300 group-hover:translate-x-1">→</span>
-        </span>
+        {onAdd ? (
+          <button
+            type="button"
+            onClick={(e) => { e.preventDefault(); onAdd(product) }}
+            className="absolute right-4 sm:right-5 top-1/2 -translate-y-1/2 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-black text-white flex items-center justify-center shadow-md transition-all duration-300 md:hover:bg-gray-900 md:hover:shadow-lg"
+            aria-label="Добавить в корзину"
+          >
+            <span className="text-xl leading-none">+</span>
+          </button>
+        ) : (
+          <span
+            className="absolute right-4 sm:right-5 top-1/2 -translate-y-1/2 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-black text-white flex items-center justify-center shadow-md transition-all duration-300 md:group-hover:bg-gray-900 md:group-hover:shadow-lg"
+            aria-hidden
+          >
+            <span className="text-lg sm:text-xl transform transition-transform duration-300 md:group-hover:translate-x-1">→</span>
+          </span>
+        )}
       </div>
     </Link>
   )
 }
 
-export default function ProductGrid({ products, splitTwoFirst = false, onlyFirstTwo = false, ctaRight, horizontal = false }: Props) {
+export default function ProductGrid({ products, splitTwoFirst = false, onlyFirstTwo = false, ctaRight, horizontal = false, onAdd }: Props) {
   if (horizontal) {
     return (
       <div className="overflow-x-auto touch-pan-x -mx-4 px-4">
         <div className="flex gap-4 sm:gap-6">
           {products.map((p) => (
             <div key={p.id} className="w-[260px] sm:w-[300px] flex-shrink-0">
-              <Card product={p} />
+              <Card product={p} onAdd={onAdd} />
             </div>
           ))}
         </div>
@@ -95,7 +107,7 @@ export default function ProductGrid({ products, splitTwoFirst = false, onlyFirst
     return (
       <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 gap-4 sm:gap-7 overflow-visible max-w-full">
         {firstTwoOnly.map((p) => (
-          <Card key={p.id} product={p} />
+          <Card key={p.id} product={p} onAdd={onAdd} />
         ))}
       </div>
     )
@@ -105,7 +117,7 @@ export default function ProductGrid({ products, splitTwoFirst = false, onlyFirst
     return (
       <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-7 overflow-visible max-w-full">
         {products.map((p) => (
-          <Card key={p.id} product={p} />
+          <Card key={p.id} product={p} onAdd={onAdd} />
         ))}
         {ctaRight}
       </div>
@@ -128,13 +140,13 @@ export default function ProductGrid({ products, splitTwoFirst = false, onlyFirst
     <div className="space-y-6">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-7">
         {firstTwo.map((p) => (
-          <Card key={p.id} product={p} />
+          <Card key={p.id} product={p} onAdd={onAdd} />
         ))}
       </div>
       {rest.length > 0 && (
         <div className={`grid ${colsClass} gap-4 sm:gap-7`}>
           {rest.map((p) => (
-            <Card key={p.id} product={p} />
+            <Card key={p.id} product={p} onAdd={onAdd} />
           ))}
         </div>
       )}

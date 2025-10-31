@@ -8,7 +8,7 @@ import { supabase } from '@/lib/supabase'
 import ProductGrid from '@/components/ProductGrid'
 
 export default function CartPage() {
-  const { items, total, updateQty, remove, clear } = useCart()
+  const { items, total, updateQty, remove, clear, add } = useCart()
   const router = useRouter()
   const [suggested, setSuggested] = useState<Array<{id:number; name:string; price:number; image_url:string}>>([])
   const [suggestedOpen, setSuggestedOpen] = useState(false)
@@ -25,6 +25,8 @@ export default function CartPage() {
   const [addrLoading, setAddrLoading] = useState(false)
   const [paymentMethod, setPaymentMethod] = useState<string>('cod')
   const [placing, setPlacing] = useState(false)
+  const [errors, setErrors] = useState<{name?: boolean; phone?: boolean; privacy?: boolean; delivery?: boolean}>({})
+  const [showFillModal, setShowFillModal] = useState(false)
 
   function toggleAcceptAll() {
     const next = !acceptAll
@@ -94,9 +96,16 @@ export default function CartPage() {
 
   async function placeOrder() {
     if (placing) return
-    // простая валидация
-    if (!contact.name || !contact.phone) {
-      alert('Укажите имя и телефон')
+    // валидация с подсветкой
+    const nextErrors = {
+      name: !contact.name,
+      phone: !contact.phone,
+      privacy: !consents.privacy,
+      delivery: !deliveryType,
+    }
+    setErrors(nextErrors)
+    if (nextErrors.name || nextErrors.phone || nextErrors.privacy || nextErrors.delivery) {
+      setShowFillModal(true)
       return
     }
     // Адрес не обязателен: если пусто и выбран курьер, отправим без адреса — уточним по звонку
@@ -194,7 +203,11 @@ export default function CartPage() {
                 </div>
 
                 <div className={`transition-all duration-500 ease-in-out overflow-hidden ${suggestedOpen ? 'max-h-[1200px] opacity-100 translate-y-0' : 'max-h-0 opacity-0 -translate-y-1'}`}>
-                  <ProductGrid products={suggested as any} horizontal />
+                  <ProductGrid
+                    products={suggested as any}
+                    horizontal
+                    onAdd={(p) => add({ id: p.id as any, name: p.name as any, price: (p as any).price as any, image_url: (p as any).image_url as any }, 1)}
+                  />
                 </div>
               </div>
             )}
@@ -204,16 +217,16 @@ export default function CartPage() {
               <div className="text-lg font-semibold mb-4">Заполните информацию о себе</div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <input
-                  className="w-full border rounded-lg px-3 py-2"
+                  className={`w-full border rounded-lg px-3 py-2 ${errors.name ? 'border-red-500' : ''}`}
                   placeholder="Имя"
                   value={contact.name}
-                  onChange={e => setContact({ ...contact, name: e.target.value })}
+                  onChange={e => { setContact({ ...contact, name: e.target.value }); if (errors.name) setErrors({ ...errors, name: false }) }}
                 />
                 <input
-                  className="w-full border rounded-lg px-3 py-2"
+                  className={`w-full border rounded-lg px-3 py-2 ${errors.phone ? 'border-red-500' : ''}`}
                   placeholder="Телефон"
                   value={contact.phone}
-                  onChange={e => setContact({ ...contact, phone: e.target.value })}
+                  onChange={e => { setContact({ ...contact, phone: e.target.value }); if (errors.phone) setErrors({ ...errors, phone: false }) }}
                 />
                 <input
                   className="w-full border rounded-lg px-3 py-2 sm:col-span-2"
@@ -229,8 +242,11 @@ export default function CartPage() {
                   <span>Принять все</span>
                 </label>
                 <label className="flex items-center gap-2">
-                  <input type="checkbox" checked={consents.privacy} onChange={() => setConsents(v => ({ ...v, privacy: !v.privacy }))} />
-                  <span>Согласен на обработку персональных данных на условиях Политики конфиденциальности</span>
+                  <input type="checkbox" checked={consents.privacy} onChange={() => { setConsents(v => ({ ...v, privacy: !v.privacy })); if (errors.privacy) setErrors({ ...errors, privacy: false }) }} />
+                  <span>
+                    Согласен на обработку персональных данных на условиях Политики конфиденциальности
+                    <span className="text-red-500"> *</span>
+                  </span>
                 </label>
                 <label className="flex items-center gap-2">
                   <input type="checkbox" checked={consents.marketing} onChange={() => setConsents(v => ({ ...v, marketing: !v.marketing }))} />
@@ -344,7 +360,21 @@ export default function CartPage() {
         </div>
       )}
 
-      
+      {/* Модалка: заполните поля */}
+      {showFillModal && (
+        <div className="fixed inset-0 z-[100] bg-black/40 flex items-center justify-center" role="dialog" aria-modal>
+          <div className="bg-white rounded-2xl shadow-xl max-w-sm w-[92%] p-5 text-center">
+            <div className="text-lg font-semibold mb-2">Заполните, пожалуйста, поля</div>
+            <div className="text-sm text-gray-600 mb-4">
+              {errors.name && <div>— Имя</div>}
+              {errors.phone && <div>— Телефон</div>}
+              {errors.privacy && <div>— Согласие на обработку персональных данных</div>}
+              {errors.delivery && <div>— Выберите способ доставки</div>}
+            </div>
+            <button className="px-5 py-2 rounded-full bg-black text-white" onClick={() => setShowFillModal(false)}>Понятно</button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

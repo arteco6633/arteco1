@@ -186,14 +186,16 @@ export default function CategoryPage() {
                         {((product as any).colors as any[])?.slice(0,5).map((c, idx) => {
                           const value = typeof c === 'string' ? c : (c?.value ?? '')
                           const name = typeof c === 'string' ? c : (c?.name ?? '')
+                          const isImage = typeof value === 'string' && (value.startsWith('http') || value.startsWith('/'))
+                          const common = `rounded-full border shadow-sm ${ (selectedVariantIndexById[product.id] || 0) === idx ? 'border-black ring-2 ring-black/10' : 'border-black/10'}`
                           return (
                             <button
                               type="button"
                               key={idx}
                               onClick={(e) => { e.preventDefault(); setSelectedVariantIndexById((prev) => ({ ...prev, [product.id]: idx })) }}
-                              className={`w-5 h-5 md:w-6 md:h-6 rounded-full border shadow-sm ${ (selectedVariantIndexById[product.id] || 0) === idx ? 'border-black ring-2 ring-black/10' : 'border-black/10'}`}
-                              style={{ background: value || '#eee' }}
+                              className={`${common} overflow-hidden w-5 h-5 md:w-6 md:h-6`}
                               title={name || value}
+                              style={isImage ? { backgroundImage: `url(${value})`, backgroundSize: 'cover', backgroundPosition: 'center' } : { background: value || '#eee' }}
                             />
                           )
                         })}
