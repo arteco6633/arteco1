@@ -503,11 +503,15 @@ export default function AdminProductsPage() {
                   <td>{product.price} ₽</td>
                   <td>{product.category_id}</td>
                   <td>
-                    <img
-                      src={product.image_url}
-                      alt={product.name}
-                      className="w-16 h-16 object-cover rounded"
-                    />
+                    {product.image_url ? (
+                      <img
+                        src={product.image_url}
+                        alt={product.name}
+                        className="w-16 h-16 object-cover rounded"
+                      />
+                    ) : (
+                      <div className="w-16 h-16 rounded bg-gray-100 grid place-items-center text-xs text-gray-400">нет фото</div>
+                    )}
                   </td>
                   <td>
                     <button
