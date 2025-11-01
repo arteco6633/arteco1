@@ -99,8 +99,7 @@ function SharedWishlistContent() {
       name: product.name,
       price: product.price,
       image_url: product.image_url || null,
-      qty: 1,
-    })
+    }, 1)
   }
 
   if (loading) {
