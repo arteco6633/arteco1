@@ -335,6 +335,12 @@ export default function ProductPage() {
                 <div
                   ref={leftMainImageRef}
                   className="rounded-lg overflow-hidden shadow-lg relative aspect-square"
+                  style={{ 
+                    touchAction: (product.images && product.images.length > 1) ? 'pan-y pinch-zoom' : 'auto',
+                    WebkitTouchCallout: 'none',
+                    WebkitUserSelect: 'none',
+                    userSelect: 'none'
+                  }}
                   onTouchStart={(e) => {
                     touchStartX.current = e.touches[0].clientX
                     touchStartY.current = e.touches[0].clientY
@@ -352,8 +358,11 @@ export default function ProductPage() {
                     const diffY = touch.clientY - startY
                     
                     // Проверяем, что это горизонтальный свайп
-                    if (Math.abs(diffX) > Math.abs(diffY)) {
-                      e.preventDefault() // Предотвращаем прокрутку страницы
+                    // Если горизонтальное движение больше вертикального в 1.5 раза и больше 10px, обрабатываем как горизонтальный свайп
+                    if (Math.abs(diffX) > Math.abs(diffY) * 1.5 && Math.abs(diffX) > 10) {
+                      // Не используем preventDefault() - вместо этого полагаемся на CSS touch-action
+                      // CSS touch-action: pan-y уже установлен, что позволяет вертикальную прокрутку,
+                      // но блокирует горизонтальную прокрутку страницы
                       // Добавляем визуальную обратную связь - смещение изображения
                       swipeOffset.current = diffX * 0.3
                       // Принудительно обновляем изображение
@@ -423,7 +432,7 @@ export default function ProductPage() {
                 >
                   <img
                     src={(product.images && product.images[activeImageIdx]) || (product.images && product.images[0]) || product.image_url || '/placeholder.jpg'}
-                    alt={product.name}
+              alt={product.name}
                     className="w-full h-full object-cover transition-transform duration-300 ease-out"
                   />
                   {product.images && product.images.length > 1 && (

@@ -75,8 +75,11 @@ export default function CategoryPage() {
     const diffY = touch.clientY - startY
     
     // Проверяем, что это горизонтальный свайп, а не вертикальная прокрутка
-    if (Math.abs(diffX) > Math.abs(diffY)) {
-      e.preventDefault() // Предотвращаем прокрутку страницы при горизонтальном свайпе
+    // Если горизонтальное движение больше вертикального в 1.5 раза, обрабатываем как горизонтальный свайп
+    if (Math.abs(diffX) > Math.abs(diffY) * 1.5 && Math.abs(diffX) > 10) {
+      // Не используем preventDefault() - вместо этого полагаемся на CSS touch-action
+      // CSS touch-action: pan-y уже установлен, что позволяет вертикальную прокрутку,
+      // но блокирует горизонтальную прокрутку страницы
       setTouchEndX((prev) => ({ ...prev, [productId]: touch.clientX }))
       setTouchEndY((prev) => ({ ...prev, [productId]: touch.clientY }))
       // Добавляем визуальную обратную связь - смещение изображения
@@ -270,11 +273,29 @@ export default function CategoryPage() {
                 <div className="relative z-10 p-0 md:px-3 md:pt-3 md:pb-3">
                   <div
                     className="relative overflow-hidden"
+                    style={{ 
+                      touchAction: imagesLength > 1 ? 'pan-y pinch-zoom' : 'auto',
+                      WebkitTouchCallout: 'none',
+                      WebkitUserSelect: 'none',
+                      userSelect: 'none'
+                    }}
                     onMouseMove={createHoverScrubHandler(product.id, imagesLength)}
                     onMouseLeave={() => setSelectedVariantIndexById((prev) => ({ ...prev, [product.id]: 0 }))}
-                    onTouchStart={(e) => handleTouchStart(product.id, e)}
-                    onTouchMove={(e) => handleTouchMove(product.id, e)}
-                    onTouchEnd={() => handleTouchEnd(product.id, imagesLength)}
+                    onTouchStart={(e) => {
+                      if (imagesLength > 1) {
+                        handleTouchStart(product.id, e)
+                      }
+                    }}
+                    onTouchMove={(e) => {
+                      if (imagesLength > 1) {
+                        handleTouchMove(product.id, e)
+                      }
+                    }}
+                    onTouchEnd={(e) => {
+                      if (imagesLength > 1) {
+                        handleTouchEnd(product.id, imagesLength)
+                      }
+                    }}
                   >
                     <img
                       src={(images && images[currentImageIdx]) || (images && images[0]) || product.image_url || '/placeholder.jpg'}
