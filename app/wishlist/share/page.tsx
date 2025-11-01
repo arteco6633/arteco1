@@ -64,18 +64,18 @@ function SharedWishlistContent() {
         }
 
         // Преобразуем данные
-        const productsData = (data || []).map((p: any) => ({
+        const productsData = (data || []).map((p: any): Product => ({
           id: p.id,
           name: p.name,
           price: p.price,
-          image_url: p.image_url,
+          image_url: p.image_url || null,
           original_price: null, // Не используем original_price, так как он может отсутствовать в схеме
         }))
 
         // Сортируем по порядку в URL
         const sortedProducts = ids
           .map(id => productsData.find(p => p.id === id))
-          .filter((p): p is Product => p !== undefined)
+          .filter((p) => p !== undefined) as Product[]
 
         if (sortedProducts.length === 0) {
           setError('Не удалось загрузить товары из вишлиста')
