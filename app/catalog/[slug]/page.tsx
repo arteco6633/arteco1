@@ -38,7 +38,11 @@ export default function CategoryPage() {
   const [selectedVariantIndexById, setSelectedVariantIndexById] = useState<Record<number, number>>({})
   // Состояния для свайпа на мобильных
   const [touchStartX, setTouchStartX] = useState<Record<number, number>>({})
+  const [touchStartY, setTouchStartY] = useState<Record<number, number>>({})
+  const [touchStartTime, setTouchStartTime] = useState<Record<number, number>>({})
   const [touchEndX, setTouchEndX] = useState<Record<number, number>>({})
+  const [touchEndY, setTouchEndY] = useState<Record<number, number>>({})
+  const [swipeOffset, setSwipeOffset] = useState<Record<number, number>>({})
 
   function createHoverScrubHandler(productId: number, imagesLength: number) {
     return (e: React.MouseEvent<HTMLDivElement>) => {
@@ -51,42 +55,88 @@ export default function CategoryPage() {
     }
   }
 
-  // Обработчики для свайпа на мобильных
+  // Улучшенные обработчики для свайпа на мобильных
   function handleTouchStart(productId: number, e: React.TouchEvent) {
-    setTouchStartX((prev) => ({ ...prev, [productId]: e.touches[0].clientX }))
+    const touch = e.touches[0]
+    setTouchStartX((prev) => ({ ...prev, [productId]: touch.clientX }))
+    setTouchStartY((prev) => ({ ...prev, [productId]: touch.clientY }))
+    setTouchStartTime((prev) => ({ ...prev, [productId]: Date.now() }))
+    setSwipeOffset((prev) => ({ ...prev, [productId]: 0 }))
   }
 
   function handleTouchMove(productId: number, e: React.TouchEvent) {
-    setTouchEndX((prev) => ({ ...prev, [productId]: e.touches[0].clientX }))
+    const touch = e.touches[0]
+    const startX = touchStartX[productId]
+    const startY = touchStartY[productId]
+    
+    if (startX === undefined || startY === undefined) return
+    
+    const diffX = touch.clientX - startX
+    const diffY = touch.clientY - startY
+    
+    // Проверяем, что это горизонтальный свайп, а не вертикальная прокрутка
+    if (Math.abs(diffX) > Math.abs(diffY)) {
+      e.preventDefault() // Предотвращаем прокрутку страницы при горизонтальном свайпе
+      setTouchEndX((prev) => ({ ...prev, [productId]: touch.clientX }))
+      setTouchEndY((prev) => ({ ...prev, [productId]: touch.clientY }))
+      // Добавляем визуальную обратную связь - смещение изображения
+      setSwipeOffset((prev) => ({ ...prev, [productId]: diffX * 0.3 }))
+    }
   }
 
   function handleTouchEnd(productId: number, imagesLength: number) {
-    if (!imagesLength || imagesLength <= 1) return
+    if (!imagesLength || imagesLength <= 1) {
+      setSwipeOffset((prev) => ({ ...prev, [productId]: 0 }))
+      return
+    }
     
     const startX = touchStartX[productId]
+    const startY = touchStartY[productId]
     const endX = touchEndX[productId]
+    const startTime = touchStartTime[productId]
     
-    if (!startX || !endX) return
+    if (startX === undefined || endX === undefined || startTime === undefined) {
+      setSwipeOffset((prev) => ({ ...prev, [productId]: 0 }))
+      return
+    }
 
-    const threshold = 50 // Минимальное расстояние для свайпа
+    const endY = touchEndY[productId]
     const diff = startX - endX
+    const diffY = startY !== undefined && endY !== undefined ? Math.abs(startY - endY) : 0
+    const duration = Date.now() - startTime
     
-    if (Math.abs(diff) > threshold) {
+    // Определяем минимальное расстояние (меньше для быстрых свайпов)
+    const minDistance = duration < 300 ? 30 : 50 // Быстрый свайп требует меньше расстояния
+    const minVelocity = 0.3 // Минимальная скорость для быстрого свайпа
+    
+    const distance = Math.abs(diff)
+    const velocity = distance / Math.max(duration, 1)
+    
+    // Учитываем только горизонтальные свайпы (горизонтальное движение больше вертикального)
+    const isHorizontalSwipe = Math.abs(diff) > Math.abs(diffY)
+    
+    if (isHorizontalSwipe && (distance > minDistance || velocity > minVelocity)) {
       const currentIdx = selectedVariantIndexById[productId] || 0
+      
       if (diff > 0) {
         // Свайп влево - следующее изображение
+        const nextIdx = Math.min(imagesLength - 1, currentIdx + 1)
         setSelectedVariantIndexById((prev) => ({
           ...prev,
-          [productId]: Math.min(imagesLength - 1, currentIdx + 1)
+          [productId]: nextIdx
         }))
       } else {
         // Свайп вправо - предыдущее изображение
+        const prevIdx = Math.max(0, currentIdx - 1)
         setSelectedVariantIndexById((prev) => ({
           ...prev,
-          [productId]: Math.max(0, currentIdx - 1)
+          [productId]: prevIdx
         }))
       }
     }
+    
+    // Плавно возвращаем смещение к нулю
+    setSwipeOffset((prev) => ({ ...prev, [productId]: 0 }))
     
     // Сбрасываем позиции
     setTouchStartX((prev) => {
@@ -94,7 +144,22 @@ export default function CategoryPage() {
       delete next[productId]
       return next
     })
+    setTouchStartY((prev) => {
+      const next = { ...prev }
+      delete next[productId]
+      return next
+    })
+    setTouchStartTime((prev) => {
+      const next = { ...prev }
+      delete next[productId]
+      return next
+    })
     setTouchEndX((prev) => {
+      const next = { ...prev }
+      delete next[productId]
+      return next
+    })
+    setTouchEndY((prev) => {
       const next = { ...prev }
       delete next[productId]
       return next
@@ -215,6 +280,10 @@ export default function CategoryPage() {
                       src={(images && images[currentImageIdx]) || (images && images[0]) || product.image_url || '/placeholder.jpg'}
                       alt={product.name}
                       className="w-full aspect-square md:aspect-[4/3] object-cover rounded-xl md:group-hover:scale-[1.02] transition-transform duration-300"
+                      style={{
+                        transform: swipeOffset[product.id] ? `translateX(${swipeOffset[product.id]}px)` : undefined,
+                        transition: swipeOffset[product.id] ? 'none' : 'transform 0.3s ease-out'
+                      }}
                       loading="lazy"
                     />
                     {(product.is_new || product.is_featured) && (

@@ -69,6 +69,8 @@ export default function ProductPage() {
   // touch-swipe по главному фото
   const touchStartX = useRef<number | null>(null)
   const touchStartY = useRef<number | null>(null)
+  const touchStartTime = useRef<number | null>(null)
+  const swipeOffset = useRef<number>(0)
   const finalPrice = useMemo(() => {
     if (!product) return 0
     const base = Number(product.price) || 0
@@ -333,26 +335,96 @@ export default function ProductPage() {
                 <div
                   ref={leftMainImageRef}
                   className="rounded-lg overflow-hidden shadow-lg relative aspect-square"
-                  onTouchStart={(e) => { touchStartX.current = e.touches[0].clientX; touchStartY.current = e.touches[0].clientY }}
-                  onTouchEnd={(e) => {
+                  onTouchStart={(e) => {
+                    touchStartX.current = e.touches[0].clientX
+                    touchStartY.current = e.touches[0].clientY
+                    touchStartTime.current = Date.now()
+                    swipeOffset.current = 0
+                  }}
+                  onTouchMove={(e) => {
                     if (!product.images || product.images.length <= 1) return
-                    const startX = touchStartX.current, startY = touchStartY.current
-                    touchStartX.current = null; touchStartY.current = null
+                    const startX = touchStartX.current
+                    const startY = touchStartY.current
                     if (startX == null || startY == null) return
+                    
+                    const touch = e.touches[0]
+                    const diffX = touch.clientX - startX
+                    const diffY = touch.clientY - startY
+                    
+                    // Проверяем, что это горизонтальный свайп
+                    if (Math.abs(diffX) > Math.abs(diffY)) {
+                      e.preventDefault() // Предотвращаем прокрутку страницы
+                      // Добавляем визуальную обратную связь - смещение изображения
+                      swipeOffset.current = diffX * 0.3
+                      // Принудительно обновляем изображение
+                      const img = e.currentTarget.querySelector('img')
+                      if (img) {
+                        img.style.transform = `translateX(${swipeOffset.current}px)`
+                        img.style.transition = 'none'
+                      }
+                    }
+                  }}
+                  onTouchEnd={(e) => {
+                    if (!product.images || product.images.length <= 1) {
+                      swipeOffset.current = 0
+                      const img = e.currentTarget.querySelector('img')
+                      if (img) {
+                        img.style.transform = ''
+                        img.style.transition = 'transform 0.3s ease-out'
+                      }
+                      return
+                    }
+                    const startX = touchStartX.current
+                    const startY = touchStartY.current
+                    const startTime = touchStartTime.current
+                    touchStartX.current = null
+                    touchStartY.current = null
+                    touchStartTime.current = null
+                    
+                    if (startX == null || startY == null || startTime == null) {
+                      swipeOffset.current = 0
+                      const img = e.currentTarget.querySelector('img')
+                      if (img) {
+                        img.style.transform = ''
+                        img.style.transition = 'transform 0.3s ease-out'
+                      }
+                      return
+                    }
+                    
                     const dx = e.changedTouches[0].clientX - startX
                     const dy = e.changedTouches[0].clientY - startY
-                    if (Math.abs(dx) < 40 || Math.abs(dx) < Math.abs(dy)) return
-                    if (dx < 0 && activeImageIdx < product.images.length - 1) {
-                      setActiveImageIdx(activeImageIdx + 1)
-                    } else if (dx > 0 && activeImageIdx > 0) {
-                      setActiveImageIdx(activeImageIdx - 1)
+                    const duration = Date.now() - startTime
+                    
+                    // Определяем минимальное расстояние (меньше для быстрых свайпов)
+                    const minDistance = duration < 300 ? 30 : 50
+                    const minVelocity = 0.3
+                    const distance = Math.abs(dx)
+                    const velocity = distance / Math.max(duration, 1)
+                    
+                    // Учитываем только горизонтальные свайпы
+                    const isHorizontalSwipe = Math.abs(dx) > Math.abs(dy)
+                    
+                    if (isHorizontalSwipe && (distance > minDistance || velocity > minVelocity)) {
+                      if (dx < 0 && activeImageIdx < product.images.length - 1) {
+                        setActiveImageIdx(activeImageIdx + 1)
+                      } else if (dx > 0 && activeImageIdx > 0) {
+                        setActiveImageIdx(activeImageIdx - 1)
+                      }
+                    }
+                    
+                    // Плавно возвращаем смещение к нулю
+                    swipeOffset.current = 0
+                    const img = e.currentTarget.querySelector('img')
+                    if (img) {
+                      img.style.transform = ''
+                      img.style.transition = 'transform 0.3s ease-out'
                     }
                   }}
                 >
                   <img
                     src={(product.images && product.images[activeImageIdx]) || (product.images && product.images[0]) || product.image_url || '/placeholder.jpg'}
-              alt={product.name}
-                    className="w-full h-full object-cover"
+                    alt={product.name}
+                    className="w-full h-full object-cover transition-transform duration-300 ease-out"
                   />
                   {product.images && product.images.length > 1 && (
                     <>
