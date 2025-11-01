@@ -70,7 +70,7 @@ export default function ProductPage() {
   const touchStartX = useRef<number | null>(null)
   const touchStartY = useRef<number | null>(null)
   const touchStartTime = useRef<number | null>(null)
-  const swipeOffset = useRef<number>(0)
+  const isHorizontalSwipeRef = useRef<boolean>(false)
   const finalPrice = useMemo(() => {
     if (!product) return 0
     const base = Number(product.price) || 0
@@ -336,16 +336,21 @@ export default function ProductPage() {
                   ref={leftMainImageRef}
                   className="rounded-lg overflow-hidden shadow-lg relative aspect-square"
                   style={{ 
+                    // Используем pan-y для разрешения только вертикальной прокрутки
+                    // pinch-zoom для масштабирования
+                    // none для блокировки горизонтальной прокрутки страницы
                     touchAction: (product.images && product.images.length > 1) ? 'pan-y pinch-zoom' : 'auto',
                     WebkitTouchCallout: 'none',
                     WebkitUserSelect: 'none',
-                    userSelect: 'none'
+                    userSelect: 'none',
+                    // Добавляем will-change для оптимизации
+                    willChange: (product.images && product.images.length > 1) ? 'transform' : 'auto'
                   }}
                   onTouchStart={(e) => {
                     touchStartX.current = e.touches[0].clientX
                     touchStartY.current = e.touches[0].clientY
                     touchStartTime.current = Date.now()
-                    swipeOffset.current = 0
+                    isHorizontalSwipeRef.current = false
                   }}
                   onTouchMove={(e) => {
                     if (!product.images || product.images.length <= 1) return
@@ -354,49 +359,35 @@ export default function ProductPage() {
                     if (startX == null || startY == null) return
                     
                     const touch = e.touches[0]
-                    const diffX = touch.clientX - startX
-                    const diffY = touch.clientY - startY
+                    const diffX = Math.abs(touch.clientX - startX)
+                    const diffY = Math.abs(touch.clientY - startY)
                     
-                    // Проверяем, что это горизонтальный свайп
-                    // Если горизонтальное движение больше вертикального в 1.5 раза и больше 10px, обрабатываем как горизонтальный свайп
-                    if (Math.abs(diffX) > Math.abs(diffY) * 1.5 && Math.abs(diffX) > 10) {
-                      // Не используем preventDefault() - вместо этого полагаемся на CSS touch-action
-                      // CSS touch-action: pan-y уже установлен, что позволяет вертикальную прокрутку,
-                      // но блокирует горизонтальную прокрутку страницы
-                      // Добавляем визуальную обратную связь - смещение изображения
-                      swipeOffset.current = diffX * 0.3
-                      // Принудительно обновляем изображение
-                      const img = e.currentTarget.querySelector('img')
-                      if (img) {
-                        img.style.transform = `translateX(${swipeOffset.current}px)`
-                        img.style.transition = 'none'
+                    // Определяем направление на раннем этапе (первые 10-15px движения)
+                    // Более строгое условие: горизонтальное движение должно быть в 2.5 раза больше вертикального
+                    if (diffX > 10 && diffX > diffY * 2.5) {
+                      // Устанавливаем флаг горизонтального свайпа
+                      if (!isHorizontalSwipeRef.current) {
+                        isHorizontalSwipeRef.current = true
                       }
+                      // Не используем preventDefault() - вместо этого полагаемся на CSS touch-action
+                      // CSS touch-action: pan-y pinch-zoom уже настроен, что блокирует горизонтальную прокрутку страницы
+                    } else if (diffY > 10 && diffY > diffX * 1.5) {
+                      // Если это явно вертикальный свайп, сбрасываем флаг
+                      isHorizontalSwipeRef.current = false
                     }
                   }}
                   onTouchEnd={(e) => {
                     if (!product.images || product.images.length <= 1) {
-                      swipeOffset.current = 0
-                      const img = e.currentTarget.querySelector('img')
-                      if (img) {
-                        img.style.transform = ''
-                        img.style.transition = 'transform 0.3s ease-out'
-                      }
+                      isHorizontalSwipeRef.current = false
                       return
                     }
                     const startX = touchStartX.current
                     const startY = touchStartY.current
                     const startTime = touchStartTime.current
-                    touchStartX.current = null
-                    touchStartY.current = null
-                    touchStartTime.current = null
+                    const isHorizontal = isHorizontalSwipeRef.current
                     
                     if (startX == null || startY == null || startTime == null) {
-                      swipeOffset.current = 0
-                      const img = e.currentTarget.querySelector('img')
-                      if (img) {
-                        img.style.transform = ''
-                        img.style.transition = 'transform 0.3s ease-out'
-                      }
+                      isHorizontalSwipeRef.current = false
                       return
                     }
                     
@@ -405,15 +396,15 @@ export default function ProductPage() {
                     const duration = Date.now() - startTime
                     
                     // Определяем минимальное расстояние (меньше для быстрых свайпов)
-                    const minDistance = duration < 300 ? 30 : 50
-                    const minVelocity = 0.3
+                    const minDistance = duration < 300 ? 25 : 40
+                    const minVelocity = 0.25
                     const distance = Math.abs(dx)
                     const velocity = distance / Math.max(duration, 1)
                     
-                    // Учитываем только горизонтальные свайпы
-                    const isHorizontalSwipe = Math.abs(dx) > Math.abs(dy)
+                    // Учитываем только горизонтальные свайпы (если флаг установлен или движение горизонтальное)
+                    const isDefinitelyHorizontal = isHorizontal || (Math.abs(dx) > Math.abs(dy) * 1.5)
                     
-                    if (isHorizontalSwipe && (distance > minDistance || velocity > minVelocity)) {
+                    if (isDefinitelyHorizontal && (distance > minDistance || velocity > minVelocity)) {
                       if (dx < 0 && activeImageIdx < product.images.length - 1) {
                         setActiveImageIdx(activeImageIdx + 1)
                       } else if (dx > 0 && activeImageIdx > 0) {
@@ -421,13 +412,11 @@ export default function ProductPage() {
                       }
                     }
                     
-                    // Плавно возвращаем смещение к нулю
-                    swipeOffset.current = 0
-                    const img = e.currentTarget.querySelector('img')
-                    if (img) {
-                      img.style.transform = ''
-                      img.style.transition = 'transform 0.3s ease-out'
-                    }
+                    // Сбрасываем состояние
+                    touchStartX.current = null
+                    touchStartY.current = null
+                    touchStartTime.current = null
+                    isHorizontalSwipeRef.current = false
                   }}
                 >
                   <img

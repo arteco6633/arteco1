@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import Link from 'next/link'
@@ -42,7 +42,7 @@ export default function CategoryPage() {
   const [touchStartTime, setTouchStartTime] = useState<Record<number, number>>({})
   const [touchEndX, setTouchEndX] = useState<Record<number, number>>({})
   const [touchEndY, setTouchEndY] = useState<Record<number, number>>({})
-  const [swipeOffset, setSwipeOffset] = useState<Record<number, number>>({})
+  const [isHorizontalSwipe, setIsHorizontalSwipe] = useState<Record<number, boolean>>({})
 
   function createHoverScrubHandler(productId: number, imagesLength: number) {
     return (e: React.MouseEvent<HTMLDivElement>) => {
@@ -61,7 +61,7 @@ export default function CategoryPage() {
     setTouchStartX((prev) => ({ ...prev, [productId]: touch.clientX }))
     setTouchStartY((prev) => ({ ...prev, [productId]: touch.clientY }))
     setTouchStartTime((prev) => ({ ...prev, [productId]: Date.now() }))
-    setSwipeOffset((prev) => ({ ...prev, [productId]: 0 }))
+    setIsHorizontalSwipe((prev) => ({ ...prev, [productId]: false }))
   }
 
   function handleTouchMove(productId: number, e: React.TouchEvent) {
@@ -71,25 +71,30 @@ export default function CategoryPage() {
     
     if (startX === undefined || startY === undefined) return
     
-    const diffX = touch.clientX - startX
-    const diffY = touch.clientY - startY
+    const diffX = Math.abs(touch.clientX - startX)
+    const diffY = Math.abs(touch.clientY - startY)
     
-    // Проверяем, что это горизонтальный свайп, а не вертикальная прокрутка
-    // Если горизонтальное движение больше вертикального в 1.5 раза, обрабатываем как горизонтальный свайп
-    if (Math.abs(diffX) > Math.abs(diffY) * 1.5 && Math.abs(diffX) > 10) {
-      // Не используем preventDefault() - вместо этого полагаемся на CSS touch-action
-      // CSS touch-action: pan-y уже установлен, что позволяет вертикальную прокрутку,
-      // но блокирует горизонтальную прокрутку страницы
+    // Определяем направление на раннем этапе (первые 10-15px движения)
+    // Более строгое условие: горизонтальное движение должно быть в 2.5 раза больше вертикального
+    if (diffX > 10 && diffX > diffY * 2.5) {
+      // Устанавливаем флаг горизонтального свайпа
+      if (!isHorizontalSwipe[productId]) {
+        setIsHorizontalSwipe((prev) => ({ ...prev, [productId]: true }))
+      }
+      // Обновляем конечные позиции для обработки свайпа
       setTouchEndX((prev) => ({ ...prev, [productId]: touch.clientX }))
       setTouchEndY((prev) => ({ ...prev, [productId]: touch.clientY }))
-      // Добавляем визуальную обратную связь - смещение изображения
-      setSwipeOffset((prev) => ({ ...prev, [productId]: diffX * 0.3 }))
+      // Не используем preventDefault() - вместо этого полагаемся на CSS touch-action
+      // CSS touch-action: pan-y pinch-zoom уже настроен, что блокирует горизонтальную прокрутку страницы
+    } else if (diffY > 10 && diffY > diffX * 1.5) {
+      // Если это явно вертикальный свайп, сбрасываем флаг
+      setIsHorizontalSwipe((prev) => ({ ...prev, [productId]: false }))
     }
   }
 
   function handleTouchEnd(productId: number, imagesLength: number) {
     if (!imagesLength || imagesLength <= 1) {
-      setSwipeOffset((prev) => ({ ...prev, [productId]: 0 }))
+      setIsHorizontalSwipe((prev) => ({ ...prev, [productId]: false }))
       return
     }
     
@@ -97,9 +102,10 @@ export default function CategoryPage() {
     const startY = touchStartY[productId]
     const endX = touchEndX[productId]
     const startTime = touchStartTime[productId]
+    const isHorizontal = isHorizontalSwipe[productId]
     
     if (startX === undefined || endX === undefined || startTime === undefined) {
-      setSwipeOffset((prev) => ({ ...prev, [productId]: 0 }))
+      setIsHorizontalSwipe((prev) => ({ ...prev, [productId]: false }))
       return
     }
 
@@ -109,16 +115,16 @@ export default function CategoryPage() {
     const duration = Date.now() - startTime
     
     // Определяем минимальное расстояние (меньше для быстрых свайпов)
-    const minDistance = duration < 300 ? 30 : 50 // Быстрый свайп требует меньше расстояния
-    const minVelocity = 0.3 // Минимальная скорость для быстрого свайпа
+    const minDistance = duration < 300 ? 25 : 40 // Быстрый свайп требует меньше расстояния
+    const minVelocity = 0.25 // Минимальная скорость для быстрого свайпа
     
     const distance = Math.abs(diff)
     const velocity = distance / Math.max(duration, 1)
     
-    // Учитываем только горизонтальные свайпы (горизонтальное движение больше вертикального)
-    const isHorizontalSwipe = Math.abs(diff) > Math.abs(diffY)
+    // Учитываем только горизонтальные свайпы (если флаг установлен или движение горизонтальное)
+    const isDefinitelyHorizontal = isHorizontal || (Math.abs(diff) > Math.abs(diffY) * 1.5)
     
-    if (isHorizontalSwipe && (distance > minDistance || velocity > minVelocity)) {
+    if (isDefinitelyHorizontal && (distance > minDistance || velocity > minVelocity)) {
       const currentIdx = selectedVariantIndexById[productId] || 0
       
       if (diff > 0) {
@@ -138,8 +144,8 @@ export default function CategoryPage() {
       }
     }
     
-    // Плавно возвращаем смещение к нулю
-    setSwipeOffset((prev) => ({ ...prev, [productId]: 0 }))
+    // Сбрасываем флаг
+    setIsHorizontalSwipe((prev) => ({ ...prev, [productId]: false }))
     
     // Сбрасываем позиции
     setTouchStartX((prev) => {
@@ -274,10 +280,15 @@ export default function CategoryPage() {
                   <div
                     className="relative overflow-hidden"
                     style={{ 
+                      // Используем pan-y для разрешения только вертикальной прокрутки
+                      // pinch-zoom для масштабирования
+                      // none для блокировки горизонтальной прокрутки страницы
                       touchAction: imagesLength > 1 ? 'pan-y pinch-zoom' : 'auto',
                       WebkitTouchCallout: 'none',
                       WebkitUserSelect: 'none',
-                      userSelect: 'none'
+                      userSelect: 'none',
+                      // Добавляем will-change для оптимизации
+                      willChange: imagesLength > 1 ? 'transform' : 'auto'
                     }}
                     onMouseMove={createHoverScrubHandler(product.id, imagesLength)}
                     onMouseLeave={() => setSelectedVariantIndexById((prev) => ({ ...prev, [product.id]: 0 }))}
@@ -301,10 +312,6 @@ export default function CategoryPage() {
                       src={(images && images[currentImageIdx]) || (images && images[0]) || product.image_url || '/placeholder.jpg'}
                       alt={product.name}
                       className="w-full aspect-square md:aspect-[4/3] object-cover rounded-xl md:group-hover:scale-[1.02] transition-transform duration-300"
-                      style={{
-                        transform: swipeOffset[product.id] ? `translateX(${swipeOffset[product.id]}px)` : undefined,
-                        transition: swipeOffset[product.id] ? 'none' : 'transform 0.3s ease-out'
-                      }}
                       loading="lazy"
                     />
                     {(product.is_new || product.is_featured) && (

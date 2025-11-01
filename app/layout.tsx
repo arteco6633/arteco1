@@ -13,6 +13,10 @@ import BootLoader from '@/components/BootLoader'
 export const metadata: Metadata = {
   title: 'ARTECO - Интернет-магазин',
   description: 'Современный интернет-магазин',
+  icons: {
+    icon: '/favicon.png',
+    apple: '/favicon.png',
+  },
 }
 
 export default function RootLayout({
@@ -24,6 +28,8 @@ export default function RootLayout({
     <html lang="ru" className="overflow-x-hidden">
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link rel="icon" type="image/png" href="/favicon.png" />
+        <link rel="apple-touch-icon" href="/favicon.png" />
       </head>
       <body className="bg-white overflow-x-hidden">
         {/* Прелоадер до гидрации (виден и на жёстком обновлении, и на мобилках) */}
