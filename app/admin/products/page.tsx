@@ -257,11 +257,31 @@ export default function AdminProductsPage() {
   async function uploadVideoFiles(files: File[]): Promise<string[]> {
     const urls: string[] = []
     for (const file of files) {
+      // Показываем размер файла для информации
+      const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2)
+      console.log(`Загрузка видео: ${file.name}, размер: ${fileSizeMB} MB`)
+      
       const ext = (file.name.split('.').pop() || 'mp4').toLowerCase()
       const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${ext}`
       const filePath = `videos/${fileName}`
-      const { error } = await supabase.storage.from('product').upload(filePath, file)
-      if (error) throw error
+      
+      // Загружаем с опциями для больших файлов
+      const { error } = await supabase.storage
+        .from('product')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false,
+          // Отключаем проверку размера на клиенте, полагаемся на Supabase
+        })
+      
+      if (error) {
+        // Улучшенная обработка ошибок
+        if (error.message.includes('exceeded') || error.message.includes('maximum') || error.message.includes('size')) {
+          throw new Error(`Файл слишком большой (${fileSizeMB} MB). В Supabase Dashboard увеличьте лимит размера файла для бакета "product". Максимальный размер по умолчанию: 50 MB (Free) или 500 MB (Pro).`)
+        }
+        throw new Error(`Ошибка загрузки: ${error.message}`)
+      }
+      
       const { data } = supabase.storage.from('product').getPublicUrl(filePath)
       urls.push(data.publicUrl)
     }
@@ -740,14 +760,37 @@ export default function AdminProductsPage() {
                       e.preventDefault(); setIsDraggingSchemes(false);
                       const files = Array.from(e.dataTransfer.files || [])
                       if (files.length === 0) return
-                      try { setUploadingGallery(true); const urls = await uploadVideoFiles(files); setFormData({ ...formData, videos: [...formData.videos, ...urls] }) } catch(err){ console.error(err); alert('Не удалось загрузить видео') } finally { setUploadingGallery(false) }
+                      try { 
+                        setUploadingGallery(true)
+                        const urls = await uploadVideoFiles(files)
+                        setFormData({ ...formData, videos: [...formData.videos, ...urls] })
+                      } catch(err: any){ 
+                        console.error(err)
+                        alert(err?.message || 'Не удалось загрузить видео')
+                      } finally { 
+                        setUploadingGallery(false) 
+                      }
                     }}
                   >
                     <p className="mb-2">Перетащите видео (mp4/mov) или</p>
                     <button type="button" className="px-4 py-2 border rounded-lg hover:bg-gray-50" onClick={() => document.getElementById('videoInputHidden')?.click()} disabled={uploadingGallery}>
                       Выбрать файлы
                     </button>
-                    <input id="videoInputHidden" type="file" accept="video/*" multiple className="hidden" onChange={async (e)=>{ const files = Array.from(e.target.files||[]); if(files.length===0) return; try{ setUploadingGallery(true); const urls= await uploadVideoFiles(files); setFormData({ ...formData, videos: [...formData.videos, ...urls] }) }catch(err){ console.error(err); alert('Не удалось загрузить видео') } finally { setUploadingGallery(false); (e.target as HTMLInputElement).value='' } }} />
+                    <input id="videoInputHidden" type="file" accept="video/*" multiple className="hidden" onChange={async (e)=>{ 
+                      const files = Array.from(e.target.files||[])
+                      if(files.length===0) return
+                      try{ 
+                        setUploadingGallery(true)
+                        const urls = await uploadVideoFiles(files)
+                        setFormData({ ...formData, videos: [...formData.videos, ...urls] })
+                      } catch(err: any) { 
+                        console.error(err)
+                        alert(err?.message || 'Не удалось загрузить видео')
+                      } finally { 
+                        setUploadingGallery(false)
+                        ;(e.target as HTMLInputElement).value=''
+                      }
+                    }} />
                     {uploadingGallery && <div className="mt-2 text-sm text-gray-500">Загрузка...</div>}
                   </div>
                   {formData.videos.length > 0 && (
