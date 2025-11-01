@@ -26,9 +26,9 @@ interface Article {
 interface Product {
   id: number
   name: string
-  description: string | null
+  description: string
   price: number
-  original_price?: number | null
+  original_price?: number
   image_url: string
   images?: string[] | null
   category_id: number
@@ -159,7 +159,13 @@ export default function ArticlePage() {
               .in('id', articleData.related_products)
 
             if (!productsError && productsData) {
-              setRelatedProducts(productsData)
+              // Преобразуем данные, чтобы соответствовать интерфейсу Product
+              const formattedProducts = productsData.map(p => ({
+                ...p,
+                description: p.description || '',
+                original_price: p.original_price || undefined
+              }))
+              setRelatedProducts(formattedProducts)
             }
           } catch (productsError) {
             console.warn('Ошибка загрузки связанных товаров:', productsError)
