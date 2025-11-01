@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import './globals.css'
 import Providers from '@/components/Providers'
 import { CartProvider } from '@/components/CartContext'
+import { WishlistProvider } from '@/components/WishlistContext'
 import CartDrawer from '@/components/CartDrawer'
 import MobileBottomNav from '@/components/MobileBottomNav'
 import Navbar from '@/components/Navbar'
@@ -36,7 +37,8 @@ export default function RootLayout({
         {/* Более широкая контентная ширина и адаптивные боковые отступы */}
         <Providers>
           <CartProvider>
-            <div className="max-w-[1680px] 2xl:max-w-[1880px] mx-auto w-full overflow-x-hidden px-1 md:px-2 xl:px-4 2xl:px-6">
+            <WishlistProvider>
+              <div className="max-w-[1680px] 2xl:max-w-[1880px] mx-auto w-full overflow-x-hidden px-1 md:px-2 xl:px-4 2xl:px-6">
               <Navbar />
               <PageLoader />
               <Suspense fallback={<div className="min-h-[50vh] w-full grid place-items-center"><div className="flex flex-col items-center gap-4"><div className="text-3xl font-bold tracking-wide">ART × CO</div><div className="w-8 h-8 rounded-full border-2 border-black/20 border-t-black animate-spin" /></div></div>}>
@@ -52,6 +54,7 @@ export default function RootLayout({
             </div>
             <MobileBottomNav />
             <CartDrawer />
+            </WishlistProvider>
           </CartProvider>
         </Providers>
       </body>

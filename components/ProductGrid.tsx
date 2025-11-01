@@ -1,4 +1,7 @@
+'use client'
+
 import Link from 'next/link'
+import { useWishlist } from '@/components/WishlistContext'
 
 interface Product {
   id: number
@@ -22,6 +25,20 @@ type Props = {
 }
 
 function Card({ product, onAdd }: { product: Product; onAdd?: (product: Product) => void }) {
+  const { toggle, isInWishlist } = useWishlist()
+  const inWishlist = isInWishlist(product.id)
+
+  const handleWishlistClick = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    toggle({
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      image_url: product.image_url,
+      original_price: product.original_price,
+    })
+  }
   const discount = product.original_price
     ? Math.round(((product.original_price - product.price) / product.original_price) * 100)
     : 0
@@ -38,8 +55,20 @@ function Card({ product, onAdd }: { product: Product; onAdd?: (product: Product)
           alt={product.name}
           className="w-full h-60 sm:h-72 object-cover transition-transform duration-300 ease-out md:group-hover:scale-[1.03]"
         />
-        <button className="absolute top-3 right-3 w-10 h-10 rounded-full bg-white/90 flex items-center justify-center md:hover:bg-white transition-colors" onClick={(e) => e.preventDefault()}>
-          <span className="text-xl">♡</span>
+        <button
+          type="button"
+          className={`absolute top-3 right-3 w-10 h-10 rounded-full bg-white/90 flex items-center justify-center md:hover:bg-white transition-colors ${inWishlist ? 'bg-white' : ''}`}
+          onClick={handleWishlistClick}
+          aria-label={inWishlist ? 'Удалить из избранного' : 'Добавить в избранное'}
+        >
+          <svg
+            className={`w-6 h-6 transition-colors ${inWishlist ? 'fill-black stroke-black' : 'fill-none stroke-gray-400'}`}
+            fill="currentColor"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+          </svg>
         </button>
         {product.is_new && (
           <span className="absolute top-3 left-3 bg-green-500 text-white px-2.5 py-1 rounded-full text-[10px] font-bold">

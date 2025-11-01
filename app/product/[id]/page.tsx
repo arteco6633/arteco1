@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef, useMemo } from 'react'
 import { useCart } from '@/components/CartContext'
+import { useWishlist } from '@/components/WishlistContext'
 import { useParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import ProductGrid from '@/components/ProductGrid'
@@ -50,6 +51,7 @@ export default function ProductPage() {
   const params = useParams()
   const id = params?.id as string
   const { add } = useCart()
+  const { toggle, isInWishlist } = useWishlist()
   
   const [product, setProduct] = useState<Product | null>(null)
   const [category, setCategory] = useState<Category | null>(null)
@@ -219,6 +221,45 @@ export default function ProductPage() {
       if (l) options.lighting = { name: l.name, delta_price: l.delta_price || 0 }
     }
     add({ id: product.id, name: product.name, price: finalPrice, image_url: activeImage, color: colorLabel, options }, quantity)
+  }
+
+  const handleShare = async () => {
+    if (!product) return
+    
+    const url = typeof window !== 'undefined' ? window.location.href : ''
+    const shareData = {
+      title: product.name,
+      text: `Посмотрите этот товар: ${product.name}`,
+      url: url,
+    }
+
+    // Используем Web Share API если доступен (мобильные устройства)
+    if (typeof navigator !== 'undefined' && navigator.share) {
+      try {
+        await navigator.share(shareData)
+      } catch (err: any) {
+        // Пользователь отменил или ошибка
+        if (err.name !== 'AbortError') {
+          console.error('Ошибка поделиться:', err)
+        }
+      }
+    } else {
+      // Fallback для десктопа: копируем ссылку в буфер обмена
+      try {
+        await navigator.clipboard.writeText(url)
+        alert('Ссылка скопирована в буфер обмена!')
+      } catch (err) {
+        console.error('Ошибка копирования в буфер обмена:', err)
+        // Альтернативный способ: показываем модалку с ссылкой
+        const input = document.createElement('input')
+        input.value = url
+        document.body.appendChild(input)
+        input.select()
+        document.execCommand('copy')
+        document.body.removeChild(input)
+        alert('Ссылка скопирована в буфер обмена!')
+      }
+    }
   }
 
   if (loading) {
@@ -637,11 +678,45 @@ export default function ProductPage() {
               <div className="flex md:hidden items-center gap-2 justify-end">
                 <button
                   type="button"
-                  aria-label="Добавить в избранное"
-                  onClick={() => alert('Добавлено в избранное')}
-                  className="w-12 h-12 rounded-full border border-black text-black hover:bg-black/5 transition-colors flex items-center justify-center flex-shrink-0 text-lg"
+                  aria-label={product && isInWishlist(product.id) ? 'Удалить из избранного' : 'Добавить в избранное'}
+                  onClick={() => {
+                    if (product) {
+                      toggle({
+                        id: product.id,
+                        name: product.name,
+                        price: product.price,
+                        image_url: product.image_url,
+                        original_price: (product as any).original_price || null,
+                      })
+                    }
+                  }}
+                  className={`w-12 h-12 rounded-full border border-black transition-colors flex items-center justify-center flex-shrink-0 ${
+                    product && isInWishlist(product.id) ? 'bg-black text-white hover:bg-black/90' : 'text-black hover:bg-black/5'
+                  }`}
                 >
-                  ♥
+                  <svg
+                    className={`w-6 h-6 ${product && isInWishlist(product.id) ? 'fill-white stroke-white' : 'fill-none stroke-current'}`}
+                    fill="currentColor"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                  </svg>
+                </button>
+                <button
+                  type="button"
+                  aria-label="Поделиться"
+                  onClick={handleShare}
+                  className="w-12 h-12 rounded-full border border-black text-black hover:bg-black/5 transition-colors flex items-center justify-center flex-shrink-0"
+                >
+                  <svg
+                    className="w-6 h-6"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                  </svg>
                 </button>
                 <button
                   onClick={addToCart}
@@ -651,15 +726,49 @@ export default function ProductPage() {
                 </button>
               </div>
               
-              {/* Вишлист на десктопе */}
+              {/* Вишлист и Поделиться на десктопе */}
               <div className="hidden md:flex items-center justify-end gap-2">
                 <button
                   type="button"
-                  aria-label="Добавить в избранное"
-                  onClick={() => alert('Добавлено в избранное')}
-                  className="w-12 h-12 rounded-full border border-black text-black hover:bg-black/5 transition-colors flex items-center justify-center flex-shrink-0 text-lg"
+                  aria-label="Поделиться"
+                  onClick={handleShare}
+                  className="w-12 h-12 rounded-full border border-black text-black hover:bg-black/5 transition-colors flex items-center justify-center flex-shrink-0"
                 >
-                  ♥
+                  <svg
+                    className="w-6 h-6"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                  </svg>
+                </button>
+                <button
+                  type="button"
+                  aria-label={product && isInWishlist(product.id) ? 'Удалить из избранного' : 'Добавить в избранное'}
+                  onClick={() => {
+                    if (product) {
+                      toggle({
+                        id: product.id,
+                        name: product.name,
+                        price: product.price,
+                        image_url: product.image_url,
+                        original_price: (product as any).original_price || null,
+                      })
+                    }
+                  }}
+                  className={`w-12 h-12 rounded-full border border-black transition-colors flex items-center justify-center flex-shrink-0 ${
+                    product && isInWishlist(product.id) ? 'bg-black text-white hover:bg-black/90' : 'text-black hover:bg-black/5'
+                  }`}
+                >
+                  <svg
+                    className={`w-6 h-6 ${product && isInWishlist(product.id) ? 'fill-white stroke-white' : 'fill-none stroke-current'}`}
+                    fill="currentColor"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                  </svg>
                 </button>
               </div>
               

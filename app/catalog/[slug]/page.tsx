@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import Link from 'next/link'
+import { useWishlist } from '@/components/WishlistContext'
 
 interface Product {
   id: number
@@ -28,6 +29,7 @@ interface Category {
 export default function CategoryPage() {
   const params = useParams()
   const slug = params?.slug as string
+  const { toggle, isInWishlist } = useWishlist()
   
   const [category, setCategory] = useState<Category | null>(null)
   const [products, setProducts] = useState<Product[]>([])
@@ -171,6 +173,34 @@ export default function CategoryPage() {
                         )}
                       </div>
                     )}
+                    {/* Кнопка вишлиста */}
+                    <button
+                      type="button"
+                      className={`absolute top-2 right-2 w-10 h-10 rounded-full bg-white/90 flex items-center justify-center transition-colors z-20 ${
+                        isInWishlist(product.id) ? 'bg-white' : ''
+                      }`}
+                      onClick={(e) => {
+                        e.preventDefault()
+                        e.stopPropagation()
+                        toggle({
+                          id: product.id,
+                          name: product.name,
+                          price: product.price,
+                          image_url: product.image_url,
+                          original_price: (product as any).original_price || null,
+                        })
+                      }}
+                      aria-label={isInWishlist(product.id) ? 'Удалить из избранного' : 'Добавить в избранное'}
+                    >
+                      <svg
+                        className={`w-6 h-6 transition-colors ${isInWishlist(product.id) ? 'fill-black stroke-black' : 'fill-none stroke-gray-400'}`}
+                        fill="currentColor"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                      </svg>
+                    </button>
                   </div>
 
                   <div className="pt-3 min-w-0">
