@@ -14,8 +14,16 @@ export const metadata: Metadata = {
   title: 'ARTECO - Интернет-магазин',
   description: 'Современный интернет-магазин',
   icons: {
-    icon: '/favicon.png',
-    apple: '/favicon.png',
+    icon: [
+      { url: '/favicon-32x32.png', sizes: '32x32', type: 'image/png' },
+      { url: '/favicon-192x192.png', sizes: '192x192', type: 'image/png' },
+      { url: '/favicon-512x512.png', sizes: '512x512', type: 'image/png' },
+      { url: '/favicon-1024x1024.png', sizes: '1024x1024', type: 'image/png' },
+      { url: '/favicon-2048x2048.png', sizes: '2048x2048', type: 'image/png' },
+      { url: '/favicon-original.png', sizes: '1920x1920', type: 'image/png' },
+    ],
+    apple: '/apple-touch-icon.png',
+    shortcut: '/favicon-2048x2048.png',
   },
 }
 
@@ -28,8 +36,15 @@ export default function RootLayout({
     <html lang="ru" className="overflow-x-hidden">
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <link rel="icon" type="image/png" href="/favicon.png" />
-        <link rel="apple-touch-icon" href="/favicon.png" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+        <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192x192.png" />
+        <link rel="icon" type="image/png" sizes="512x512" href="/favicon-512x512.png" />
+        <link rel="icon" type="image/png" sizes="1024x1024" href="/favicon-1024x1024.png" />
+        <link rel="icon" type="image/png" sizes="2048x2048" href="/favicon-2048x2048.png" />
+        <link rel="icon" type="image/png" sizes="1920x1920" href="/favicon-original.png" />
+        <link rel="shortcut icon" type="image/png" href="/favicon-2048x2048.png" />
+        <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+        <link rel="apple-touch-icon" sizes="1024x1024" href="/favicon-1024x1024.png" />
       </head>
       <body className="bg-white overflow-x-hidden">
         {/* Прелоадер до гидрации (виден и на жёстком обновлении, и на мобилках) */}
