@@ -189,30 +189,32 @@ export default function CategoryPage() {
             <p className="text-gray-600">В данной категории пока нет товаров</p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-x-3 sm:gap-x-4 md:gap-x-6 gap-y-5 sm:gap-y-7">
-            {products.map((product) => (
+          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-x-2 sm:gap-x-3 md:gap-x-6 gap-y-4 sm:gap-y-5 md:gap-y-7">
+            {products.map((product) => {
+              const images = (product as any).images as string[] | undefined
+              const imagesLength = images?.length || 0
+              const currentImageIdx = selectedVariantIndexById[product.id] || 0
+              const hasMultipleImages = imagesLength > 1
+              
+              return (
               <Link 
                 key={product.id} 
                 href={`/product/${product.id}`}
-                className="group block relative hover:z-10 rounded-2xl bg-white border border-gray-100 shadow-sm hover:shadow-lg transition-shadow duration-300 md:min-h-[460px]"
+                className="group block relative hover:z-10 md:rounded-2xl bg-transparent md:bg-white md:border md:border-gray-100 md:shadow-sm md:hover:shadow-lg transition-shadow duration-300 md:min-h-[460px]"
               >
-                <div className="relative z-10 px-3 pt-3 pb-3 md:p-3">
+                <div className="relative z-10 p-0 md:px-3 md:pt-3 md:pb-3">
                   <div
-                    className="relative rounded-xl overflow-hidden"
-                    onMouseMove={createHoverScrubHandler(product.id, ((product as any).images as string[] | undefined)?.length || 0)}
+                    className="relative overflow-hidden"
+                    onMouseMove={createHoverScrubHandler(product.id, imagesLength)}
                     onMouseLeave={() => setSelectedVariantIndexById((prev) => ({ ...prev, [product.id]: 0 }))}
                     onTouchStart={(e) => handleTouchStart(product.id, e)}
                     onTouchMove={(e) => handleTouchMove(product.id, e)}
-                    onTouchEnd={() => handleTouchEnd(product.id, ((product as any).images as string[] | undefined)?.length || 0)}
+                    onTouchEnd={() => handleTouchEnd(product.id, imagesLength)}
                   >
                     <img
-                      src={(() => {
-                        const imgs = (product as any).images as string[] | undefined
-                        const idx = selectedVariantIndexById[product.id] || 0
-                        return (imgs && imgs[idx]) || (imgs && imgs[0]) || product.image_url || '/placeholder.jpg'
-                      })()}
+                      src={(images && images[currentImageIdx]) || (images && images[0]) || product.image_url || '/placeholder.jpg'}
                       alt={product.name}
-                      className="w-full aspect-square md:aspect-[4/3] object-cover group-hover:scale-[1.02] transition-transform duration-300"
+                      className="w-full aspect-square md:aspect-[4/3] object-cover rounded-xl md:group-hover:scale-[1.02] transition-transform duration-300"
                       loading="lazy"
                     />
                     {(product.is_new || product.is_featured) && (
@@ -232,7 +234,7 @@ export default function CategoryPage() {
                     {/* Кнопка вишлиста */}
                     <button
                       type="button"
-                      className={`absolute top-2 right-2 w-10 h-10 rounded-full bg-white/90 flex items-center justify-center transition-colors z-20 ${
+                      className={`absolute top-2 right-2 w-8 h-8 md:w-10 md:h-10 rounded-full bg-white/90 md:bg-white/90 flex items-center justify-center transition-colors z-20 ${
                         isInWishlist(product.id) ? 'bg-white' : ''
                       }`}
                       onClick={(e) => {
@@ -249,7 +251,7 @@ export default function CategoryPage() {
                       aria-label={isInWishlist(product.id) ? 'Удалить из избранного' : 'Добавить в избранное'}
                     >
                       <svg
-                        className={`w-6 h-6 transition-colors ${isInWishlist(product.id) ? 'fill-black stroke-black' : 'fill-none stroke-gray-400'}`}
+                        className={`w-5 h-5 md:w-6 md:h-6 transition-colors ${isInWishlist(product.id) ? 'fill-black stroke-black' : 'fill-none stroke-gray-400'}`}
                         fill="currentColor"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -257,13 +259,30 @@ export default function CategoryPage() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                       </svg>
                     </button>
+                    
+                    {/* Индикаторы точек для свайпа на мобильных */}
+                    {hasMultipleImages && (
+                      <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5 md:hidden">
+                        {Array.from({ length: Math.min(imagesLength, 5) }).map((_, idx) => (
+                          <div
+                            key={idx}
+                            className={`w-1.5 h-1.5 rounded-full transition-all ${
+                              currentImageIdx === idx ? 'bg-white w-4' : 'bg-white/50'
+                            }`}
+                          />
+                        ))}
+                        {imagesLength > 5 && (
+                          <div className="w-1.5 h-1.5 rounded-full bg-white/30" />
+                        )}
+                      </div>
+                    )}
                   </div>
 
-                  <div className="pt-3 min-w-0">
-                    <div className="mb-1 text-black font-semibold text-lg">
+                  <div className="pt-2 md:pt-3 min-w-0">
+                    <div className="mb-1 text-black font-semibold text-base md:text-lg">
                       {product.price.toLocaleString('ru-RU')} ₽
                     </div>
-                    <h3 className="font-medium text-[15px] sm:text-[16px] leading-snug line-clamp-2 group-hover:text-black transition-colors">
+                    <h3 className="font-medium text-sm md:text-[15px] sm:md:text-[16px] leading-snug line-clamp-2 md:group-hover:text-black transition-colors text-black">
                       {product.name}
                     </h3>
                     {/* Свотчи цветов */}
@@ -301,7 +320,8 @@ export default function CategoryPage() {
                   </div>
                 </div>
               </Link>
-            ))}
+              )
+            })}
           </div>
         )}
       </main>
