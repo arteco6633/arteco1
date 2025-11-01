@@ -30,6 +30,7 @@ interface Product {
   description: string
   price: number
   image_url: string
+  images?: string[] | null
   category_id: number
   is_featured: boolean
   is_new: boolean

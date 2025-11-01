@@ -10,6 +10,7 @@ interface Product {
   price: number
   original_price?: number
   image_url: string
+  images?: string[] | null
   category_id: number
   is_new?: boolean
   is_featured?: boolean
@@ -51,7 +52,7 @@ function Card({ product, onAdd }: { product: Product; onAdd?: (product: Product)
       {/* Обёртка для изображения с клипом только картинки, не тени */}
       <div className="relative rounded-t-xl overflow-hidden">
         <img
-          src={product.image_url || '/placeholder.jpg'}
+          src={(product.images && product.images.length > 0) ? product.images[0] : (product.image_url || '/placeholder.jpg')}
           alt={product.name}
           className="w-full h-60 sm:h-72 object-cover transition-transform duration-300 ease-out md:group-hover:scale-[1.03]"
         />

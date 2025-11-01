@@ -36,6 +36,9 @@ export default function CategoryPage() {
   const [loading, setLoading] = useState(true)
   // Выбранные варианты цветов/изображений по товару (индекс)
   const [selectedVariantIndexById, setSelectedVariantIndexById] = useState<Record<number, number>>({})
+  // Состояния для свайпа на мобильных
+  const [touchStartX, setTouchStartX] = useState<Record<number, number>>({})
+  const [touchEndX, setTouchEndX] = useState<Record<number, number>>({})
 
   function createHoverScrubHandler(productId: number, imagesLength: number) {
     return (e: React.MouseEvent<HTMLDivElement>) => {
@@ -46,6 +49,56 @@ export default function CategoryPage() {
       const idx = Math.min(imagesLength - 1, Math.floor(ratio * imagesLength))
       setSelectedVariantIndexById((prev) => ({ ...prev, [productId]: idx }))
     }
+  }
+
+  // Обработчики для свайпа на мобильных
+  function handleTouchStart(productId: number, e: React.TouchEvent) {
+    setTouchStartX((prev) => ({ ...prev, [productId]: e.touches[0].clientX }))
+  }
+
+  function handleTouchMove(productId: number, e: React.TouchEvent) {
+    setTouchEndX((prev) => ({ ...prev, [productId]: e.touches[0].clientX }))
+  }
+
+  function handleTouchEnd(productId: number, imagesLength: number) {
+    if (!imagesLength || imagesLength <= 1) return
+    
+    const startX = touchStartX[productId]
+    const endX = touchEndX[productId]
+    
+    if (!startX || !endX) return
+
+    const threshold = 50 // Минимальное расстояние для свайпа
+    const diff = startX - endX
+    
+    if (Math.abs(diff) > threshold) {
+      const currentIdx = selectedVariantIndexById[productId] || 0
+      if (diff > 0) {
+        // Свайп влево - следующее изображение
+        setSelectedVariantIndexById((prev) => ({
+          ...prev,
+          [productId]: Math.min(imagesLength - 1, currentIdx + 1)
+        }))
+      } else {
+        // Свайп вправо - предыдущее изображение
+        setSelectedVariantIndexById((prev) => ({
+          ...prev,
+          [productId]: Math.max(0, currentIdx - 1)
+        }))
+      }
+    }
+    
+    // Сбрасываем позиции
+    setTouchStartX((prev) => {
+      const next = { ...prev }
+      delete next[productId]
+      return next
+    })
+    setTouchEndX((prev) => {
+      const next = { ...prev }
+      delete next[productId]
+      return next
+    })
   }
 
   useEffect(() => {
@@ -141,13 +194,16 @@ export default function CategoryPage() {
               <Link 
                 key={product.id} 
                 href={`/product/${product.id}`}
-                className="group block relative hover:z-10 rounded-2xl bg-white border border-gray-100 shadow-sm hover:shadow-lg transition-shadow duration-300 min-h-[360px] md:min-h-[460px]"
+                className="group block relative hover:z-10 rounded-2xl bg-white border border-gray-100 shadow-sm hover:shadow-lg transition-shadow duration-300 md:min-h-[460px]"
               >
-                <div className="relative z-10 p-3">
+                <div className="relative z-10 px-3 pt-3 pb-3 md:p-3">
                   <div
                     className="relative rounded-xl overflow-hidden"
                     onMouseMove={createHoverScrubHandler(product.id, ((product as any).images as string[] | undefined)?.length || 0)}
                     onMouseLeave={() => setSelectedVariantIndexById((prev) => ({ ...prev, [product.id]: 0 }))}
+                    onTouchStart={(e) => handleTouchStart(product.id, e)}
+                    onTouchMove={(e) => handleTouchMove(product.id, e)}
+                    onTouchEnd={() => handleTouchEnd(product.id, ((product as any).images as string[] | undefined)?.length || 0)}
                   >
                     <img
                       src={(() => {
@@ -236,7 +292,7 @@ export default function CategoryPage() {
                     )}
                   </div>
                   {/* Кнопка в корзину под названием; появляется по ховеру, не сдвигая соседей */}
-                  <div className="pt-3 md:opacity-0 md:translate-y-1 md:group-hover:opacity-100 md:group-hover:translate-y-0 transition-all duration-300">
+                  <div className="hidden md:block pt-3 md:opacity-0 md:translate-y-1 md:group-hover:opacity-100 md:group-hover:translate-y-0 transition-all duration-300">
                     <button
                       className="w-full bg-black text-white py-2.5 rounded-lg shadow-md hover:bg-gray-900"
                     >
