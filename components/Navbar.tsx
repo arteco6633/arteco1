@@ -200,9 +200,9 @@ export default function Navbar() {
             <a href="#promotions" className="text-black hover:text-gray-600 transition-colors">
               Акции
             </a>
-            <a href="#journal" className="text-black hover:text-gray-600 transition-colors">
+            <Link href="/journal" className="text-black hover:text-gray-600 transition-colors">
               Журнал
-            </a>
+            </Link>
             <a href="#showrooms" className="text-black hover:text-gray-600 transition-colors">
               Шоурумы
             </a>
@@ -342,7 +342,7 @@ export default function Navbar() {
                   <div className="grid grid-cols-2 gap-3">
                     <Link href="/catalog" className="px-4 py-3 rounded-[50px] border bg-white hover:bg-gray-50 text-center font-medium" onClick={() => setIsMobileOpen(false)}>Каталог</Link>
                     <a href="#promotions" className="px-4 py-3 rounded-[50px] border bg-white hover:bg-gray-50 text-center font-medium" onClick={() => setIsMobileOpen(false)}>Акции</a>
-                    <a href="#journal" className="px-4 py-3 rounded-[50px] border bg-white hover:bg-gray-50 text-center font-medium" onClick={() => setIsMobileOpen(false)}>Журнал</a>
+                    <Link href="/journal" className="px-4 py-3 rounded-[50px] border bg-white hover:bg-gray-50 text-center font-medium" onClick={() => setIsMobileOpen(false)}>Журнал</Link>
                     <a href="#showrooms" className="px-4 py-3 rounded-[50px] border bg-white hover:bg-gray-50 text-center font-medium" onClick={() => setIsMobileOpen(false)}>Шоурумы</a>
                   </div>
 
