@@ -65,7 +65,20 @@ export default function ProductPage() {
   const [selectedDrawerIdx, setSelectedDrawerIdx] = useState<number | null>(null)
   const [selectedLightingIdx, setSelectedLightingIdx] = useState<number | null>(null)
   const [selectedColorIdx, setSelectedColorIdx] = useState<number | null>(null)
-  const [isDesktop, setIsDesktop] = useState(false)
+  // Хук для отслеживания брейкпоинта (избегаем разницы SSR/CSR)
+  function useMediaQuery(query: string) {
+    const [matches, setMatches] = useState<boolean>(false)
+    useEffect(() => {
+      if (typeof window === 'undefined') return
+      const mql = window.matchMedia(query)
+      const onChange = (e: MediaQueryListEvent | MediaQueryList) => setMatches('matches' in e ? e.matches : (e as MediaQueryList).matches)
+      setMatches(mql.matches)
+      mql.addEventListener ? mql.addEventListener('change', onChange as any) : mql.addListener(onChange as any)
+      return () => { mql.removeEventListener ? mql.removeEventListener('change', onChange as any) : mql.removeListener(onChange as any) }
+    }, [query])
+    return matches
+  }
+  const isDesktop = useMediaQuery('(min-width: 768px)')
   // touch-swipe по главному фото
   const touchStartX = useRef<number | null>(null)
   const touchStartY = useRef<number | null>(null)
@@ -104,14 +117,7 @@ export default function ProductPage() {
     }
   }, [id])
 
-  useEffect(() => {
-    const checkDesktop = () => {
-      setIsDesktop(window.innerWidth >= 768)
-    }
-    checkDesktop()
-    window.addEventListener('resize', checkDesktop)
-    return () => window.removeEventListener('resize', checkDesktop)
-  }, [])
+  // Отдельный эффект больше не нужен — используем matchMedia выше
 
   useEffect(() => {
     const updateHeight = () => {
@@ -451,6 +457,11 @@ export default function ProductPage() {
                     src={(product.images && product.images[activeImageIdx]) || (product.images && product.images[0]) || product.image_url || '/placeholder.jpg'}
               alt={product.name}
                     className="w-full h-full object-cover transition-transform duration-300 ease-out"
+                    onLoad={() => {
+                      if (leftMainImageRef.current) {
+                        setSyncedRightHeight(leftMainImageRef.current.offsetHeight || 0)
+                      }
+                    }}
                   />
                   {product.images && product.images.length > 1 && (
                     <>
