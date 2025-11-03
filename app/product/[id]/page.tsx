@@ -832,7 +832,9 @@ export default function ProductPage() {
                               style={{ maxHeight: openModuleGroup === (key as any) ? 1200 : 0, opacity: openModuleGroup === (key as any) ? 1 : 0 }}
                               aria-hidden={openModuleGroup !== (key as any)}
                             >
-                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-1">
+                              {/* Прокрутка списка модулей на мобильных, без ограничения на десктопе */}
+                              <div className="mt-1 max-h-[60vh] overflow-y-auto pr-2 -mr-2 sm:max-h-none sm:overflow-visible sm:pr-0 sm:mr-0">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 {groups[key].map((m) => {
                                   const qty = selectedModules[m.id] || 0
                                   const size = [m.width, m.height, m.depth].every(v => v) ? `${m.width}×${m.height}×${m.depth} мм` : undefined
@@ -861,6 +863,7 @@ export default function ProductPage() {
                                     </div>
                                   )
                                 })}
+                                </div>
                               </div>
                             </div>
                           </div>
