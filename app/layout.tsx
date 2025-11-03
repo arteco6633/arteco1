@@ -13,6 +13,21 @@ import BootLoader from '@/components/BootLoader'
 export const metadata: Metadata = {
   title: 'ARTECO - Интернет-магазин',
   description: 'Современный интернет-магазин',
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://arteco.example'),
+  openGraph: {
+    title: 'ARTECO — современная мебель',
+    description: 'Каталог, кухни, новинки, акции. Дизайн и качество.',
+    url: '/',
+    siteName: 'ARTECO',
+    type: 'website',
+    images: [{ url: '/favicon-1024x1024.png', width: 1024, height: 1024 }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'ARTECO — современная мебель',
+    description: 'Каталог, кухни, новинки, акции. Дизайн и качество.',
+    images: ['/favicon-1024x1024.png'],
+  },
   icons: {
     icon: [
       { url: '/favicon-32x32.png', sizes: '32x32', type: 'image/png' },

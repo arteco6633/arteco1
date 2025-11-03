@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import Link from 'next/link'
+import Head from 'next/head'
 import ProductGrid from '@/components/ProductGrid'
 
 interface Article {
@@ -319,6 +320,20 @@ export default function ArticlePage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <Head>
+        <title>{article.title}</title>
+        <meta name="description" content={article.excerpt || ''} />
+        <meta property="og:type" content="article" />
+        <meta property="og:title" content={article.title} />
+        <meta property="og:description" content={article.excerpt || ''} />
+        <meta property="og:url" content={`${process.env.NEXT_PUBLIC_SITE_URL || 'https://www.arteeeco.ru'}/journal/${article.slug}`} />
+        <meta property="og:image" content={(article as any).og_image || article.featured_image || '/favicon-1024x1024.png'} />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={article.title} />
+        <meta name="twitter:description" content={article.excerpt || ''} />
+        <meta name="twitter:image" content={(article as any).og_image || article.featured_image || '/favicon-1024x1024.png'} />
+        <link rel="canonical" href={`${process.env.NEXT_PUBLIC_SITE_URL || 'https://www.arteeeco.ru'}/journal/${article.slug}`} />
+      </Head>
       <main className="max-w-[1400px] mx-auto px-1 md:px-2 xl:px-4 2xl:px-6 py-8 md:py-12">
         {/* Хлебные крошки */}
         <nav className="flex mb-6" aria-label="Breadcrumb">

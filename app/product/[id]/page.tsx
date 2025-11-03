@@ -8,6 +8,7 @@ import { supabase } from '@/lib/supabase'
 import ProductGrid from '@/components/ProductGrid'
 import KitchenQuiz from '@/components/KitchenQuiz'
 import Link from 'next/link'
+import type { Metadata } from 'next'
 
 interface Product {
   id: number

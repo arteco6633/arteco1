@@ -6,6 +6,7 @@ create table if not exists public.journal_articles (
   excerpt text,
   content text not null, -- markdown контент
   featured_image text,
+  og_image text,
   author_name text,
   author_avatar text,
   category text,

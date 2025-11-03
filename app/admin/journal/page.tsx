@@ -10,6 +10,7 @@ interface Article {
   excerpt: string | null
   content: string
   featured_image: string | null
+  og_image?: string | null
   author_name: string | null
   author_avatar: string | null
   category: string | null
@@ -39,6 +40,7 @@ export default function AdminJournalPage() {
     excerpt: '',
     content: '',
     featured_image: '',
+    og_image: '',
     author_name: '',
     author_avatar: '',
     category: '',
@@ -160,6 +162,33 @@ export default function AdminJournalPage() {
 
       const { data } = supabase.storage.from('product').getPublicUrl(filePath)
       setFormData({ ...formData, author_avatar: data.publicUrl })
+    } catch (error: any) {
+      console.error(error)
+      alert(error?.message || 'Ошибка загрузки изображения')
+    } finally {
+      setUploading(false)
+      ;(e.target as HTMLInputElement).value = ''
+    }
+  }
+
+  async function handleOgImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    try {
+      setUploading(true)
+      const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg'
+      const fileName = `og-${Date.now()}-${Math.random().toString(36).substring(2)}.${ext}`
+      const filePath = `journal/${fileName}`
+
+      const { error } = await supabase.storage
+        .from('product')
+        .upload(filePath, file, { cacheControl: '3600', upsert: false })
+
+      if (error) throw error
+
+      const { data } = supabase.storage.from('product').getPublicUrl(filePath)
+      setFormData({ ...formData, og_image: data.publicUrl })
     } catch (error: any) {
       console.error(error)
       alert(error?.message || 'Ошибка загрузки изображения')
@@ -297,6 +326,7 @@ export default function AdminJournalPage() {
         excerpt: formData.excerpt || null,
         content: formData.content,
         featured_image: formData.featured_image || null,
+        og_image: formData.og_image || null,
         author_name: formData.author_name || null,
         author_avatar: formData.author_avatar || null,
         category: formData.category || null,
@@ -337,6 +367,7 @@ export default function AdminJournalPage() {
         excerpt: '',
         content: '',
         featured_image: '',
+        og_image: '',
         author_name: '',
         author_avatar: '',
         category: '',
@@ -360,6 +391,7 @@ export default function AdminJournalPage() {
       excerpt: article.excerpt || '',
       content: article.content,
       featured_image: article.featured_image || '',
+      og_image: (article as any).og_image || '',
       author_name: article.author_name || '',
       author_avatar: article.author_avatar || '',
       category: article.category || '',
@@ -696,6 +728,21 @@ export default function AdminJournalPage() {
                     {formData.featured_image && (
                       <img src={formData.featured_image} alt="Preview" className="mt-2 w-32 h-32 object-cover rounded" />
                     )}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-1">OG‑изображение (для предпросмотра ссылок)</label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleOgImageUpload}
+                      disabled={uploading}
+                      className="w-full border rounded-lg px-3 py-2"
+                    />
+                    {formData.og_image && (
+                      <img src={formData.og_image} alt="OG Preview" className="mt-2 w-32 h-32 object-cover rounded" />
+                    )}
+                    <p className="text-xs text-gray-500 mt-1">Рекомендуется 1200×630px</p>
                   </div>
 
                   <div>
