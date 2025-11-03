@@ -85,8 +85,9 @@ export default function ProductPage() {
   const touchStartTime = useRef<number | null>(null)
   const isHorizontalSwipeRef = useRef<boolean>(false)
   // Конструктор модулей (состояния объявлены до вычисления finalPrice)
-  const [modules, setModules] = useState<Array<{ id:number; name:string; price:number; image_url?:string|null; description?:string|null }>>([])
+  const [modules, setModules] = useState<Array<{ id:number; name:string; price:number; image_url?:string|null; description?:string|null; width?:number|null; height?:number|null; depth?:number|null; kind?:string|null }>>([])
   const [selectedModules, setSelectedModules] = useState<Record<number, number>>({})
+  const [previewImage, setPreviewImage] = useState<string | null>(null)
   const finalPrice = useMemo(() => {
     if (!product) return 0
     const base = Number(product.price) || 0
@@ -203,7 +204,7 @@ export default function ProductPage() {
       try {
         const { data: mods } = await supabase
           .from('product_modules')
-          .select('id, name, price, image_url, description')
+          .select('id, name, price, image_url, description, width, height, depth, kind')
           .eq('product_id', productData.id)
           .order('position', { ascending: true })
         setModules((mods as any) || [])
@@ -779,42 +780,71 @@ export default function ProductPage() {
               )}
 
               {/* Конструктор модулей */}
-              {modules && modules.length > 0 && (
-                <div className="mt-3 border rounded-lg overflow-hidden">
-                  <div className="w-full px-4 py-3 flex items-center justify-between bg-white">
-                    <span className="font-semibold">Конструктор модулей</span>
-                    <span className="text-sm text-gray-500">Добавляйте модули — цена обновляется</span>
-                  </div>
-                  <div className="px-2 sm:px-4 pb-4 bg-white">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      {modules.map((m) => {
-                        const qty = selectedModules[m.id] || 0
-                        return (
-                          <div key={m.id} className="p-3 border rounded-lg">
-                            <div className="flex items-start gap-3">
-                              {m.image_url ? (
-                                <img src={m.image_url} alt={m.name} className="w-24 h-24 sm:w-28 sm:h-28 rounded object-cover border" />
-                              ) : (
-                                <div className="w-24 h-24 sm:w-28 sm:h-28 rounded bg-gray-100 border flex items-center justify-center text-gray-400 text-xs">Нет фото</div>
-                              )}
-                              <div className="flex-1 min-w-0">
-                                <div className="font-medium truncate">{m.name}</div>
-                                <div className="text-sm text-gray-600 mb-1">{m.price.toLocaleString('ru-RU')} ₽</div>
-                                {m.description && <div className="text-xs text-gray-500 line-clamp-2">{m.description}</div>}
-                                <div className="mt-2 flex items-center gap-2">
-                                  <button type="button" onClick={() => setSelectedModules((prev) => ({ ...prev, [m.id]: Math.max(0, (prev[m.id]||0) - 1) }))} className="w-8 h-8 rounded-full border flex items-center justify-center">−</button>
-                                  <div className="w-10 text-center">{qty}</div>
-                                  <button type="button" onClick={() => setSelectedModules((prev) => ({ ...prev, [m.id]: (prev[m.id]||0) + 1 }))} className="w-8 h-8 rounded-full border flex items-center justify-center">+</button>
-                                </div>
-                              </div>
+              {modules && modules.length > 0 && (() => {
+                const groups: Record<string, typeof modules> = { base: [], wall: [], tall: [], other: [] }
+                modules.forEach(m => {
+                  const k = (m.kind || '').toLowerCase()
+                  if (k === 'base') groups.base.push(m)
+                  else if (k === 'wall') groups.wall.push(m)
+                  else if (k === 'tall') groups.tall.push(m)
+                  else groups.other.push(m)
+                })
+
+                const order: Array<[string, string]> = [
+                  ['base', 'Нижняя база'],
+                  ['wall', 'Верхняя база'],
+                  ['tall', 'Пеналы'],
+                  ['other', 'Прочие'],
+                ]
+
+                return (
+                  <div className="mt-3 border rounded-lg overflow-hidden">
+                    <div className="w-full px-4 py-3 flex items-center justify-between bg-white">
+                      <span className="font-semibold">Конструктор модулей</span>
+                      <span className="text-sm text-gray-500">Добавляйте модули — цена обновляется</span>
+                    </div>
+                    <div className="px-2 sm:px-4 pb-4 bg-white space-y-6">
+                      {order.map(([key, title]) => (
+                        groups[key].length > 0 && (
+                          <div key={key}>
+                            <div className="font-semibold text-gray-800 mb-3">{title}</div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                              {groups[key].map((m) => {
+                                const qty = selectedModules[m.id] || 0
+                                const size = [m.width, m.height, m.depth].every(v => v) ? `${m.width}×${m.height}×${m.depth} мм` : undefined
+                                return (
+                                  <div key={m.id} className="p-3 border rounded-lg" title={size ? `Габариты: ${size}` : undefined}>
+                                    <div className="flex items-start gap-3">
+                                      {m.image_url ? (
+                                        <button type="button" onClick={() => setPreviewImage(m.image_url!)} className="focus:outline-none">
+                                          <img src={m.image_url} alt={m.name} className="w-24 h-24 sm:w-28 sm:h-28 rounded object-cover border" />
+                                        </button>
+                                      ) : (
+                                        <div className="w-24 h-24 sm:w-28 sm:h-28 rounded bg-gray-100 border flex items-center justify-center text-gray-400 text-xs">Нет фото</div>
+                                      )}
+                                      <div className="flex-1 min-w-0">
+                                        <div className="font-medium truncate">{m.name}</div>
+                                        <div className="text-sm text-gray-600 mb-1">{m.price.toLocaleString('ru-RU')} ₽</div>
+                                        {size && <div className="text-xs text-gray-500">{size}</div>}
+                                        {m.description && <div className="text-xs text-gray-500 line-clamp-2">{m.description}</div>}
+                                        <div className="mt-2 flex items-center gap-2">
+                                          <button type="button" onClick={() => setSelectedModules((prev) => ({ ...prev, [m.id]: Math.max(0, (prev[m.id]||0) - 1) }))} className="w-8 h-8 rounded-full border flex items-center justify-center">−</button>
+                                          <div className="w-10 text-center">{qty}</div>
+                                          <button type="button" onClick={() => setSelectedModules((prev) => ({ ...prev, [m.id]: (prev[m.id]||0) + 1 }))} className="w-8 h-8 rounded-full border flex items-center justify-center">+</button>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                )
+                              })}
                             </div>
                           </div>
                         )
-                      })}
+                      ))}
                     </div>
                   </div>
-                </div>
-              )}
+                )
+              })()}
 
                 </div>
               </div>
@@ -1059,6 +1089,13 @@ export default function ProductPage() {
         </section>
 
         <KitchenQuiz isOpen={isCalcOpen} onClose={() => setIsCalcOpen(false)} imageUrl={product?.images?.[0] || (product as any)?.image_url || ''} />
+
+        {/* Просмотр изображения модуля */}
+        {previewImage && (
+          <div className="fixed inset-0 z-[100] bg-black/70 grid place-items-center p-4" onClick={() => setPreviewImage(null)}>
+            <img src={previewImage} alt="Превью модуля" className="max-w-[90vw] max-h-[85vh] rounded-lg shadow-2xl object-contain" />
+          </div>
+        )}
 
         {related.length > 0 && (
           <section className="mt-8 md:mt-12">
