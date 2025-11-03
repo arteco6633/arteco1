@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 
 interface Product { id: number; name: string }
@@ -26,6 +26,8 @@ export default function AdminModulesPage() {
   const [saving, setSaving] = useState(false)
   const [form, setForm] = useState<Partial<ModuleItem>>({ price: 0 })
   const [showModal, setShowModal] = useState(false)
+  const imageInputRef = useRef<HTMLInputElement | null>(null)
+  const [uploadingImage, setUploadingImage] = useState(false)
 
   useEffect(() => { loadProducts() }, [])
   useEffect(() => { if (selectedProduct) loadModules(selectedProduct) }, [selectedProduct])
@@ -73,6 +75,32 @@ export default function AdminModulesPage() {
     setShowModal(false)
     setForm({ price: 0 })
     loadModules(selectedProduct)
+  }
+
+  async function uploadImage(file: File): Promise<string> {
+    const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg'
+    const fileName = `modules/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
+    const { error } = await supabase.storage
+      .from('product')
+      .upload(fileName, file, { cacheControl: '3600', upsert: false })
+    if (error) throw error
+    const { data } = supabase.storage.from('product').getPublicUrl(fileName)
+    return data.publicUrl
+  }
+
+  async function handleImageSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    try {
+      setUploadingImage(true)
+      const url = await uploadImage(file)
+      setForm((prev) => ({ ...prev, image_url: url }))
+    } catch (err: any) {
+      alert(err?.message || 'Ошибка загрузки изображения')
+    } finally {
+      setUploadingImage(false)
+      if (imageInputRef.current) imageInputRef.current.value = ''
+    }
   }
 
   async function handleDelete(id: number) {
@@ -168,8 +196,41 @@ export default function AdminModulesPage() {
                 <textarea value={form.description || ''} onChange={(e) => setForm({ ...form, description: e.target.value })} className="w-full border rounded-lg px-3 py-2" rows={3} />
               </div>
               <div className="sm:col-span-2">
-                <label className="block text-sm font-medium mb-1">URL изображения</label>
-                <input value={form.image_url || ''} onChange={(e) => setForm({ ...form, image_url: e.target.value })} className="w-full border rounded-lg px-3 py-2" placeholder="https://..." />
+                <label className="block text-sm font-medium mb-1">Изображение модуля</label>
+                <div className="flex items-center gap-3">
+                  {form.image_url ? (
+                    <img src={form.image_url} alt="Превью" className="w-16 h-16 rounded object-cover border" />
+                  ) : (
+                    <div className="w-16 h-16 rounded bg-gray-100 border grid place-items-center text-gray-400 text-xs">Нет</div>
+                  )}
+                  <div className="flex items-center gap-2">
+                    <input
+                      ref={imageInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageSelect}
+                      className="hidden"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => imageInputRef.current?.click()}
+                      disabled={uploadingImage}
+                      className="px-3 py-2 border rounded-lg hover:bg-gray-50 disabled:opacity-50"
+                    >
+                      {uploadingImage ? 'Загрузка…' : 'Загрузить изображение'}
+                    </button>
+                    {form.image_url && (
+                      <button
+                        type="button"
+                        onClick={() => setForm({ ...form, image_url: '' })}
+                        className="px-3 py-2 border rounded-lg hover:bg-gray-50"
+                      >
+                        Удалить
+                      </button>
+                    )}
+                  </div>
+                </div>
+                <p className="text-xs text-gray-500 mt-1">Поддерживается загрузка в Storage; URL заполнится автоматически.</p>
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">Ширина</label>
