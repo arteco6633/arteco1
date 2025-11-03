@@ -28,6 +28,7 @@ export default function AdminModulesPage() {
   const [showModal, setShowModal] = useState(false)
   const imageInputRef = useRef<HTMLInputElement | null>(null)
   const [uploadingImage, setUploadingImage] = useState(false)
+  const [sourceProduct, setSourceProduct] = useState<number | ''>('')
 
   useEffect(() => { loadProducts() }, [])
   useEffect(() => { if (selectedProduct) loadModules(selectedProduct) }, [selectedProduct])
@@ -48,6 +49,37 @@ export default function AdminModulesPage() {
       .order('position', { ascending: true })
     setItems((data as any) || [])
     setLoading(false)
+  }
+
+  async function copyFromProduct() {
+    if (!selectedProduct || !sourceProduct) return
+    if (selectedProduct === sourceProduct) {
+      alert('Нельзя копировать модули внутри одного и того же товара')
+      return
+    }
+    try {
+      setSaving(true)
+      const { data: src } = await supabase
+        .from('product_modules')
+        .select('name, sku, description, image_url, price, width, height, depth, kind, position')
+        .eq('product_id', sourceProduct as number)
+        .order('position', { ascending: true })
+      const rows = (src || []).map((r: any) => ({ ...r, product_id: selectedProduct }))
+      if (rows.length === 0) {
+        alert('У выбранного источника нет модулей')
+        setSaving(false)
+        return
+      }
+      const { error } = await supabase.from('product_modules').insert(rows)
+      if (error) throw error
+      await loadModules(selectedProduct)
+      alert(`Скопировано модулей: ${rows.length}`)
+    } catch (e: any) {
+      console.error(e)
+      alert(e?.message || 'Ошибка копирования модулей')
+    } finally {
+      setSaving(false)
+    }
   }
 
   async function handleSave(e: React.FormEvent) {
@@ -122,7 +154,7 @@ export default function AdminModulesPage() {
         </button>
       </div>
 
-      <div className="mb-6">
+      <div className="mb-6 space-y-3">
         <label className="block text-sm font-medium mb-1">Товар (кухня)</label>
         <select
           className="w-full sm:w-96 border rounded-lg px-3 py-2"
@@ -134,6 +166,29 @@ export default function AdminModulesPage() {
             <option key={p.id} value={p.id}>{p.name}</option>
           ))}
         </select>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-600">Импортировать модули из:</span>
+            <select
+              className="border rounded-lg px-3 py-2 w-64"
+              value={sourceProduct}
+              onChange={(e) => setSourceProduct(e.target.value ? Number(e.target.value) : '')}
+              disabled={!selectedProduct}
+            >
+              <option value="">— Не выбрано —</option>
+              {products.filter(p => p.id !== selectedProduct).map((p) => (
+                <option key={p.id} value={p.id}>{p.name}</option>
+              ))}
+            </select>
+          </div>
+          <button
+            onClick={copyFromProduct}
+            disabled={!selectedProduct || !sourceProduct || saving}
+            className="px-4 py-2 rounded-lg border hover:bg-gray-50 disabled:opacity-50"
+          >
+            Скопировать модули
+          </button>
+        </div>
       </div>
 
       {selectedProduct && (
