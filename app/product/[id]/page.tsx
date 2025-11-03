@@ -71,6 +71,9 @@ export default function ProductPage() {
   const touchStartY = useRef<number | null>(null)
   const touchStartTime = useRef<number | null>(null)
   const isHorizontalSwipeRef = useRef<boolean>(false)
+  // Конструктор модулей (состояния объявлены до вычисления finalPrice)
+  const [modules, setModules] = useState<Array<{ id:number; name:string; price:number; image_url?:string|null; description?:string|null }>>([])
+  const [selectedModules, setSelectedModules] = useState<Record<number, number>>({})
   const finalPrice = useMemo(() => {
     if (!product) return 0
     const base = Number(product.price) || 0
@@ -78,8 +81,12 @@ export default function ProductPage() {
     const hinge = (product.hinges && selectedHingeIdx != null && product.hinges[selectedHingeIdx]?.delta_price) || 0
     const drawer = (product.drawers && selectedDrawerIdx != null && product.drawers[selectedDrawerIdx]?.delta_price) || 0
     const lighting = (product.lighting && selectedLightingIdx != null && product.lighting[selectedLightingIdx]?.delta_price) || 0
-    return base + fill + hinge + drawer + lighting
-  }, [product, selectedFillingIdx, selectedHingeIdx, selectedDrawerIdx, selectedLightingIdx])
+    const modulesSum = Object.entries(selectedModules).reduce((sum, [id, qty]) => {
+      const m = modules.find(x => x.id === Number(id))
+      return sum + (m ? m.price * (qty || 0) : 0)
+    }, 0)
+    return base + fill + hinge + drawer + lighting + modulesSum
+  }, [product, selectedFillingIdx, selectedHingeIdx, selectedDrawerIdx, selectedLightingIdx, selectedModules, modules])
   const [openFilling, setOpenFilling] = useState(true)
   const [openHinge, setOpenHinge] = useState(false)
   const [openDrawer, setOpenDrawer] = useState(false)
@@ -185,6 +192,16 @@ export default function ProductPage() {
         .single()
 
       setCategory(categoryData)
+
+      // Загружаем модули для конструктора
+      try {
+        const { data: mods } = await supabase
+          .from('product_modules')
+          .select('id, name, price, image_url, description')
+          .eq('product_id', productData.id)
+          .order('position', { ascending: true })
+        setModules((mods as any) || [])
+      } catch {}
     } catch (error) {
       console.error('Ошибка загрузки товара:', error)
     } finally {
@@ -221,6 +238,17 @@ export default function ProductPage() {
     if (product.lighting && selectedLightingIdx != null) {
       const l = product.lighting[selectedLightingIdx]
       if (l) options.lighting = { name: l.name, delta_price: l.delta_price || 0 }
+    }
+    // Передаём выбранные модули в корзину
+    const modulesOptions = Object.entries(selectedModules)
+      .filter(([_, qty]) => (qty || 0) > 0)
+      .map(([id, qty]) => {
+        const m = modules.find(x => x.id === Number(id))
+        return m ? { id: m.id, name: m.name, price: m.price, qty } : null
+      })
+      .filter(Boolean)
+    if (modulesOptions.length > 0) {
+      options.modules = modulesOptions
     }
     add({ id: product.id, name: product.name, price: finalPrice, image_url: activeImage, color: colorLabel, options }, quantity)
   }
@@ -737,6 +765,44 @@ export default function ProductPage() {
                     </div>
                   )}
               </div>
+              )}
+
+              {/* Конструктор модулей */}
+              {modules && modules.length > 0 && (
+                <div className="mt-3 border rounded-lg overflow-hidden">
+                  <div className="w-full px-4 py-3 flex items-center justify-between bg-white">
+                    <span className="font-semibold">Конструктор модулей</span>
+                    <span className="text-sm text-gray-500">Добавляйте модули — цена обновляется</span>
+                  </div>
+                  <div className="px-2 sm:px-4 pb-4 bg-white">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {modules.map((m) => {
+                        const qty = selectedModules[m.id] || 0
+                        return (
+                          <div key={m.id} className="p-3 border rounded-lg">
+                            <div className="flex items-start gap-3">
+                              {m.image_url ? (
+                                <img src={m.image_url} alt={m.name} className="w-24 h-24 sm:w-28 sm:h-28 rounded object-cover border" />
+                              ) : (
+                                <div className="w-24 h-24 sm:w-28 sm:h-28 rounded bg-gray-100 border flex items-center justify-center text-gray-400 text-xs">Нет фото</div>
+                              )}
+                              <div className="flex-1 min-w-0">
+                                <div className="font-medium truncate">{m.name}</div>
+                                <div className="text-sm text-gray-600 mb-1">{m.price.toLocaleString('ru-RU')} ₽</div>
+                                {m.description && <div className="text-xs text-gray-500 line-clamp-2">{m.description}</div>}
+                                <div className="mt-2 flex items-center gap-2">
+                                  <button type="button" onClick={() => setSelectedModules((prev) => ({ ...prev, [m.id]: Math.max(0, (prev[m.id]||0) - 1) }))} className="w-8 h-8 rounded-full border flex items-center justify-center">−</button>
+                                  <div className="w-10 text-center">{qty}</div>
+                                  <button type="button" onClick={() => setSelectedModules((prev) => ({ ...prev, [m.id]: (prev[m.id]||0) + 1 }))} className="w-8 h-8 rounded-full border flex items-center justify-center">+</button>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                </div>
               )}
 
                 </div>
