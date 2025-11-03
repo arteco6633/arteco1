@@ -610,8 +610,11 @@ export default function ProductPage() {
                     <span className="font-semibold">Вариант наполнения</span>
                     <span className="text-xl">{openFilling ? '−' : '+'}</span>
                   </button>
-                  {openFilling && (
-                    <div className="px-2 sm:px-4 pb-4 bg-white">
+                  <div
+                    className="px-2 sm:px-4 bg-white overflow-hidden transition-all duration-400 ease-in-out"
+                    style={{ maxHeight: openFilling ? 800 : 0, paddingBottom: openFilling ? 16 : 0, opacity: openFilling ? 1 : 0 }}
+                    aria-hidden={!openFilling}
+                  >
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         {product.fillings.map((f, idx) => (
                           <button
@@ -637,8 +640,7 @@ export default function ProductPage() {
                           </button>
                         ))}
                       </div>
-                    </div>
-                  )}
+                  </div>
               </div>
               )}
 
@@ -656,8 +658,11 @@ export default function ProductPage() {
                     <span className="font-semibold">Петли</span>
                     <span className="text-xl">{openHinge ? '−' : '+'}</span>
                   </button>
-                  {openHinge && (
-                    <div className="px-2 sm:px-4 pb-4 bg-white">
+                  <div
+                    className="px-2 sm:px-4 bg-white overflow-hidden transition-all duration-400 ease-in-out"
+                    style={{ maxHeight: openHinge ? 800 : 0, paddingBottom: openHinge ? 16 : 0, opacity: openHinge ? 1 : 0 }}
+                    aria-hidden={!openHinge}
+                  >
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         {product.hinges.map((h, idx) => (
                           <button
@@ -683,8 +688,7 @@ export default function ProductPage() {
                           </button>
                         ))}
                       </div>
-                    </div>
-                  )}
+                  </div>
                 </div>
               )}
 
@@ -702,8 +706,11 @@ export default function ProductPage() {
                     <span className="font-semibold">Ящики</span>
                     <span className="text-xl">{openDrawer ? '−' : '+'}</span>
                   </button>
-                  {openDrawer && (
-                    <div className="px-2 sm:px-4 pb-4 bg-white">
+                  <div
+                    className="px-2 sm:px-4 bg-white overflow-hidden transition-all duration-400 ease-in-out"
+                    style={{ maxHeight: openDrawer ? 800 : 0, paddingBottom: openDrawer ? 16 : 0, opacity: openDrawer ? 1 : 0 }}
+                    aria-hidden={!openDrawer}
+                  >
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         {product.drawers.map((d, idx) => (
                           <button
@@ -729,8 +736,7 @@ export default function ProductPage() {
                           </button>
                         ))}
                       </div>
-                    </div>
-                  )}
+                  </div>
                 </div>
               )}
 
@@ -748,8 +754,11 @@ export default function ProductPage() {
                     <span className="font-semibold">Подсветка</span>
                     <span className="text-xl">{openLighting ? '−' : '+'}</span>
                   </button>
-                  {openLighting && (
-                    <div className="px-2 sm:px-4 pb-4 bg-white">
+                  <div
+                    className="px-2 sm:px-4 bg-white overflow-hidden transition-all duration-400 ease-in-out"
+                    style={{ maxHeight: openLighting ? 800 : 0, paddingBottom: openLighting ? 16 : 0, opacity: openLighting ? 1 : 0 }}
+                    aria-hidden={!openLighting}
+                  >
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         {product.lighting.map((l, idx) => (
                           <button
@@ -775,8 +784,7 @@ export default function ProductPage() {
                           </button>
                         ))}
                       </div>
-                    </div>
-                  )}
+                  </div>
               </div>
               )}
 
@@ -818,8 +826,12 @@ export default function ProductPage() {
                               <span className="text-xl">{openModuleGroup === (key as any) ? '−' : '+'}</span>
                             </button>
 
-                            {openModuleGroup === (key as any) && (
-                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div
+                              className="overflow-hidden transition-all duration-400 ease-in-out"
+                              style={{ maxHeight: openModuleGroup === (key as any) ? 1200 : 0, opacity: openModuleGroup === (key as any) ? 1 : 0 }}
+                              aria-hidden={openModuleGroup !== (key as any)}
+                            >
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-1">
                                 {groups[key].map((m) => {
                                   const qty = selectedModules[m.id] || 0
                                   const size = [m.width, m.height, m.depth].every(v => v) ? `${m.width}×${m.height}×${m.depth} мм` : undefined
@@ -849,7 +861,7 @@ export default function ProductPage() {
                                   )
                                 })}
                               </div>
-                            )}
+                            </div>
                           </div>
                         )
                       ))}
