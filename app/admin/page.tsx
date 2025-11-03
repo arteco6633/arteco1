@@ -36,6 +36,7 @@ export default function AdminHomePage() {
         {card('/admin/products', 'Товары', 'Список товаров и управление')}
         {card('/admin/categories', 'Категории', 'Структура каталога')}
         {card('/admin/banners', 'Баннеры', 'Промо и визуальные блоки')}
+        {card('/admin/modules', 'Модули кухонь', 'Создание, редактирование и импорт модулей')}
         {card('/admin/journal', 'Журнал', 'Статьи и публикации')}
       </div>
     </main>
