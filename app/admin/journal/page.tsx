@@ -453,6 +453,7 @@ export default function AdminJournalPage() {
                 excerpt: '',
                 content: '',
                 featured_image: '',
+                og_image: '',
                 author_name: '',
                 author_avatar: '',
                 category: '',
