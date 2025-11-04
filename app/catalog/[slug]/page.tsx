@@ -223,6 +223,13 @@ export default function CategoryPage() {
     }
   }
 
+  function applyAnySize(next: boolean) {
+    setOnlyCustom(next)
+    const sp = new URLSearchParams(Array.from(searchParams?.entries() || []))
+    if (next) sp.set('anysize', '1'); else sp.delete('anysize')
+    router.replace(`/catalog/${slug}?${sp.toString()}`)
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen">
@@ -267,22 +274,19 @@ export default function CategoryPage() {
         </nav>
 
         {/* Фильтры */}
-        <div className="mb-4 md:mb-6 flex items-center gap-4">
-          <label className="inline-flex items-center gap-2 cursor-pointer select-none">
-            <input
-              type="checkbox"
-              className="w-5 h-5"
-              checked={onlyCustom}
-              onChange={(e) => {
-                const next = e.target.checked
-                setOnlyCustom(next)
-                const sp = new URLSearchParams(Array.from(searchParams?.entries() || []))
-                if (next) sp.set('anysize', '1'); else sp.delete('anysize')
-                router.replace(`/catalog/${slug}?${sp.toString()}`)
-              }}
+        <div className="mb-4 md:mb-6 flex items-center gap-3">
+          <button
+            type="button"
+            role="switch"
+            aria-checked={onlyCustom}
+            onClick={() => applyAnySize(!onlyCustom)}
+            className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors duration-200 ${onlyCustom ? 'bg-black' : 'bg-gray-200'}`}
+          >
+            <span
+              className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform duration-200 ${onlyCustom ? 'translate-x-6' : 'translate-x-1'}`}
             />
-            <span className="text-sm md:text-base">Под любые размеры</span>
-          </label>
+          </button>
+          <span className="text-sm md:text-base select-none">Под любые размеры</span>
         </div>
 
         {/* Сетка товаров */}
