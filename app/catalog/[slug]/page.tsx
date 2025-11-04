@@ -311,7 +311,7 @@ export default function CategoryPage() {
                     <img
                       src={(images && images[currentImageIdx]) || (images && images[0]) || product.image_url || '/placeholder.jpg'}
                       alt={product.name}
-                      className="w-full aspect-square md:aspect-[4/3] object-cover rounded-xl md:group-hover:scale-[1.02] transition-transform duration-300"
+                      className="w-full aspect-[4/5] md:aspect-[4/3] object-cover rounded-xl md:group-hover:scale-[1.02] transition-transform duration-300"
                       loading="lazy"
                     />
                     {(product.is_new || product.is_featured) && (
