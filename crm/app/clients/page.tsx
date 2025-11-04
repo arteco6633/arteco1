@@ -42,7 +42,7 @@ export default function ClientsPage() {
       }
 
       // Загружаем информацию о партнерах
-      const partnerIds = [...new Set((data || []).map((c: Client) => c.partner_id))]
+      const partnerIds = Array.from(new Set((data || []).map((c: Client) => c.partner_id)))
       const { data: partnersData } = await supabaseServer
         .from('partners')
         .select('id, name, phone')
