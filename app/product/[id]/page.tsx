@@ -271,7 +271,7 @@ export default function ProductPage() {
       .filter(([_, qty]) => (qty || 0) > 0)
       .map(([id, qty]) => {
         const m = modules.find(x => x.id === Number(id))
-        return m ? { id: m.id, name: m.name, price: m.price, qty } : null
+        return m ? { id: m.id, name: m.name, price: m.price, qty, image_url: m.image_url || null } : null
       })
       .filter(Boolean)
     if (modulesOptions.length > 0) {

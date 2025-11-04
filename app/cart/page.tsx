@@ -189,10 +189,18 @@ export default function CartPage() {
                               <div className="mt-2 overflow-x-auto -mx-1 px-1">
                                 <div className="flex gap-2">
                                   {(it.options as any).modules.map((m: any, idx: number) => (
-                                    <div key={idx} className="w-[180px] flex-shrink-0 border rounded-lg p-2 bg-white">
-                                      <div className="font-medium text-sm truncate" title={m.name}>{m.name}</div>
-                                      <div className="text-xs text-gray-500 mt-1">Количество: {m.qty || 1}</div>
-                                      <div className="text-sm font-semibold mt-1">{(m.price * (m.qty || 1)).toLocaleString('ru-RU')} ₽</div>
+                                    <div key={idx} className="w-[180px] flex-shrink-0 border rounded-lg bg-white overflow-hidden">
+                                      <div className="relative w-full h-24 bg-gray-100">
+                                        {m.image_url ? (
+                                          // eslint-disable-next-line @next/next/no-img-element
+                                          <img src={m.image_url} alt={m.name} className="w-full h-full object-cover" />
+                                        ) : null}
+                                      </div>
+                                      <div className="p-2">
+                                        <div className="font-medium text-sm truncate" title={m.name}>{m.name}</div>
+                                        <div className="text-xs text-gray-500 mt-1">Количество: {m.qty || 1}</div>
+                                        <div className="text-sm font-semibold mt-1">{(m.price * (m.qty || 1)).toLocaleString('ru-RU')} ₽</div>
+                                      </div>
                                     </div>
                                   ))}
                                 </div>
