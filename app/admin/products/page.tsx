@@ -33,6 +33,7 @@ interface Product {
   category_id: number
   is_featured: boolean
   is_new: boolean
+  is_custom_size?: boolean
   related_products?: number[] | null
 }
 
@@ -104,6 +105,7 @@ export default function AdminProductsPage() {
     category_id: '',
     is_featured: false,
     is_new: false,
+    is_custom_size: false,
     related_products: [] as number[],
   })
 
@@ -241,6 +243,7 @@ export default function AdminProductsPage() {
       category_id: '',
       is_featured: false,
       is_new: false,
+      is_custom_size: false,
       related_products: [],
     })
     setShowModal(true)
@@ -287,6 +290,7 @@ export default function AdminProductsPage() {
       category_id: product.category_id.toString(),
       is_featured: product.is_featured,
       is_new: product.is_new,
+      is_custom_size: !!(product as any).is_custom_size,
       related_products: (product as any).related_products || [],
     })
     setShowModal(true)
@@ -519,6 +523,7 @@ export default function AdminProductsPage() {
         category_id: parseInt(formData.category_id),
         is_featured: formData.is_featured,
         is_new: formData.is_new,
+        is_custom_size: formData.is_custom_size,
         related_products: formData.related_products,
       }
 
@@ -1571,7 +1576,7 @@ export default function AdminProductsPage() {
                 </div>
 
                 {/* Флаги товара */}
-                <div className="mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
                   <label className="flex items-center p-4 border rounded-lg hover:bg-gray-50 cursor-pointer">
                     <input
                       type="checkbox"
@@ -1589,6 +1594,15 @@ export default function AdminProductsPage() {
                       onChange={(e) => setFormData({ ...formData, is_new: e.target.checked })}
                     />
                     <span className="font-semibold">Новинка</span>
+                  </label>
+                  <label className="flex items-center p-4 border rounded-lg hover:bg-gray-50 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      className="mr-3 w-5 h-5"
+                      checked={formData.is_custom_size}
+                      onChange={(e) => setFormData({ ...formData, is_custom_size: e.target.checked })}
+                    />
+                    <span className="font-semibold">Под любые размеры</span>
                   </label>
                 </div>
 

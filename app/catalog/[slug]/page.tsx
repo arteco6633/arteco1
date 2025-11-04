@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState, useRef } from 'react'
-import { useParams } from 'next/navigation'
+import { useParams, useSearchParams, useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import Link from 'next/link'
 import { useWishlist } from '@/components/WishlistContext'
@@ -17,6 +17,7 @@ interface Product {
   category_id: number
   is_featured: boolean
   is_new: boolean
+  is_custom_size?: boolean
 }
 
 interface Category {
@@ -30,10 +31,13 @@ export default function CategoryPage() {
   const params = useParams()
   const slug = params?.slug as string
   const { toggle, isInWishlist } = useWishlist()
+  const searchParams = useSearchParams()
+  const router = useRouter()
   
   const [category, setCategory] = useState<Category | null>(null)
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
+  const [onlyCustom, setOnlyCustom] = useState<boolean>(false)
   // Выбранные варианты цветов/изображений по товару (индекс)
   const [selectedVariantIndexById, setSelectedVariantIndexById] = useState<Record<number, number>>({})
   // Состояния для свайпа на мобильных
@@ -178,12 +182,13 @@ export default function CategoryPage() {
   }
 
   useEffect(() => {
-    if (slug) {
-      loadCategoryData()
-    }
-  }, [slug])
+    if (!slug) return
+    const flag = searchParams?.get('anysize') === '1'
+    setOnlyCustom(flag)
+    loadCategoryData(flag)
+  }, [slug, searchParams])
 
-  async function loadCategoryData() {
+  async function loadCategoryData(flag?: boolean) {
     try {
       // Загружаем категорию
       const { data: categoryData } = await supabase
@@ -200,11 +205,15 @@ export default function CategoryPage() {
       setCategory(categoryData)
 
       // Загружаем товары этой категории
-      const { data: productsData } = await supabase
+      let query = supabase
         .from('products')
         .select('*')
         .eq('category_id', categoryData.id)
         .order('id', { ascending: false })
+      if (flag) {
+        query = query.eq('is_custom_size', true)
+      }
+      const { data: productsData } = await query
 
       setProducts(productsData || [])
     } catch (error) {
@@ -256,6 +265,25 @@ export default function CategoryPage() {
             <li className="text-gray-900">{category.name}</li>
           </ol>
         </nav>
+
+        {/* Фильтры */}
+        <div className="mb-4 md:mb-6 flex items-center gap-4">
+          <label className="inline-flex items-center gap-2 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              className="w-5 h-5"
+              checked={onlyCustom}
+              onChange={(e) => {
+                const next = e.target.checked
+                setOnlyCustom(next)
+                const sp = new URLSearchParams(Array.from(searchParams?.entries() || []))
+                if (next) sp.set('anysize', '1'); else sp.delete('anysize')
+                router.replace(`/catalog/${slug}?${sp.toString()}`)
+              }}
+            />
+            <span className="text-sm md:text-base">Под любые размеры</span>
+          </label>
+        </div>
 
         {/* Сетка товаров */}
         {products.length === 0 ? (

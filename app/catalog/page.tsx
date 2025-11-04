@@ -16,6 +16,7 @@ interface Category {
 export default function CatalogPage() {
   const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
+  // Тумблер на корне каталога показываем как info, ведёт на первую категорию
 
   useEffect(() => {
     loadCategories()
