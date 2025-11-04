@@ -83,9 +83,9 @@ export default function PartnersPage() {
             </div>
 
             <div className="mt-6 md:mt-8">
-              <button className="w-full md:w-auto px-8 py-4 bg-black text-white rounded-[50px] hover:bg-gray-800 transition-colors font-semibold text-base md:text-lg">
+              <Link href="/partners/register" className="inline-block w-full md:w-auto px-8 py-4 bg-black text-white rounded-[50px] hover:bg-gray-800 transition-colors font-semibold text-base md:text-lg text-center">
                 Стать партнером
-              </button>
+              </Link>
             </div>
           </div>
         </section>
@@ -199,9 +199,9 @@ export default function PartnersPage() {
             </div>
 
             <div className="mt-6 md:mt-8">
-              <button className="w-full md:w-auto px-8 py-4 bg-blue-600 text-white rounded-[50px] hover:bg-blue-700 transition-colors font-semibold text-base md:text-lg">
+              <Link href="/partners/register" className="inline-block w-full md:w-auto px-8 py-4 bg-blue-600 text-white rounded-[50px] hover:bg-blue-700 transition-colors font-semibold text-base md:text-lg text-center">
                 Стать партнером-производителем
-              </button>
+              </Link>
             </div>
           </div>
         </section>
