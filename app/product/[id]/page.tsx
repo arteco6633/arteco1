@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useRef, useMemo } from 'react'
+import Image from 'next/image'
 import { useCart } from '@/components/CartContext'
 import { useWishlist } from '@/components/WishlistContext'
 import { useParams } from 'next/navigation'
@@ -372,7 +373,7 @@ export default function ProductPage() {
                           className={`rounded overflow-hidden ring-2 flex-shrink-0 w-20 ${activeImageIdx===idx ? 'ring-black' : 'ring-transparent hover:ring-gray-300'}`}
                           style={{ aspectRatio: '1', minWidth: '80px' }}
                         >
-                          <img src={url} alt={`Фото ${idx+1}`} className="w-full h-full object-cover" />
+                          <Image src={url} alt={`Фото ${idx+1}`} width={80} height={80} className="w-full h-full object-cover" />
                         </button>
                       ))}
                     </div>
@@ -482,18 +483,21 @@ export default function ProductPage() {
                     }}
                   >
                     {(product.images && product.images.length > 0 ? product.images : [product.image_url || '/placeholder.jpg']).map((imgUrl, idx) => (
-                      <img
-                        key={idx}
-                        src={imgUrl}
-                        alt={`${product.name} - фото ${idx + 1}`}
-                        className="w-full h-full flex-shrink-0 object-cover"
-                        loading={idx === 0 ? "eager" : "lazy"}
-                        onLoad={() => {
-                          if (idx === 0 && leftMainImageRef.current) {
-                            setSyncedRightHeight(leftMainImageRef.current.offsetHeight || 0)
-                          }
-                        }}
-                      />
+                      <div key={idx} className="relative w-full h-full flex-shrink-0">
+                        <Image
+                          src={imgUrl}
+                          alt={`${product.name} - фото ${idx + 1}`}
+                          fill
+                          sizes="(min-width: 1280px) 700px, (min-width: 768px) 50vw, 100vw"
+                          priority={idx === 0}
+                          className="object-cover"
+                          onLoad={() => {
+                            if (idx === 0 && leftMainImageRef.current) {
+                              setSyncedRightHeight(leftMainImageRef.current.offsetHeight || 0)
+                            }
+                          }}
+                        />
+                      </div>
                     ))}
                   </div>
                   
@@ -546,11 +550,11 @@ export default function ProductPage() {
                 </div>
 
                 {/* Миниатюры под главным фото на мобильных */}
-                {product.images && product.images.length > 1 && (
+                    {product.images && product.images.length > 1 && (
                   <div className="mt-3 md:hidden grid grid-cols-4 gap-2">
                     {product.images.slice(0,10).map((url, idx) => (
                       <button key={idx} type="button" onClick={() => setActiveImageIdx(idx)} className={`rounded overflow-hidden ring-2 ${activeImageIdx===idx ? 'ring-black' : 'ring-transparent'}`}>
-                        <img src={url} alt={`Фото ${idx+1}`} className="w-full h-16 object-cover" />
+                        <Image src={url} alt={`Фото ${idx+1}`} width={200} height={200} className="w-full h-16 object-cover" />
                       </button>
                     ))}
                   </div>

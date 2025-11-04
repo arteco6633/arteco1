@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import Link from 'next/link'
+import Image from 'next/image'
 
 interface Category {
   id: number
@@ -59,9 +60,9 @@ export default function CatalogPage() {
               href={`/catalog/${category.slug}`}
               className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg transition-all group flex flex-col items-center text-center p-4 md:p-5"
             >
-              <div className="w-full aspect-square max-w-[128px] md:max-w-[140px] rounded-xl overflow-hidden bg-gray-100 mb-3">
+              <div className="w-full aspect-square max-w-[128px] md:max-w-[140px] rounded-xl overflow-hidden bg-gray-100 mb-3 relative">
                 {category.image_url ? (
-                  <img src={category.image_url} alt={category.name} className="w-full h-full object-cover" loading="lazy" />
+                  <Image src={category.image_url} alt={category.name} fill sizes="(min-width: 1024px) 140px, 33vw" className="object-cover" />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-4xl">📦</div>
                 )}
