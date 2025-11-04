@@ -51,15 +51,21 @@ function Card({ product, onAdd }: { product: Product; onAdd?: (product: Product)
       className="bg-white rounded-xl shadow-md transition-all duration-300 group md:hover:-translate-y-1.5 md:hover:shadow-xl md:hover:ring-1 md:hover:ring-black/10 block cursor-pointer"
     >
       {/* Обёртка для изображения с клипом только картинки, не тени */}
-      <div className="relative rounded-t-xl overflow-hidden h-60 sm:h-72">
-        <Image
-          src={(product.images && product.images.length > 0) ? product.images[0] : (product.image_url || '/placeholder.jpg')}
-          alt={product.name}
-          fill
-          sizes="(min-width: 1280px) 25vw, (min-width: 768px) 33vw, 100vw"
-          className="object-cover transition-transform duration-300 ease-out md:group-hover:scale-[1.03]"
-          priority={false}
-        />
+      <div className="relative rounded-t-xl overflow-hidden h-60 sm:h-72 bg-gray-50">
+        {(() => {
+          const src = (product.images && product.images.length > 0) ? product.images[0] : (product.image_url || '/placeholder.jpg')
+          const hasMultiple = Array.isArray(product.images) && product.images.length > 1
+          return (
+            <Image
+              src={src}
+              alt={product.name}
+              fill
+              sizes="(min-width: 1280px) 25vw, (min-width: 768px) 33vw, 100vw"
+              className={`${hasMultiple ? 'object-cover' : 'object-contain'} transition-transform duration-300 ease-out md:group-hover:scale-[1.03]`}
+              priority={false}
+            />
+          )
+        })()}
         <button
           type="button"
           className={`absolute top-3 right-3 w-10 h-10 rounded-full bg-white/90 flex items-center justify-center md:hover:bg-white transition-colors ${inWishlist ? 'bg-white' : ''}`}
