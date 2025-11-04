@@ -27,6 +27,7 @@ export default function CartPage() {
   const [placing, setPlacing] = useState(false)
   const [errors, setErrors] = useState<{name?: boolean; phone?: boolean; privacy?: boolean; delivery?: boolean}>({})
   const [showFillModal, setShowFillModal] = useState(false)
+  const [modulesOpenByKey, setModulesOpenByKey] = useState<Record<string, boolean>>({})
 
   function toggleAcceptAll() {
     const next = !acceptAll
@@ -159,15 +160,44 @@ export default function CartPage() {
                         {/* Модули (если пользователь добавлял) */}
                         {Array.isArray((it.options as any).modules) && (it.options as any).modules.length > 0 && (
                           <div className="pt-1">
-                            <div className="font-medium text-gray-700">Модули:</div>
-                            <ul className="mt-1 space-y-0.5">
-                              {(it.options as any).modules.map((m: any, idx: number) => (
-                                <li key={idx} className="flex items-center justify-between gap-2">
-                                  <span className="truncate">— {m.name} {m.qty ? `× ${m.qty}` : ''}</span>
-                                  <span className="text-gray-700">{(m.price * (m.qty || 1)).toLocaleString('ru-RU')} ₽</span>
-                                </li>
-                              ))}
-                            </ul>
+                            <div className="flex items-center justify-between">
+                              <div className="font-medium text-gray-700">Модули</div>
+                              <button
+                                type="button"
+                                className="text-[11px] px-2 py-1 rounded-full border hover:bg-gray-50"
+                                onClick={() => setModulesOpenByKey(v => ({ ...v, [key]: !v[key] }))}
+                              >
+                                {modulesOpenByKey[key] ? 'Свернуть' : 'Развернуть'}
+                              </button>
+                            </div>
+                            {/* Превью в одну строку */}
+                            {!modulesOpenByKey[key] && (
+                              <div className="mt-1 flex flex-wrap gap-1">
+                                {(it.options as any).modules.slice(0,6).map((m: any, idx: number) => (
+                                  <span key={idx} className="inline-flex items-center gap-1 px-2 py-1 rounded bg-gray-100 text-gray-700">
+                                    <span className="truncate max-w-[140px]">{m.name}</span>
+                                    {m.qty ? <span className="text-gray-500">×{m.qty}</span> : null}
+                                  </span>
+                                ))}
+                                {(it.options as any).modules.length > 6 && (
+                                  <span className="px-2 py-1 rounded bg-gray-100 text-gray-500">+{(it.options as any).modules.length - 6}</span>
+                                )}
+                              </div>
+                            )}
+                            {/* Карточки модулей при раскрытии */}
+                            {modulesOpenByKey[key] && (
+                              <div className="mt-2 overflow-x-auto -mx-1 px-1">
+                                <div className="flex gap-2">
+                                  {(it.options as any).modules.map((m: any, idx: number) => (
+                                    <div key={idx} className="w-[180px] flex-shrink-0 border rounded-lg p-2 bg-white">
+                                      <div className="font-medium text-sm truncate" title={m.name}>{m.name}</div>
+                                      <div className="text-xs text-gray-500 mt-1">Количество: {m.qty || 1}</div>
+                                      <div className="text-sm font-semibold mt-1">{(m.price * (m.qty || 1)).toLocaleString('ru-RU')} ₽</div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
                           </div>
                         )}
                       </div>
