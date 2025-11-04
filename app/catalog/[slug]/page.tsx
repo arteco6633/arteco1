@@ -266,9 +266,20 @@ export default function CategoryPage() {
           <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-x-2 sm:gap-x-3 md:gap-x-6 gap-y-4 sm:gap-y-5 md:gap-y-7">
             {products.map((product) => {
               const images = (product as any).images as string[] | undefined
-              const imagesLength = images?.length || 0
               const currentImageIdx = selectedVariantIndexById[product.id] || 0
-              const hasMultipleImages = imagesLength > 1
+              
+              // Подготовка массива всех изображений для отображения
+              const imagesToDisplay = images && images.length > 0 
+                ? images 
+                : [product.image_url || '/placeholder.jpg']
+              
+              const hasMultipleImages = imagesToDisplay.length > 1
+              
+              // Безопасный индекс, чтобы не выйти за границы массива
+              const safeCurrentImageIdx = Math.min(
+                Math.max(0, currentImageIdx),
+                imagesToDisplay.length - 1
+              )
               
               return (
               <Link 
@@ -278,42 +289,53 @@ export default function CategoryPage() {
               >
                 <div className="relative z-10 p-0 md:px-3 md:pt-3 md:pb-3">
                   <div
-                    className="relative overflow-hidden"
+                    className="relative overflow-hidden rounded-xl aspect-[4/5] md:aspect-[4/3]"
                     style={{ 
                       // Используем pan-y для разрешения только вертикальной прокрутки
                       // pinch-zoom для масштабирования
                       // none для блокировки горизонтальной прокрутки страницы
-                      touchAction: imagesLength > 1 ? 'pan-y pinch-zoom' : 'auto',
+                      touchAction: imagesToDisplay.length > 1 ? 'pan-y pinch-zoom' : 'auto',
                       WebkitTouchCallout: 'none',
                       WebkitUserSelect: 'none',
                       userSelect: 'none',
                       // Добавляем will-change для оптимизации
-                      willChange: imagesLength > 1 ? 'transform' : 'auto'
+                      willChange: imagesToDisplay.length > 1 ? 'transform' : 'auto'
                     }}
-                    onMouseMove={createHoverScrubHandler(product.id, imagesLength)}
+                    onMouseMove={createHoverScrubHandler(product.id, imagesToDisplay.length)}
                     onMouseLeave={() => setSelectedVariantIndexById((prev) => ({ ...prev, [product.id]: 0 }))}
                     onTouchStart={(e) => {
-                      if (imagesLength > 1) {
+                      if (imagesToDisplay.length > 1) {
                         handleTouchStart(product.id, e)
                       }
                     }}
                     onTouchMove={(e) => {
-                      if (imagesLength > 1) {
+                      if (imagesToDisplay.length > 1) {
                         handleTouchMove(product.id, e)
                       }
                     }}
                     onTouchEnd={(e) => {
-                      if (imagesLength > 1) {
-                        handleTouchEnd(product.id, imagesLength)
+                      if (imagesToDisplay.length > 1) {
+                        handleTouchEnd(product.id, imagesToDisplay.length)
                       }
                     }}
                   >
-                    <img
-                      src={(images && images[currentImageIdx]) || (images && images[0]) || product.image_url || '/placeholder.jpg'}
-                      alt={product.name}
-                      className="w-full aspect-[4/5] md:aspect-[4/3] object-cover rounded-xl md:group-hover:scale-[1.02] transition-transform duration-300"
-                      loading="lazy"
-                    />
+                    {/* Контейнер для плавной анимации пролистывания */}
+                    <div
+                      className="flex w-full h-full transition-transform duration-500 ease-out"
+                      style={{ 
+                        transform: `translateX(-${safeCurrentImageIdx * 100}%)`
+                      }}
+                    >
+                      {imagesToDisplay.map((imgUrl, idx) => (
+                        <img
+                          key={idx}
+                          src={imgUrl}
+                          alt={`${product.name} - фото ${idx + 1}`}
+                          className="w-full h-full flex-shrink-0 object-cover md:group-hover:scale-[1.02] transition-transform duration-300"
+                          loading={idx === 0 ? "eager" : "lazy"}
+                        />
+                      ))}
+                    </div>
                     {(product.is_new || product.is_featured) && (
                       <div className="absolute top-2 left-2 flex gap-2">
                         {product.is_new && (
@@ -359,16 +381,16 @@ export default function CategoryPage() {
                     
                     {/* Индикаторы точек для свайпа на мобильных */}
                     {hasMultipleImages && (
-                      <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5 md:hidden">
-                        {Array.from({ length: Math.min(imagesLength, 5) }).map((_, idx) => (
+                      <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5 md:hidden z-10">
+                        {Array.from({ length: Math.min(imagesToDisplay.length, 5) }).map((_, idx) => (
                           <div
                             key={idx}
-                            className={`w-1.5 h-1.5 rounded-full transition-all ${
-                              currentImageIdx === idx ? 'bg-white w-4' : 'bg-white/50'
+                            className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${
+                              safeCurrentImageIdx === idx ? 'bg-white w-4' : 'bg-white/50'
                             }`}
                           />
                         ))}
-                        {imagesLength > 5 && (
+                        {imagesToDisplay.length > 5 && (
                           <div className="w-1.5 h-1.5 rounded-full bg-white/30" />
                         )}
                       </div>
