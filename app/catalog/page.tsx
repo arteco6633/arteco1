@@ -48,7 +48,7 @@ export default function CatalogPage() {
 
   return (
     <div className="min-h-screen">
-      <main className="mx-auto max-w-[1400px] 2xl:max-w-[1600px] px-4 md:px-3 xl:px-6 2xl:px-9 py-6 md:py-8">
+      <main className="mx-auto max-w-[1680px] 2xl:max-w-none px-4 md:px-2 xl:px-4 2xl:px-6 py-6 md:py-8">
         <h1 className="text-3xl md:text-4xl font-bold mb-6 md:mb-8">Каталог товаров</h1>
 
         {/* Сетка категорий */}
