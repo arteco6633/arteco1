@@ -121,10 +121,27 @@ function Card({ product, onAdd }: { product: Product; onAdd?: (product: Product)
 export default function ProductGrid({ products, splitTwoFirst = false, onlyFirstTwo = false, ctaRight, horizontal = false, onAdd }: Props) {
   if (horizontal) {
     return (
-      <div className="overflow-x-auto touch-pan-x -mx-4 px-4">
+      <div 
+        className="overflow-x-auto -mx-4 px-4"
+        style={{
+          // Разрешаем и горизонтальную, и вертикальную прокрутку
+          // Браузер сам определит направление свайпа
+          touchAction: 'pan-x pan-y pinch-zoom',
+          overscrollBehaviorX: 'contain',
+          overscrollBehaviorY: 'auto'
+        }}
+      >
         <div className="flex gap-4 sm:gap-6">
           {products.map((p) => (
-            <div key={p.id} className="w-[260px] sm:w-[300px] flex-shrink-0">
+            <div 
+              key={p.id} 
+              className="w-[260px] sm:w-[300px] flex-shrink-0"
+              style={{
+                // На карточках разрешаем вертикальную прокрутку страницы
+                // Это позволяет пользователю прокручивать страницу, касаясь карточек
+                touchAction: 'pan-y pinch-zoom'
+              }}
+            >
               <Card product={p} onAdd={onAdd} />
             </div>
           ))}
