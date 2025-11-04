@@ -92,7 +92,7 @@ export default function ProductPage() {
   const [openModuleGroup, setOpenModuleGroup] = useState<'base' | 'wall' | 'tall' | 'other' | null>('base')
   const finalPrice = useMemo(() => {
     if (!product) return 0
-    const base = Number(product.price) || 0
+    // Убираем основную цену товара (base), считаем только опции и модули
     const fill = (product.fillings && selectedFillingIdx != null && product.fillings[selectedFillingIdx]?.delta_price) || 0
     const hinge = (product.hinges && selectedHingeIdx != null && product.hinges[selectedHingeIdx]?.delta_price) || 0
     const drawer = (product.drawers && selectedDrawerIdx != null && product.drawers[selectedDrawerIdx]?.delta_price) || 0
@@ -101,7 +101,8 @@ export default function ProductPage() {
       const m = modules.find(x => x.id === Number(id))
       return sum + (m ? m.price * (qty || 0) : 0)
     }, 0)
-    return base + fill + hinge + drawer + lighting + modulesSum
+    // Цена формируется только из опций и модулей, без основной цены товара
+    return fill + hinge + drawer + lighting + modulesSum
   }, [product, selectedFillingIdx, selectedHingeIdx, selectedDrawerIdx, selectedLightingIdx, selectedModules, modules])
   const [openFilling, setOpenFilling] = useState(true)
   const [openHinge, setOpenHinge] = useState(false)
