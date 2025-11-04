@@ -197,9 +197,9 @@ export default function Navbar() {
 
             {/* Удалена ссылка "Все категории" по запросу */}
 
-            <a href="#promotions" className="text-black hover:text-gray-600 transition-colors">
-              Акции
-            </a>
+            <Link href="/partners" className="text-black hover:text-gray-600 transition-colors">
+              Партнерам
+            </Link>
             <Link href="/journal" className="text-black hover:text-gray-600 transition-colors">
               Журнал
             </Link>
@@ -341,7 +341,7 @@ export default function Navbar() {
                   {/* Быстрые ссылки */}
                   <div className="grid grid-cols-2 gap-3">
                     <Link href="/catalog" className="px-4 py-3 rounded-[50px] border bg-white hover:bg-gray-50 text-center font-medium" onClick={() => setIsMobileOpen(false)}>Каталог</Link>
-                    <a href="#promotions" className="px-4 py-3 rounded-[50px] border bg-white hover:bg-gray-50 text-center font-medium" onClick={() => setIsMobileOpen(false)}>Акции</a>
+                    <Link href="/partners" className="px-4 py-3 rounded-[50px] border bg-white hover:bg-gray-50 text-center font-medium" onClick={() => setIsMobileOpen(false)}>Партнерам</Link>
                     <Link href="/journal" className="px-4 py-3 rounded-[50px] border bg-white hover:bg-gray-50 text-center font-medium" onClick={() => setIsMobileOpen(false)}>Журнал</Link>
                     <a href="#showrooms" className="px-4 py-3 rounded-[50px] border bg-white hover:bg-gray-50 text-center font-medium" onClick={() => setIsMobileOpen(false)}>Шоурумы</a>
                   </div>
