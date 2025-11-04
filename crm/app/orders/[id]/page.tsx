@@ -318,12 +318,12 @@ export default function OrderDetailPage() {
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-500">Товары ({orderItems.length})</span>
-                    <span className="text-gray-900">{order.total_amount.toLocaleString('ru-RU')} ₽</span>
+                    <span className="text-gray-900">{(order.total_amount || order.total || 0).toLocaleString('ru-RU')} ₽</span>
                   </div>
                   <div className="border-t border-gray-200 pt-2 mt-2">
                     <div className="flex justify-between">
                       <span className="text-lg font-semibold text-gray-900">Итого</span>
-                      <span className="text-lg font-semibold text-gray-900">{order.total_amount.toLocaleString('ru-RU')} ₽</span>
+                      <span className="text-lg font-semibold text-gray-900">{(order.total_amount || order.total || 0).toLocaleString('ru-RU')} ₽</span>
                     </div>
                   </div>
                 </div>
