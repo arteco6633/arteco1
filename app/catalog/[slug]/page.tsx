@@ -74,9 +74,9 @@ export default function CategoryPage() {
     const diffX = Math.abs(touch.clientX - startX)
     const diffY = Math.abs(touch.clientY - startY)
     
-    // Определяем направление на раннем этапе (первые 10-15px движения)
-    // Более строгое условие: горизонтальное движение должно быть в 2.5 раза больше вертикального
-    if (diffX > 10 && diffX > diffY * 2.5) {
+    // Определяем направление на раннем этапе (первые 8-10px движения)
+    // Более строгое условие: горизонтальное движение должно быть в 3 раза больше вертикального
+    if (diffX > 8 && diffX > diffY * 3) {
       // Устанавливаем флаг горизонтального свайпа
       if (!isHorizontalSwipe[productId]) {
         setIsHorizontalSwipe((prev) => ({ ...prev, [productId]: true }))
@@ -84,9 +84,10 @@ export default function CategoryPage() {
       // Обновляем конечные позиции для обработки свайпа
       setTouchEndX((prev) => ({ ...prev, [productId]: touch.clientX }))
       setTouchEndY((prev) => ({ ...prev, [productId]: touch.clientY }))
-      // Не используем preventDefault() - вместо этого полагаемся на CSS touch-action
-      // CSS touch-action: pan-y pinch-zoom уже настроен, что блокирует горизонтальную прокрутку страницы
-    } else if (diffY > 10 && diffY > diffX * 1.5) {
+      // Предотвращаем прокрутку страницы при горизонтальном свайпе
+      e.preventDefault()
+      e.stopPropagation()
+    } else if (diffY > 8 && diffY > diffX * 2) {
       // Если это явно вертикальный свайп, сбрасываем флаг
       setIsHorizontalSwipe((prev) => ({ ...prev, [productId]: false }))
     }
@@ -115,14 +116,15 @@ export default function CategoryPage() {
     const duration = Date.now() - startTime
     
     // Определяем минимальное расстояние (меньше для быстрых свайпов)
-    const minDistance = duration < 300 ? 25 : 40 // Быстрый свайп требует меньше расстояния
-    const minVelocity = 0.25 // Минимальная скорость для быстрого свайпа
+    const minDistance = duration < 300 ? 20 : 35 // Быстрый свайп требует меньше расстояния
+    const minVelocity = 0.2 // Минимальная скорость для быстрого свайпа
     
     const distance = Math.abs(diff)
     const velocity = distance / Math.max(duration, 1)
     
-    // Учитываем только горизонтальные свайпы (если флаг установлен или движение горизонтальное)
-    const isDefinitelyHorizontal = isHorizontal || (Math.abs(diff) > Math.abs(diffY) * 1.5)
+    // Учитываем только горизонтальные свайпы
+    // Более строгие условия: флаг должен быть установлен ИЛИ горизонтальное движение должно быть в 2.5 раза больше вертикального
+    const isDefinitelyHorizontal = isHorizontal || (Math.abs(diff) > Math.abs(diffY) * 2.5)
     
     if (isDefinitelyHorizontal && (distance > minDistance || velocity > minVelocity)) {
       const currentIdx = selectedVariantIndexById[productId] || 0
@@ -293,13 +295,15 @@ export default function CategoryPage() {
                     style={{ 
                       // Используем pan-y для разрешения только вертикальной прокрутки
                       // pinch-zoom для масштабирования
-                      // none для блокировки горизонтальной прокрутки страницы
+                      // Блокируем горизонтальную прокрутку страницы при множественных изображениях
                       touchAction: imagesToDisplay.length > 1 ? 'pan-y pinch-zoom' : 'auto',
                       WebkitTouchCallout: 'none',
                       WebkitUserSelect: 'none',
                       userSelect: 'none',
                       // Добавляем will-change для оптимизации
-                      willChange: imagesToDisplay.length > 1 ? 'transform' : 'auto'
+                      willChange: imagesToDisplay.length > 1 ? 'transform' : 'auto',
+                      // Предотвращаем случайную прокрутку страницы
+                      overscrollBehaviorX: imagesToDisplay.length > 1 ? 'contain' : 'auto'
                     }}
                     onMouseMove={createHoverScrubHandler(product.id, imagesToDisplay.length)}
                     onMouseLeave={() => setSelectedVariantIndexById((prev) => ({ ...prev, [product.id]: 0 }))}
@@ -310,6 +314,22 @@ export default function CategoryPage() {
                     }}
                     onTouchMove={(e) => {
                       if (imagesToDisplay.length > 1) {
+                        // Проверяем направление движения перед вызовом handleTouchMove
+                        const touch = e.touches[0]
+                        const startX = touchStartX[product.id]
+                        const startY = touchStartY[product.id]
+                        
+                        if (startX !== undefined && startY !== undefined) {
+                          const diffX = Math.abs(touch.clientX - startX)
+                          const diffY = Math.abs(touch.clientY - startY)
+                          
+                          // Если это явно горизонтальный свайп (в 3 раза больше вертикального), предотвращаем прокрутку страницы
+                          if (diffX > 8 && diffX > diffY * 3) {
+                            e.preventDefault()
+                            e.stopPropagation()
+                          }
+                        }
+                        
                         handleTouchMove(product.id, e)
                       }
                     }}
