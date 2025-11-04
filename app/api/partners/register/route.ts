@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
-import bcrypt from 'bcryptjs'
+import * as bcrypt from 'bcryptjs'
 
 export async function POST(request: NextRequest) {
   try {
@@ -23,11 +23,20 @@ export async function POST(request: NextRequest) {
     }
 
     // Проверяем, существует ли партнер с таким телефоном
-    const { data: existingPartner } = await supabase
+    const { data: existingPartner, error: checkError } = await supabase
       .from('partners')
       .select('id')
       .eq('phone', phone)
-      .single()
+      .maybeSingle()
+
+    // Если ошибка не связана с отсутствием записи (PGRST116), значит что-то пошло не так
+    if (checkError && checkError.code !== 'PGRST116') {
+      console.error('Ошибка проверки существующего партнера:', checkError)
+      return NextResponse.json(
+        { error: 'Ошибка при проверке данных. Попробуйте позже.' },
+        { status: 500 }
+      )
+    }
 
     if (existingPartner) {
       return NextResponse.json(
@@ -58,8 +67,15 @@ export async function POST(request: NextRequest) {
 
     if (partnerError) {
       console.error('Ошибка создания партнера:', partnerError)
+      // Если таблица не существует, возвращаем более понятное сообщение
+      if (partnerError.code === '42P01' || partnerError.message?.includes('does not exist')) {
+        return NextResponse.json(
+          { error: 'Таблица партнеров не создана. Выполните SQL скрипт setup_partners.sql в Supabase.' },
+          { status: 500 }
+        )
+      }
       return NextResponse.json(
-        { error: 'Ошибка при регистрации. Попробуйте позже.' },
+        { error: `Ошибка при регистрации: ${partnerError.message || 'Попробуйте позже.'}` },
         { status: 500 }
       )
     }
@@ -79,7 +95,7 @@ export async function POST(request: NextRequest) {
   } catch (error: any) {
     console.error('Ошибка регистрации партнера:', error)
     return NextResponse.json(
-      { error: 'Ошибка при регистрации' },
+      { error: `Ошибка при регистрации: ${error?.message || 'Неизвестная ошибка'}` },
       { status: 500 }
     )
   }
