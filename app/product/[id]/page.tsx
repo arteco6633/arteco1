@@ -519,7 +519,7 @@ export default function ProductPage() {
           {/* Информация о товаре */}
           <div className="relative flex flex-col md:overflow-hidden" style={isDesktop && syncedRightHeight ? { height: `${syncedRightHeight}px` } : {}}>
             {/* Фиксированный хедер с названием и ценой */}
-            <div className="md:sticky md:top-0 md:z-10 bg-white md:pb-4 md:border-b md:border-gray-200 md:mb-4">
+            <div className="sticky top-0 z-10 bg-white pb-4 border-b border-gray-200 mb-4">
             {category && (
               <Link
                 href={`/catalog/${category.slug}`}
@@ -546,11 +546,11 @@ export default function ProductPage() {
                   ⭐ Рекомендуем
                 </span>
               )}
-              </div>
+            </div>
             </div>
 
             {/* Прокручиваемая область с контентом */}
-            <div className="flex-1 md:overflow-y-auto md:h-full md:pr-1">
+            <div className="flex-1 overflow-y-auto md:h-full md:pr-1">
               {product.description && (
                 <p className="text-gray-600 text-base sm:text-lg leading-snug mb-4">{product.description}</p>
               )}
@@ -1088,7 +1088,7 @@ export default function ProductPage() {
                 ) : (
                   <div className="text-gray-500">Видео отсутствуют</div>
                 )}
-              </div>
+            </div>
 
               <div className="md:col-span-7 md:sticky md:top-24 md:max-h-[70vh] md:overflow-auto pr-1">
                 <h3 className="text-lg font-semibold mb-4">Характеристики</h3>
