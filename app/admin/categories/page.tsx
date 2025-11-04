@@ -78,8 +78,16 @@ export default function AdminCategoriesPage() {
   async function saveOrder() {
     // присваиваем позиции от 1
     const payload = categories.map((c, i) => ({ id: c.id, position: i + 1 }))
-    const { error } = await supabase.from('categories').upsert(payload, { onConflict: 'id' })
-    if (error) {
+    try {
+      await Promise.all(
+        payload.map((row) =>
+          supabase
+            .from('categories')
+            .update({ position: row.position })
+            .eq('id', row.id)
+        )
+      )
+    } catch (error) {
       console.error('Ошибка сохранения порядка:', error)
       alert('Не удалось сохранить порядок категорий')
       return
