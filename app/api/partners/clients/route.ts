@@ -15,6 +15,28 @@ export async function POST(request: NextRequest) {
     }
 
     // Создаем клиента
+    console.log('Попытка вставки в таблицу partner_clients:', {
+      partnerId,
+      name,
+      phone,
+      email,
+      notes
+    })
+    
+    // Проверяем существование таблицы перед вставкой
+    const { data: tableCheck, error: tableCheckError } = await supabaseServer
+      .from('partner_clients')
+      .select('id')
+      .limit(0)
+    
+    if (tableCheckError && (tableCheckError.code === '42P01' || tableCheckError.message?.includes('does not exist'))) {
+      console.error('Таблица partner_clients не существует!')
+      return NextResponse.json(
+        { error: 'Таблица partner_clients не создана. Выполните SQL скрипт setup_partners.sql в Supabase SQL Editor.' },
+        { status: 500 }
+      )
+    }
+    
     const { data: client, error: clientError } = await supabaseServer
       .from('partner_clients')
       .insert({
@@ -29,6 +51,12 @@ export async function POST(request: NextRequest) {
 
     if (clientError) {
       console.error('Ошибка создания клиента:', clientError)
+      console.error('Детали ошибки:', {
+        code: clientError.code,
+        message: clientError.message,
+        details: clientError.details,
+        hint: clientError.hint
+      })
       // Если таблица не существует, возвращаем более понятное сообщение
       if (clientError.code === '42P01' || clientError.message?.includes('does not exist')) {
         return NextResponse.json(

@@ -54,6 +54,28 @@ export async function POST(request: NextRequest) {
     console.log('Пароль захеширован для телефона:', phone)
 
     // Создаем партнера (используем нормализованный телефон для единообразия)
+    console.log('Попытка вставки в таблицу partners:', {
+      phone: normalizedPhone,
+      name,
+      email,
+      companyName,
+      partnerType
+    })
+    
+    // Проверяем существование таблицы перед вставкой
+    const { data: tableCheck, error: tableCheckError } = await supabaseServer
+      .from('partners')
+      .select('id')
+      .limit(0)
+    
+    if (tableCheckError && (tableCheckError.code === '42P01' || tableCheckError.message?.includes('does not exist'))) {
+      console.error('Таблица partners не существует!')
+      return NextResponse.json(
+        { error: 'Таблица partners не создана. Выполните SQL скрипт setup_partners.sql в Supabase SQL Editor.' },
+        { status: 500 }
+      )
+    }
+    
     const { data: partner, error: partnerError } = await supabaseServer
       .from('partners')
       .insert({
@@ -71,6 +93,12 @@ export async function POST(request: NextRequest) {
 
     if (partnerError) {
       console.error('Ошибка создания партнера:', partnerError)
+      console.error('Детали ошибки:', {
+        code: partnerError.code,
+        message: partnerError.message,
+        details: partnerError.details,
+        hint: partnerError.hint
+      })
       // Если таблица не существует, возвращаем более понятное сообщение
       if (partnerError.code === '42P01' || partnerError.message?.includes('does not exist')) {
         return NextResponse.json(
