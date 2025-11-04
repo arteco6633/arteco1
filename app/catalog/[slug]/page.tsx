@@ -128,15 +128,15 @@ export default function CategoryPage() {
       const currentIdx = selectedVariantIndexById[productId] || 0
       
       if (diff > 0) {
-        // Свайп влево - следующее изображение
-        const nextIdx = Math.min(imagesLength - 1, currentIdx + 1)
+        // Свайп влево - следующее изображение (бесконечный цикл)
+        const nextIdx = currentIdx === imagesLength - 1 ? 0 : currentIdx + 1
         setSelectedVariantIndexById((prev) => ({
           ...prev,
           [productId]: nextIdx
         }))
       } else {
-        // Свайп вправо - предыдущее изображение
-        const prevIdx = Math.max(0, currentIdx - 1)
+        // Свайп вправо - предыдущее изображение (бесконечный цикл)
+        const prevIdx = currentIdx === 0 ? imagesLength - 1 : currentIdx - 1
         setSelectedVariantIndexById((prev) => ({
           ...prev,
           [productId]: prevIdx
@@ -321,7 +321,7 @@ export default function CategoryPage() {
                   >
                     {/* Контейнер для плавной анимации пролистывания */}
                     <div
-                      className="flex w-full h-full transition-transform duration-500 ease-out"
+                      className="flex w-full h-full transition-transform duration-700 ease-in-out"
                       style={{ 
                         transform: `translateX(-${safeCurrentImageIdx * 100}%)`
                       }}
@@ -379,19 +379,19 @@ export default function CategoryPage() {
                       </svg>
                     </button>
                     
-                    {/* Индикаторы точек для свайпа на мобильных */}
+                    {/* Индикаторы точек пагинации для всех устройств */}
                     {hasMultipleImages && (
-                      <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5 md:hidden z-10">
-                        {Array.from({ length: Math.min(imagesToDisplay.length, 5) }).map((_, idx) => (
+                      <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
+                        {Array.from({ length: Math.min(imagesToDisplay.length, 8) }).map((_, idx) => (
                           <div
                             key={idx}
-                            className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${
-                              safeCurrentImageIdx === idx ? 'bg-white w-4' : 'bg-white/50'
+                            className={`w-1.5 h-1.5 md:w-2 md:h-2 rounded-full transition-all duration-300 ${
+                              safeCurrentImageIdx === idx ? 'bg-white w-4 md:w-5' : 'bg-white/50'
                             }`}
                           />
                         ))}
-                        {imagesToDisplay.length > 5 && (
-                          <div className="w-1.5 h-1.5 rounded-full bg-white/30" />
+                        {imagesToDisplay.length > 8 && (
+                          <div className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-white/30" />
                         )}
                       </div>
                     )}
