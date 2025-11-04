@@ -69,6 +69,8 @@ export default function ProductPage() {
   const [selectedDrawerIdx, setSelectedDrawerIdx] = useState<number | null>(null)
   const [selectedLightingIdx, setSelectedLightingIdx] = useState<number | null>(null)
   const [selectedColorIdx, setSelectedColorIdx] = useState<number | null>(null)
+  // Плавное появление изображений после полной загрузки
+  const [loadedImages, setLoadedImages] = useState<Record<number, boolean>>({})
   // Хук для отслеживания брейкпоинта (избегаем разницы SSR/CSR)
   function useMediaQuery(query: string) {
     const [matches, setMatches] = useState<boolean>(false)
@@ -489,6 +491,9 @@ export default function ProductPage() {
                   >
                     {(product.images && product.images.length > 0 ? product.images : [product.image_url || '/placeholder.jpg']).map((imgUrl, idx) => (
                       <div key={idx} className="relative w-full h-full flex-shrink-0">
+                        {!loadedImages[idx] && (
+                          <div className="absolute inset-0 bg-gray-100 animate-pulse" />
+                        )}
                         <Image
                           src={imgUrl}
                           alt={`${product.name} - фото ${idx + 1}`}
@@ -496,12 +501,13 @@ export default function ProductPage() {
                           sizes="(min-width: 1280px) 700px, (min-width: 768px) 50vw, 100vw"
                           quality={95}
                           priority={idx === 0}
-                          className="object-cover"
+                          className={`object-cover transition-opacity duration-300 ${loadedImages[idx] ? 'opacity-100' : 'opacity-0'}`}
                           onLoad={() => {
                             if (idx === 0 && leftMainImageRef.current) {
                               setSyncedRightHeight(leftMainImageRef.current.offsetHeight || 0)
                             }
                           }}
+                          onLoadingComplete={() => setLoadedImages((prev) => ({ ...prev, [idx]: true }))}
                         />
                       </div>
                     ))}
