@@ -518,8 +518,8 @@ export default function ProductPage() {
 
           {/* Информация о товаре */}
           <div className="relative flex flex-col md:overflow-hidden" style={isDesktop && syncedRightHeight ? { height: `${syncedRightHeight}px` } : {}}>
-            {/* Фиксированный хедер с названием и ценой */}
-            <div className="sticky top-0 z-10 bg-white pb-4 border-b border-gray-200 mb-4 -mx-4 px-4 md:mx-0 md:px-0">
+            {/* Фиксированный хедер с названием и ценой (только на десктопе) */}
+            <div className="hidden md:block sticky top-0 z-10 bg-white pb-4 border-b border-gray-200 mb-4">
             {category && (
               <Link
                 href={`/catalog/${category.slug}`}
@@ -890,10 +890,18 @@ export default function ProductPage() {
                 </div>
               </div>
 
+            {/* Sticky блок с названием и ценой на мобильных (над кнопками) */}
+            <div className="md:hidden sticky bottom-[140px] z-10 bg-white pt-4 pb-2 border-t border-gray-200 -mx-4 px-4">
+              <h1 className="text-2xl font-bold mb-1 leading-tight">{product.name}</h1>
+              <div className="text-3xl font-bold text-black">
+                {finalPrice.toLocaleString('ru-RU')} ₽
+              </div>
+            </div>
+
             {/* Низ блока: количество и кнопка, закреплены вне скролла */}
             <div className="mt-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3 sm:gap-4">
               {/* Вишлист на мобильных рядом с "В корзину", на десктопе отдельно */}
-              <div className="flex md:hidden items-center gap-2 justify-end">
+              <div className="flex md:hidden sticky bottom-0 z-20 bg-white pt-4 pb-4 border-t border-gray-200 -mx-4 px-4 items-center gap-2 justify-end w-full">
                 <button
                   type="button"
                   aria-label={product && isInWishlist(product.id) ? 'Удалить из избранного' : 'Добавить в избранное'}
