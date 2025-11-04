@@ -132,9 +132,9 @@ export default function PartnersPage() {
             </div>
 
             <div className="mt-6 md:mt-8">
-              <button className="w-full md:w-auto px-8 py-4 bg-black text-white rounded-[50px] hover:bg-gray-800 transition-colors font-semibold text-base md:text-lg">
+              <Link href="/partners/login" className="inline-block w-full md:w-auto px-8 py-4 bg-black text-white rounded-[50px] hover:bg-gray-800 transition-colors font-semibold text-base md:text-lg text-center">
                 Войти в личный кабинет
-              </button>
+              </Link>
             </div>
           </div>
         </section>
