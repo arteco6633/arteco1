@@ -63,16 +63,23 @@ export default function CatalogPage() {
             >
               <div className="w-full aspect-square max-w-none md:max-w-[140px] rounded-xl overflow-hidden bg-gray-100 mb-3 relative">
                 {category.image_url ? (
-                  <Image src={category.image_url} alt={category.name} fill sizes="(min-width: 1024px) 140px, 33vw" className="object-cover" />
+                  <Image
+                    src={category.image_url}
+                    alt={category.name}
+                    fill
+                    sizes="(max-width: 640px) 50vw, (min-width: 1024px) 180px, 33vw"
+                    className="object-cover"
+                    quality={90}
+                  />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-4xl">📦</div>
                 )}
               </div>
-              <h3 className="text-lg md:text-xl font-semibold mb-2 group-hover:text-black transition-colors text-center">
+              <h3 className="text-[15px] sm:text-base md:text-lg font-semibold leading-snug mb-1 group-hover:text-black transition-colors text-center">
                 {category.name}
               </h3>
               {category.description && (
-                <p className="text-gray-600 text-center text-sm leading-snug line-clamp-2">{category.description}</p>
+                <p className="text-gray-500 text-center text-xs sm:text-sm leading-snug line-clamp-2">{category.description}</p>
               )}
             </Link>
           ))}
