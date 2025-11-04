@@ -813,7 +813,7 @@ export default function ProductPage() {
                       <span className="font-semibold">Конструктор модулей</span>
                       <span className="text-sm text-gray-500">Добавляйте модули — цена обновляется</span>
                     </div>
-                    <div className="px-2 sm:px-4 pb-4 bg-white space-y-6">
+                    <div className="px-2 sm:px-4 pb-4 bg-white space-y-4">
                       {order.map(([key, title]) => (
                         groups[key].length > 0 && (
                           <div key={key}>
@@ -821,7 +821,7 @@ export default function ProductPage() {
                             <button
                               type="button"
                               onClick={() => setOpenModuleGroup(key as any)}
-                              className="w-full px-4 py-3 flex items-center justify-between bg-gray-50 hover:bg-gray-100 rounded-lg border mb-2"
+                              className="w-full px-4 py-3 flex items-center justify-between bg-gray-50 hover:bg-gray-100 rounded-[50px] border"
                             >
                               <span className="font-semibold text-gray-800">{title}</span>
                               <span className="text-xl">{openModuleGroup === (key as any) ? '−' : '+'}</span>
