@@ -60,6 +60,9 @@ export default function AdminProductsPage() {
   const filesInputRef = useRef<HTMLInputElement | null>(null)
   const [isDraggingFiles, setIsDraggingFiles] = useState(false)
   const [uploadingFiles, setUploadingFiles] = useState(false)
+  // Состояния для drag-and-drop перестановки изображений
+  const [draggedImageIndex, setDraggedImageIndex] = useState<number | null>(null)
+  const [dragOverImageIndex, setDragOverImageIndex] = useState<number | null>(null)
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -648,9 +651,56 @@ export default function AdminProductsPage() {
                   {formData.images.length > 0 && (
                     <div className="mt-3 grid grid-cols-5 gap-2">
                       {formData.images.map((url, idx) => (
-                        <div key={idx} className="relative">
-                          <img src={url} className="w-full h-20 object-cover rounded" />
-                          <button type="button" className="absolute -top-2 -right-2 bg-white rounded-full border w-6 h-6 text-xs" onClick={() => setFormData({ ...formData, images: formData.images.filter((_,i)=>i!==idx) })}>×</button>
+                        <div 
+                          key={idx} 
+                          className={`relative cursor-move transition-opacity ${
+                            draggedImageIndex === idx ? 'opacity-50' : ''
+                          } ${dragOverImageIndex === idx ? 'ring-2 ring-blue-500' : ''}`}
+                          draggable
+                          onDragStart={(e) => {
+                            setDraggedImageIndex(idx)
+                            e.dataTransfer.effectAllowed = 'move'
+                          }}
+                          onDragOver={(e) => {
+                            e.preventDefault()
+                            e.dataTransfer.dropEffect = 'move'
+                            if (draggedImageIndex !== null && draggedImageIndex !== idx) {
+                              setDragOverImageIndex(idx)
+                            }
+                          }}
+                          onDragLeave={() => {
+                            setDragOverImageIndex(null)
+                          }}
+                          onDrop={(e) => {
+                            e.preventDefault()
+                            if (draggedImageIndex !== null && draggedImageIndex !== idx) {
+                              const newImages = [...formData.images]
+                              const [draggedItem] = newImages.splice(draggedImageIndex, 1)
+                              newImages.splice(idx, 0, draggedItem)
+                              setFormData({ ...formData, images: newImages })
+                            }
+                            setDraggedImageIndex(null)
+                            setDragOverImageIndex(null)
+                          }}
+                          onDragEnd={() => {
+                            setDraggedImageIndex(null)
+                            setDragOverImageIndex(null)
+                          }}
+                        >
+                          <img src={url} className="w-full h-20 object-cover rounded pointer-events-none" alt={`Изображение ${idx + 1}`} />
+                          <button 
+                            type="button" 
+                            className="absolute -top-2 -right-2 bg-white rounded-full border w-6 h-6 text-xs hover:bg-red-50 z-10" 
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setFormData({ ...formData, images: formData.images.filter((_,i)=>i!==idx) })
+                            }}
+                          >
+                            ×
+                          </button>
+                          <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs text-center py-1 rounded-b">
+                            {idx + 1}
+                          </div>
                         </div>
                       ))}
                     </div>
