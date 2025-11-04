@@ -388,7 +388,7 @@ export default function CategoryPage() {
                         />
                       ))}
                     </div>
-                    {(product.is_new || product.is_featured) && (
+                    {(product.is_new || product.is_featured || (product as any).is_custom_size) && (
                       <div className="absolute top-2 left-2 flex gap-2">
                         {product.is_new && (
                           <span className="bg-green-500 text-white px-2 py-1 rounded text-xs font-semibold">
@@ -398,6 +398,11 @@ export default function CategoryPage() {
                         {product.is_featured && (
                           <span className="bg-blue-500 text-white px-2 py-1 rounded text-xs font-semibold">
                             ⭐
+                          </span>
+                        )}
+                        {(product as any).is_custom_size && (
+                          <span className="bg-black text-white px-2 py-1 rounded text-[11px] font-semibold whitespace-nowrap">
+                            Под любые размеры
                           </span>
                         )}
                       </div>

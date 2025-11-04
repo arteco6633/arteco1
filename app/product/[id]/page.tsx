@@ -41,6 +41,7 @@ interface Product {
   category_id: number
   is_featured: boolean
   is_new: boolean
+  is_custom_size?: boolean
   related_products?: number[] | null
 }
 
@@ -595,6 +596,11 @@ export default function ProductPage() {
               {product.is_featured && (
                 <span className="bg-blue-500 text-white px-3 py-1 rounded-full text-sm font-semibold">
                   ⭐ Рекомендуем
+                </span>
+              )}
+              {(product as any).is_custom_size && (
+                <span className="bg-black text-white px-3 py-1 rounded-full text-sm font-semibold">
+                  Под любые размеры
                 </span>
               )}
             </div>
