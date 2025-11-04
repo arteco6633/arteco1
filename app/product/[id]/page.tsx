@@ -442,10 +442,14 @@ export default function ProductPage() {
                     const isDefinitelyHorizontal = isHorizontal || (Math.abs(dx) > Math.abs(dy) * 1.5)
                     
                     if (isDefinitelyHorizontal && (distance > minDistance || velocity > minVelocity)) {
-                      if (dx < 0 && activeImageIdx < product.images.length - 1) {
-                        setActiveImageIdx(activeImageIdx + 1)
-                      } else if (dx > 0 && activeImageIdx > 0) {
-                        setActiveImageIdx(activeImageIdx - 1)
+                      if (dx < 0) {
+                        // Свайп влево - следующее изображение (бесконечный цикл)
+                        const nextIdx = activeImageIdx === product.images.length - 1 ? 0 : activeImageIdx + 1
+                        setActiveImageIdx(nextIdx)
+                      } else if (dx > 0) {
+                        // Свайп вправо - предыдущее изображение (бесконечный цикл)
+                        const prevIdx = activeImageIdx === 0 ? product.images.length - 1 : activeImageIdx - 1
+                        setActiveImageIdx(prevIdx)
                       }
                     }
                     
@@ -456,39 +460,44 @@ export default function ProductPage() {
                     isHorizontalSwipeRef.current = false
                   }}
                 >
-                  <img
-                    src={(product.images && product.images[activeImageIdx]) || (product.images && product.images[0]) || product.image_url || '/placeholder.jpg'}
-              alt={product.name}
-                    className="w-full h-full object-cover transition-transform duration-300 ease-out"
-                    onLoad={() => {
-                      if (leftMainImageRef.current) {
-                        setSyncedRightHeight(leftMainImageRef.current.offsetHeight || 0)
-                      }
+                  {/* Контейнер для плавной анимации пролистывания */}
+                  <div
+                    className="flex w-full h-full transition-transform duration-700 ease-in-out"
+                    style={{ 
+                      transform: `translateX(-${activeImageIdx * 100}%)`
                     }}
-                  />
+                  >
+                    {(product.images && product.images.length > 0 ? product.images : [product.image_url || '/placeholder.jpg']).map((imgUrl, idx) => (
+                      <img
+                        key={idx}
+                        src={imgUrl}
+                        alt={`${product.name} - фото ${idx + 1}`}
+                        className="w-full h-full flex-shrink-0 object-cover"
+                        loading={idx === 0 ? "eager" : "lazy"}
+                        onLoad={() => {
+                          if (idx === 0 && leftMainImageRef.current) {
+                            setSyncedRightHeight(leftMainImageRef.current.offsetHeight || 0)
+                          }
+                        }}
+                      />
+                    ))}
+                  </div>
+                  
+                  {/* Точки пагинации */}
                   {product.images && product.images.length > 1 && (
-                    <>
-                      {/* Кнопка "Назад" */}
-                      {activeImageIdx > 0 && (
-                        <button
-                          type="button"
-                          onClick={() => setActiveImageIdx(activeImageIdx - 1)}
-                          className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white w-10 h-10 rounded-full flex items-center justify-center transition-colors z-10"
-                        >
-                          ←
-                        </button>
+                    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-10">
+                      {product.images.slice(0, 10).map((_, idx) => (
+                        <div
+                          key={idx}
+                          className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                            activeImageIdx === idx ? 'bg-white w-6' : 'bg-white/50'
+                          }`}
+                        />
+                      ))}
+                      {product.images.length > 10 && (
+                        <div className="w-2 h-2 rounded-full bg-white/30" />
                       )}
-                      {/* Кнопка "Вперёд" */}
-                      {activeImageIdx < product.images.length - 1 && (
-                        <button
-                          type="button"
-                          onClick={() => setActiveImageIdx(activeImageIdx + 1)}
-                          className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white w-10 h-10 rounded-full flex items-center justify-center transition-colors z-10"
-                        >
-                          →
-                        </button>
-                      )}
-                    </>
+                    </div>
                   )}
                 </div>
 
