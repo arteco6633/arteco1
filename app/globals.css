@@ -47,6 +47,16 @@ img, video, svg { max-width: 100%; height: auto; display: block; }
   .clip-x { overflow-x: clip; }
 }
 
+/* Утилита для скрытия скроллбара */
+.scrollbar-hide {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none; /* Chrome/Safari/Opera */
+}
+
 /* Контейнер с изоляцией по ширине */
 .contain-inline { contain: inline-size; }
 

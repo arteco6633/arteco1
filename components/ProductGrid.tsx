@@ -122,13 +122,14 @@ export default function ProductGrid({ products, splitTwoFirst = false, onlyFirst
   if (horizontal) {
     return (
       <div 
-        className="overflow-x-auto -mx-4 px-4"
+        className="overflow-x-auto -mx-4 px-4 scrollbar-hide"
         style={{
           // Разрешаем и горизонтальную, и вертикальную прокрутку
-          // Браузер сам определит направление свайпа
+          // Браузер определит направление свайпа на основе движения
           touchAction: 'pan-x pan-y pinch-zoom',
           overscrollBehaviorX: 'contain',
-          overscrollBehaviorY: 'auto'
+          overscrollBehaviorY: 'auto',
+          WebkitOverflowScrolling: 'touch'
         }}
       >
         <div className="flex gap-4 sm:gap-6">
@@ -136,11 +137,6 @@ export default function ProductGrid({ products, splitTwoFirst = false, onlyFirst
             <div 
               key={p.id} 
               className="w-[260px] sm:w-[300px] flex-shrink-0"
-              style={{
-                // На карточках разрешаем вертикальную прокрутку страницы
-                // Это позволяет пользователю прокручивать страницу, касаясь карточек
-                touchAction: 'pan-y pinch-zoom'
-              }}
             >
               <Card product={p} onAdd={onAdd} />
             </div>
