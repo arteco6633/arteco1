@@ -686,7 +686,7 @@ export default function ProductPage() {
                           >
                             <div className="flex items-start gap-2 sm:gap-3">
                               {f.image_url ? (
-                                <img src={f.image_url} alt={f.name || 'Вариант'} className="w-24 h-24 sm:w-32 sm:h-32 min-w-[96px] sm:min-w-[128px] rounded object-cover border border-gray-200 flex-shrink-0" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
+                                <Image src={f.image_url} alt={f.name || 'Вариант'} width={128} height={128} className="w-24 h-24 sm:w-32 sm:h-32 min-w-[96px] sm:min-w-[128px] rounded object-cover border border-gray-200 flex-shrink-0" />
                               ) : (
                                 <div className="w-24 h-24 sm:w-32 sm:h-32 min-w-[96px] sm:min-w-[128px] rounded bg-gray-100 border border-gray-200 flex items-center justify-center text-gray-400 text-xs flex-shrink-0">Нет фото</div>
                               )}
@@ -734,7 +734,7 @@ export default function ProductPage() {
                           >
                             <div className="flex items-start gap-2 sm:gap-3">
                               {h.image_url ? (
-                                <img src={h.image_url} alt={h.name || 'Вариант'} className="w-24 h-24 sm:w-32 sm:h-32 min-w-[96px] sm:min-w-[128px] rounded object-cover border border-gray-200 flex-shrink-0" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
+                                <Image src={h.image_url} alt={h.name || 'Вариант'} width={128} height={128} className="w-24 h-24 sm:w-32 sm:h-32 min-w-[96px] sm:min-w-[128px] rounded object-cover border border-gray-200 flex-shrink-0" />
                               ) : (
                                 <div className="w-24 h-24 sm:w-32 sm:h-32 min-w-[96px] sm:min-w-[128px] rounded bg-gray-100 border border-gray-200 flex items-center justify-center text-gray-400 text-xs flex-shrink-0">Нет фото</div>
                               )}
@@ -782,7 +782,7 @@ export default function ProductPage() {
                           >
                             <div className="flex items-start gap-2 sm:gap-3">
                               {d.image_url ? (
-                                <img src={d.image_url} alt={d.name || 'Вариант'} className="w-24 h-24 sm:w-32 sm:h-32 min-w-[96px] sm:min-w-[128px] rounded object-cover border border-gray-200 flex-shrink-0" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
+                                <Image src={d.image_url} alt={d.name || 'Вариант'} width={128} height={128} className="w-24 h-24 sm:w-32 sm:h-32 min-w-[96px] sm:min-w-[128px] rounded object-cover border border-gray-200 flex-shrink-0" />
                               ) : (
                                 <div className="w-24 h-24 sm:w-32 sm:h-32 min-w-[96px] sm:min-w-[128px] rounded bg-gray-100 border border-gray-200 flex items-center justify-center text-gray-400 text-xs flex-shrink-0">Нет фото</div>
                               )}
@@ -830,7 +830,7 @@ export default function ProductPage() {
                           >
                             <div className="flex items-start gap-2 sm:gap-3">
                               {l.image_url ? (
-                                <img src={l.image_url} alt={l.name || 'Вариант'} className="w-24 h-24 sm:w-32 sm:h-32 min-w-[96px] sm:min-w-[128px] rounded object-cover border border-gray-200 flex-shrink-0" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
+                                <Image src={l.image_url} alt={l.name || 'Вариант'} width={128} height={128} className="w-24 h-24 sm:w-32 sm:h-32 min-w-[96px] sm:min-w-[128px] rounded object-cover border border-gray-200 flex-shrink-0" />
                               ) : (
                                 <div className="w-24 h-24 sm:w-32 sm:h-32 min-w-[96px] sm:min-w-[128px] rounded bg-gray-100 border border-gray-200 flex items-center justify-center text-gray-400 text-xs flex-shrink-0">Нет фото</div>
                               )}
@@ -903,7 +903,7 @@ export default function ProductPage() {
                                       <div className="flex items-start gap-3">
                                         {m.image_url ? (
                                           <button type="button" onClick={() => setPreviewImage(m.image_url!)} className="focus:outline-none">
-                                            <img src={m.image_url} alt={m.name} className="w-24 h-24 sm:w-28 sm:h-28 rounded object-cover border" />
+                                            <Image src={m.image_url} alt={m.name} width={128} height={128} className="w-24 h-24 sm:w-28 sm:h-28 rounded object-cover border" />
                                           </button>
                                         ) : (
                                           <div className="w-24 h-24 sm:w-28 sm:h-28 rounded bg-gray-100 border flex items-center justify-center text-gray-400 text-xs">Нет фото</div>
@@ -1091,7 +1091,9 @@ export default function ProductPage() {
               {(product.schemes && product.schemes.length > 0) ? (
                 product.schemes.map((url, idx) => (
                   <a key={idx} href={url} target="_blank" rel="noreferrer" className="block w-full rounded-lg overflow-hidden border hover:shadow-lg bg-white transition-shadow">
-                    <img src={url} alt={`Схема ${idx+1}`} className="w-full object-contain bg-white" style={{ maxHeight: '700px' }} />
+                    <div className="relative w-full" style={{ maxHeight: '700px' }}>
+                      <Image src={url} alt={`Схема ${idx+1}`} width={1200} height={700} className="w-full object-contain bg-white" />
+                    </div>
                   </a>
                 ))
               ) : (
@@ -1202,6 +1204,7 @@ export default function ProductPage() {
         {/* Просмотр изображения модуля */}
         {previewImage && (
           <div className="fixed inset-0 z-[100] bg-black/70 grid place-items-center p-4" onClick={() => setPreviewImage(null)}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={previewImage} alt="Превью модуля" className="max-w-[90vw] max-h-[85vh] rounded-lg shadow-2xl object-contain" />
           </div>
         )}
