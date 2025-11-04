@@ -63,6 +63,8 @@ export default function AdminProductsPage() {
   // Состояния для drag-and-drop перестановки изображений
   const [draggedImageIndex, setDraggedImageIndex] = useState<number | null>(null)
   const [dragOverImageIndex, setDragOverImageIndex] = useState<number | null>(null)
+  // Состояние для открытия dropdown выбора изображения для цвета
+  const [openImageSelect, setOpenImageSelect] = useState<number | null>(null)
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -97,6 +99,17 @@ export default function AdminProductsPage() {
   useEffect(() => {
     loadData()
   }, [])
+
+  // Закрытие dropdown при клике вне его
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (openImageSelect !== null && !(event.target as HTMLElement).closest('.image-select-dropdown')) {
+        setOpenImageSelect(null)
+      }
+    }
+    document.addEventListener('click', handleClickOutside)
+    return () => document.removeEventListener('click', handleClickOutside)
+  }, [openImageSelect])
 
   async function loadData() {
     try {
@@ -951,27 +964,68 @@ export default function AdminProductsPage() {
                                 setFormData({ ...formData, colors: arr })
                               }}>× Удалить</button>
                             </div>
-                            <div className="mt-2">
+                            <div className="mt-2 relative image-select-dropdown">
                               <label className="block text-xs text-gray-600 mb-1">Связать с изображением из галереи:</label>
-                              <select
-                                className="w-full px-2 py-1 border rounded text-sm"
-                                value={imageIndex !== null ? imageIndex : ''}
-                                onChange={(e) => {
-                                  const arr = [...(formData.colors as any[])]
-                                  const val = e.target.value === '' ? null : parseInt(e.target.value)
-                                  const prev = typeof arr[idx] === 'object' ? arr[idx] : { value: arr[idx] }
-                                  arr[idx] = { ...prev, imageIndex: val }
-                                  setFormData({ ...formData, colors: arr })
+                              <button
+                                type="button"
+                                className="w-full px-2 py-1 border rounded text-sm text-left flex items-center justify-between hover:bg-gray-50"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  setOpenImageSelect(openImageSelect === idx ? null : idx)
                                 }}
                               >
-                                <option value="">Не связывать</option>
-                                {formData.images.map((imgUrl, imgIdx) => (
-                                  <option key={imgIdx} value={imgIdx}>Изображение {imgIdx + 1}</option>
-                                ))}
-                              </select>
+                                <span>
+                                  {imageIndex !== null && formData.images[imageIndex] 
+                                    ? `Изображение ${imageIndex + 1}` 
+                                    : 'Не связывать'}
+                                </span>
+                                <span className="text-gray-400">{openImageSelect === idx ? '▲' : '▼'}</span>
+                              </button>
+                              {openImageSelect === idx && (
+                                <div className="absolute z-50 mt-1 w-full bg-white border rounded-lg shadow-lg max-h-60 overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+                                  <button
+                                    type="button"
+                                    className={`w-full px-3 py-2 text-left flex items-center gap-2 hover:bg-gray-100 ${
+                                      imageIndex === null ? 'bg-blue-50' : ''
+                                    }`}
+                                    onClick={() => {
+                                      const arr = [...(formData.colors as any[])]
+                                      const prev = typeof arr[idx] === 'object' ? arr[idx] : { value: arr[idx] }
+                                      arr[idx] = { ...prev, imageIndex: null }
+                                      setFormData({ ...formData, colors: arr })
+                                      setOpenImageSelect(null)
+                                    }}
+                                  >
+                                    <span className="text-sm">Не связывать</span>
+                                  </button>
+                                  {formData.images.map((imgUrl, imgIdx) => (
+                                    <button
+                                      key={imgIdx}
+                                      type="button"
+                                      className={`w-full px-3 py-2 text-left flex items-center gap-3 hover:bg-gray-100 ${
+                                        imageIndex === imgIdx ? 'bg-blue-50' : ''
+                                      }`}
+                                      onClick={() => {
+                                        const arr = [...(formData.colors as any[])]
+                                        const prev = typeof arr[idx] === 'object' ? arr[idx] : { value: arr[idx] }
+                                        arr[idx] = { ...prev, imageIndex: imgIdx }
+                                        setFormData({ ...formData, colors: arr })
+                                        setOpenImageSelect(null)
+                                      }}
+                                    >
+                                      <img 
+                                        src={imgUrl} 
+                                        alt={`Изображение ${imgIdx + 1}`} 
+                                        className="w-12 h-12 object-contain rounded border bg-gray-50 flex-shrink-0" 
+                                      />
+                                      <span className="text-sm">Изображение {imgIdx + 1}</span>
+                                    </button>
+                                  ))}
+                                </div>
+                              )}
                               {imageIndex !== null && formData.images[imageIndex] && (
                                 <div className="mt-2">
-                                  <img src={formData.images[imageIndex]} alt={`Привязанное изображение`} className="w-20 h-20 object-cover rounded border" />
+                                  <img src={formData.images[imageIndex]} alt={`Привязанное изображение`} className="w-20 h-20 object-contain rounded border bg-gray-100" />
                                 </div>
                               )}
                             </div>
