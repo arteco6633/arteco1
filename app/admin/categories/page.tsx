@@ -11,6 +11,7 @@ interface Category {
   image_url: string | null
   slug: string
   is_active: boolean
+  position?: number | null
 }
 
 export default function AdminCategoriesPage() {
@@ -38,6 +39,7 @@ export default function AdminCategoriesPage() {
       const { data, error } = await supabase
         .from('categories')
         .select('*')
+        .order('position', { ascending: true, nullsFirst: false })
         .order('name', { ascending: true })
 
       if (error) {
@@ -50,6 +52,39 @@ export default function AdminCategoriesPage() {
     } finally {
       setLoading(false)
     }
+  }
+
+  // DnD сортировка
+  const [dragIndex, setDragIndex] = useState<number | null>(null)
+  const [overIndex, setOverIndex] = useState<number | null>(null)
+
+  function onDragStart(idx: number) {
+    setDragIndex(idx)
+  }
+  function onDragOver(e: React.DragEvent, idx: number) {
+    e.preventDefault()
+    setOverIndex(idx)
+  }
+  function onDrop(idx: number) {
+    if (dragIndex === null || dragIndex === idx) { setDragIndex(null); setOverIndex(null); return }
+    const next = [...categories]
+    const [item] = next.splice(dragIndex, 1)
+    next.splice(idx, 0, item)
+    setCategories(next)
+    setDragIndex(null)
+    setOverIndex(null)
+  }
+
+  async function saveOrder() {
+    // присваиваем позиции от 1
+    const payload = categories.map((c, i) => ({ id: c.id, position: i + 1 }))
+    const { error } = await supabase.from('categories').upsert(payload, { onConflict: 'id' })
+    if (error) {
+      console.error('Ошибка сохранения порядка:', error)
+      alert('Не удалось сохранить порядок категорий')
+      return
+    }
+    loadData()
   }
 
   function openAddModal() {
@@ -231,9 +266,20 @@ export default function AdminCategoriesPage() {
           </button>
         </div>
 
+        <div className="flex justify-end mb-4">
+          <button onClick={saveOrder} className="px-4 py-2 rounded-lg bg-black text-white hover:bg-black/90">Сохранить порядок</button>
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {categories.map((category) => (
-            <div key={category.id} className="bg-white rounded-lg shadow-md p-6">
+          {categories.map((category, idx) => (
+            <div
+              key={category.id}
+              className={`bg-white rounded-lg shadow-md p-6 border ${overIndex===idx ? 'border-blue-400' : 'border-transparent'}`}
+              draggable
+              onDragStart={() => onDragStart(idx)}
+              onDragOver={(e) => onDragOver(e, idx)}
+              onDrop={() => onDrop(idx)}
+            >
               {category.image_url && (
                 <div className="mb-4">
                   <img

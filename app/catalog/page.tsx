@@ -28,6 +28,7 @@ export default function CatalogPage() {
         .from('categories')
         .select('*')
         .eq('is_active', true)
+        .order('position', { ascending: true, nullsFirst: false })
         .order('name', { ascending: true })
       
       setCategories(data || [])
