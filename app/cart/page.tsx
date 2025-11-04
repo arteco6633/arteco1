@@ -176,6 +176,8 @@ export default function CartPage() {
                     <img src={it.image_url || '/placeholder.jpg'} alt={it.name} className="w-24 h-24 rounded object-cover" />
                     <div className="flex-1 min-w-0">
                       <div className="font-medium line-clamp-2">{it.name}</div>
+                      {/* Цена справа наверху */}
+                      <div className="text-right font-semibold">{(it.price * it.qty).toLocaleString('ru-RU')} ₽</div>
                     {it.color && <div className="text-xs text-gray-500 mt-0.5">Цвет: {it.color}</div>}
                     {/* Опции */}
                     {it.options && (
@@ -187,7 +189,7 @@ export default function CartPage() {
                         {/* Модули (если пользователь добавлял) */}
                         {Array.isArray((it.options as any).modules) && (it.options as any).modules.length > 0 && (
                           <div className="pt-1">
-                            <div className="flex items-center justify-between">
+                            <div className="flex items-center justify-start gap-2">
                               <div className="font-medium text-gray-700">Модули</div>
                               <button
                                 type="button"
@@ -238,14 +240,14 @@ export default function CartPage() {
                       </div>
                     )}
                     </div>
-                    <div className="ml-auto flex items-center gap-2">
-                      <button className="w-8 h-8 border rounded" onClick={() => updateQty(it.id, it.qty - 1, key)}>-</button>
-                      <div className="px-2 text-sm">{it.qty}</div>
-                      <button className="w-8 h-8 border rounded" onClick={() => updateQty(it.id, it.qty + 1, key)}>+</button>
-                      <button className="ml-3 text-sm text-red-600" onClick={() => remove(it.id, key)}>Удалить</button>
-                    </div>
                   </div>
-                  <div className="text-right font-semibold">{(it.price * it.qty).toLocaleString('ru-RU')} ₽</div>
+                  {/* Количество и удалить снизу в контейнере */}
+                  <div className="flex justify-end items-center gap-2">
+                    <button className="w-8 h-8 border rounded" onClick={() => updateQty(it.id, it.qty - 1, key)}>-</button>
+                    <div className="px-2 text-sm">{it.qty}</div>
+                    <button className="w-8 h-8 border rounded" onClick={() => updateQty(it.id, it.qty + 1, key)}>+</button>
+                    <button className="ml-3 text-sm text-red-600" onClick={() => remove(it.id, key)}>Удалить</button>
+                  </div>
                 </div>
               )
             })}
