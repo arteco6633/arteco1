@@ -53,15 +53,15 @@ export default function CatalogPage() {
       <main className="mx-auto max-w-[1680px] 2xl:max-w-none px-4 md:px-2 xl:px-4 2xl:px-6 py-6 md:py-8">
         <h1 className="text-3xl md:text-4xl font-bold mb-6 md:mb-8">Каталог товаров</h1>
 
-        {/* Сетка категорий */}
-        <div className="grid grid-cols-2 xs:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4 md:gap-6">
+        {/* Сетка категорий (на мобилках строго 2 в ряд) */}
+        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3 sm:gap-4 md:gap-6">
           {categories.map((category) => (
             <Link
               key={category.id}
               href={`/catalog/${category.slug}`}
               className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg transition-all group flex flex-col items-center text-center p-4 md:p-5"
             >
-              <div className="w-full aspect-square max-w-[128px] md:max-w-[140px] rounded-xl overflow-hidden bg-gray-100 mb-3 relative">
+              <div className="w-full aspect-square max-w-none md:max-w-[140px] rounded-xl overflow-hidden bg-gray-100 mb-3 relative">
                 {category.image_url ? (
                   <Image src={category.image_url} alt={category.name} fill sizes="(min-width: 1024px) 140px, 33vw" className="object-cover" />
                 ) : (
