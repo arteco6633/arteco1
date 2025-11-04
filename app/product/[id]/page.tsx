@@ -92,8 +92,7 @@ export default function ProductPage() {
   const [openModuleGroup, setOpenModuleGroup] = useState<'base' | 'wall' | 'tall' | 'other' | null>('base')
   const finalPrice = useMemo(() => {
     if (!product) return 0
-    // Цена формируется только из: Петли + Ящики + Подсветка + Модули
-    // БЕЗ основной цены товара и БЕЗ наполнения
+    // Доплаты опций
     const hinge = (product.hinges && selectedHingeIdx != null && product.hinges[selectedHingeIdx]?.delta_price) || 0
     const drawer = (product.drawers && selectedDrawerIdx != null && product.drawers[selectedDrawerIdx]?.delta_price) || 0
     const lighting = (product.lighting && selectedLightingIdx != null && product.lighting[selectedLightingIdx]?.delta_price) || 0
@@ -101,9 +100,21 @@ export default function ProductPage() {
       const m = modules.find(x => x.id === Number(id))
       return sum + (m ? m.price * (qty || 0) : 0)
     }, 0)
-    // Итоговая цена: Петли + Ящики + Подсветка + Модули
-    return hinge + drawer + lighting + modulesSum
-  }, [product, selectedHingeIdx, selectedDrawerIdx, selectedLightingIdx, selectedModules, modules])
+
+    // Определяем, относится ли товар к кухонной категории (по имени/слагу)
+    const isKitchenCategory = (category?.slug?.toLowerCase() || '').includes('kitchen')
+      || (category?.slug?.toLowerCase() || '').includes('kuhn')
+      || (category?.name?.toLowerCase() || '').includes('кух')
+
+    const hasModules = modulesSum > 0
+
+    // Базовая цена:
+    // - для всех товаров: показываем базовую цену
+    // - для кухонь: как только пользователь начинает добавлять модули, базовая цена не учитывается
+    const base = (!isKitchenCategory || !hasModules) ? (Number(product.price) || 0) : 0
+
+    return base + hinge + drawer + lighting + modulesSum
+  }, [product, category?.slug, category?.name, selectedHingeIdx, selectedDrawerIdx, selectedLightingIdx, selectedModules, modules])
   const [openFilling, setOpenFilling] = useState(true)
   const [openHinge, setOpenHinge] = useState(false)
   const [openDrawer, setOpenDrawer] = useState(false)
