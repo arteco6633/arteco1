@@ -75,12 +75,12 @@ export default function CatalogPage() {
                   <div className="w-full h-full flex items-center justify-center text-4xl">📦</div>
                 )}
               </div>
-              <div className="w-full px-3 pb-3 pt-2 md:px-5 md:pb-5 md:pt-3">
-                <h3 className="text-[15px] sm:text-base md:text-lg font-semibold leading-snug mb-1 group-hover:text-black transition-colors text-center">
+              <div className="w-full px-3 pb-3 pt-2 md:px-5 md:pb-5 md:pt-3 text-left">
+                <h3 className="text-[15px] sm:text-base md:text-lg font-semibold leading-snug mb-1 group-hover:text-black transition-colors">
                   {category.name}
                 </h3>
                 {category.description && (
-                  <p className="text-gray-500 text-center text-xs sm:text-sm leading-snug line-clamp-2">{category.description}</p>
+                  <p className="text-gray-500 text-xs sm:text-sm leading-snug line-clamp-2">{category.description}</p>
                 )}
               </div>
             </Link>
