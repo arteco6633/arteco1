@@ -174,7 +174,7 @@ export default function OrdersPage() {
                           <div className="flex items-center space-x-4">
                             <div className="text-right">
                               <div className="text-sm font-medium text-gray-900">
-                                {order.total_amount.toLocaleString('ru-RU')} ₽
+                                {(order.total_amount || order.total || 0).toLocaleString('ru-RU')} ₽
                               </div>
                               <div className="text-xs text-gray-500">
                                 {new Date(order.created_at).toLocaleDateString('ru-RU')}
