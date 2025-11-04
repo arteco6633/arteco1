@@ -602,7 +602,7 @@ export default function ProductPage() {
               {(product as any).is_custom_size && (
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium text-black bg-white border border-black/15 shadow-sm">
                   <svg viewBox="0 0 24 24" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 7h16M4 12h10M4 17h6"/></svg>
-                  Индивидуальная коллекция
+                  Под любые размеры
                 </span>
               )}
             </div>
