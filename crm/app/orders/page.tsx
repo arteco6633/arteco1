@@ -137,38 +137,40 @@ export default function OrdersPage() {
               <ul className="divide-y divide-gray-200">
                 {orders.map((order) => (
                   <li key={order.id}>
-                    <div className="px-4 py-4 sm:px-6 hover:bg-gray-50">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center">
-                          <div className="flex-shrink-0">
-                            <span className="text-sm font-medium text-gray-900">#{order.order_number}</span>
-                          </div>
-                          <div className="ml-4">
-                            <div className="text-sm font-medium text-gray-900">
-                              {order.user_name || 'Без имени'}
+                    <Link href={`/orders/${order.id}`}>
+                      <div className="px-4 py-4 sm:px-6 hover:bg-gray-50 cursor-pointer">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center">
+                            <div className="flex-shrink-0">
+                              <span className="text-sm font-medium text-gray-900">#{order.order_number}</span>
                             </div>
-                            <div className="text-sm text-gray-500">{order.user_phone}</div>
+                            <div className="ml-4">
+                              <div className="text-sm font-medium text-gray-900">
+                                {order.user_name || 'Без имени'}
+                              </div>
+                              <div className="text-sm text-gray-500">{order.user_phone}</div>
+                            </div>
+                          </div>
+                          <div className="flex items-center space-x-4">
+                            <div className="text-right">
+                              <div className="text-sm font-medium text-gray-900">
+                                {order.total_amount.toLocaleString('ru-RU')} ₽
+                              </div>
+                              <div className="text-xs text-gray-500">
+                                {new Date(order.created_at).toLocaleDateString('ru-RU')}
+                              </div>
+                            </div>
+                            <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(order.status)}`}>
+                              {getStatusText(order.status)}
+                            </span>
                           </div>
                         </div>
-                        <div className="flex items-center space-x-4">
-                          <div className="text-right">
-                            <div className="text-sm font-medium text-gray-900">
-                              {order.total_amount.toLocaleString('ru-RU')} ₽
-                            </div>
-                            <div className="text-xs text-gray-500">
-                              {new Date(order.created_at).toLocaleDateString('ru-RU')}
-                            </div>
-                          </div>
-                          <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(order.status)}`}>
-                            {getStatusText(order.status)}
-                          </span>
+                        <div className="mt-2 text-xs text-gray-500">
+                          {order.delivery_type && <span>Доставка: {order.delivery_type}</span>}
+                          {order.payment_method && <span className="ml-4">Оплата: {order.payment_method}</span>}
                         </div>
                       </div>
-                      <div className="mt-2 text-xs text-gray-500">
-                        {order.delivery_type && <span>Доставка: {order.delivery_type}</span>}
-                        {order.payment_method && <span className="ml-4">Оплата: {order.payment_method}</span>}
-                      </div>
-                    </div>
+                    </Link>
                   </li>
                 ))}
               </ul>
