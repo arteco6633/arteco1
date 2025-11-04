@@ -1,65 +1,59 @@
 'use client'
 
 import { useState } from 'react'
-import { signIn } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { supabase } from '@/lib/supabase'
 
 export default function PartnerLogin() {
   const router = useRouter()
   const [phone, setPhone] = useState('')
-  const [code, setCode] = useState('')
-  const [step, setStep] = useState<'phone' | 'code'>('phone')
+  const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
-  async function handlePhoneSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
     setError('')
 
     try {
-      // Отправка кода на телефон
-      const response = await fetch('/api/otp/send', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone })
-      })
+      // Получаем партнера по телефону
+      const { data: partner, error: partnerError } = await supabase
+        .from('partners')
+        .select('*')
+        .eq('phone', phone)
+        .eq('is_active', true)
+        .single()
 
-      if (response.ok) {
-        setStep('code')
-      } else {
-        const data = await response.json()
-        setError(data.error || 'Ошибка отправки кода')
+      if (partnerError || !partner) {
+        setError('Неверный телефон или пароль')
+        setLoading(false)
+        return
       }
-    } catch (err) {
-      setError('Ошибка при отправке кода')
-    } finally {
-      setLoading(false)
-    }
-  }
 
-  async function handleCodeSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    setLoading(true)
-    setError('')
-
-    try {
-      // Авторизация через NextAuth
-      const result = await signIn('credentials', {
-        phone,
-        code,
-        redirect: false,
-        callbackUrl: '/partners/cabinet'
-      })
-
-      if (result?.error) {
-        setError('Неверный код')
-      } else if (result?.ok) {
-        router.push('/partners/cabinet')
+      // Проверяем пароль (в реальном приложении нужно использовать bcrypt)
+      // Для демонстрации используем простую проверку
+      // В production нужно использовать bcrypt.compare()
+      if (partner.password_hash !== password) {
+        setError('Неверный телефон или пароль')
+        setLoading(false)
+        return
       }
+
+      // Сохраняем информацию о партнере в sessionStorage
+      sessionStorage.setItem('partner', JSON.stringify({
+        id: partner.id,
+        phone: partner.phone,
+        name: partner.name,
+        partner_type: partner.partner_type
+      }))
+
+      // Перенаправляем в личный кабинет
+      router.push('/partners/cabinet')
     } catch (err) {
       setError('Ошибка при входе')
+      console.error('Ошибка входа:', err)
     } finally {
       setLoading(false)
     }
@@ -87,75 +81,48 @@ export default function PartnerLogin() {
             </div>
           )}
 
-          {step === 'phone' ? (
-            <form onSubmit={handlePhoneSubmit} className="space-y-4">
-              <div>
-                <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
-                  Номер телефона
-                </label>
-                <input
-                  type="tel"
-                  id="phone"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  placeholder="+7 (999) 123-45-67"
-                  required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
-                />
-              </div>
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full px-6 py-3 bg-black text-white rounded-[50px] hover:bg-gray-800 transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {loading ? 'Отправка...' : 'Получить код'}
-              </button>
-            </form>
-          ) : (
-            <form onSubmit={handleCodeSubmit} className="space-y-4">
-              <div>
-                <label htmlFor="code" className="block text-sm font-medium text-gray-700 mb-2">
-                  Код подтверждения
-                </label>
-                <input
-                  type="text"
-                  id="code"
-                  value={code}
-                  onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                  placeholder="000000"
-                  required
-                  maxLength={6}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent text-center text-2xl tracking-widest"
-                />
-                <p className="text-sm text-gray-500 mt-2">Код отправлен на {phone}</p>
-              </div>
-              <div className="flex gap-4">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setStep('phone')
-                    setCode('')
-                    setError('')
-                  }}
-                  className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-[50px] hover:bg-gray-50 transition-colors font-semibold"
-                >
-                  Назад
-                </button>
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="flex-1 px-6 py-3 bg-black text-white rounded-[50px] hover:bg-gray-800 transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {loading ? 'Вход...' : 'Войти'}
-                </button>
-              </div>
-            </form>
-          )}
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
+                Номер телефона
+              </label>
+              <input
+                type="tel"
+                id="phone"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="+7 (999) 123-45-67"
+                required
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
+              />
+            </div>
+            <div>
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+                Пароль
+              </label>
+              <input
+                type="password"
+                id="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Введите пароль"
+                required
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full px-6 py-3 bg-black text-white rounded-[50px] hover:bg-gray-800 transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loading ? 'Вход...' : 'Войти'}
+            </button>
+          </form>
 
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-600">
               Нет аккаунта?{' '}
-              <Link href="/partners" className="text-black font-semibold hover:underline">
+              <Link href="/partners/register" className="text-black font-semibold hover:underline">
                 Стать партнером
               </Link>
             </p>

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useSession } from 'next-auth/react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 
@@ -38,7 +38,8 @@ interface Commission {
 }
 
 export default function PartnerCabinet() {
-  const { data: session, status } = useSession()
+  const router = useRouter()
+  const [partner, setPartner] = useState<{ id: number; phone: string; name: string | null; partner_type: string } | null>(null)
   const [stats, setStats] = useState<PartnerStats | null>(null)
   const [orders, setOrders] = useState<Order[]>([])
   const [commissions, setCommissions] = useState<Commission[]>([])
@@ -46,100 +47,99 @@ export default function PartnerCabinet() {
   const [activeTab, setActiveTab] = useState<'orders' | 'commissions' | 'stats'>('orders')
 
   useEffect(() => {
-    if (status === 'authenticated' && session?.user) {
-      loadPartnerData()
-    } else if (status === 'unauthenticated') {
-      // Перенаправление на страницу входа для партнеров
-      window.location.href = '/partners/login'
+    // Проверяем наличие партнера в sessionStorage
+    if (typeof window !== 'undefined') {
+      const partnerData = sessionStorage.getItem('partner')
+      if (partnerData) {
+        try {
+          const parsed = JSON.parse(partnerData)
+          setPartner(parsed)
+          loadPartnerData(parsed.id)
+        } catch (err) {
+          console.error('Ошибка парсинга данных партнера:', err)
+          router.push('/partners/login')
+        }
+      } else {
+        router.push('/partners/login')
+      }
     }
-  }, [session, status])
+  }, [router])
 
-  async function loadPartnerData() {
+  async function loadPartnerData(partnerId: number) {
     try {
       setLoading(true)
       
-      // Здесь будет загрузка данных партнера из Supabase
-      // Пока используем моковые данные для демонстрации
-      
-      // Загрузка статистики
-      const mockStats: PartnerStats = {
-        totalClients: 24,
-        totalOrders: 47,
-        totalRevenue: 3245000,
-        totalCommissions: 324500,
-        pendingCommissions: 87500
+      // Загрузка статистики из Supabase
+      const { data: ordersData } = await supabase
+        .from('partner_orders')
+        .select('*')
+        .eq('partner_id', partnerId)
+
+      if (ordersData && ordersData.length > 0) {
+        const totalClients = new Set(ordersData.map(o => o.client_phone)).size
+        const totalOrders = ordersData.length
+        const totalRevenue = ordersData.reduce((sum, o) => sum + Number(o.total_amount || 0), 0)
+        const totalCommissions = ordersData.reduce((sum, o) => sum + Number(o.commission_amount || 0), 0)
+        
+        const { data: pendingCommissionsData } = await supabase
+          .from('partner_commissions')
+          .select('amount')
+          .eq('partner_id', partnerId)
+          .eq('status', 'pending')
+
+        const pendingCommissions = pendingCommissionsData?.reduce((sum, c) => sum + Number(c.amount || 0), 0) || 0
+
+        setStats({
+          totalClients,
+          totalOrders,
+          totalRevenue,
+          totalCommissions,
+          pendingCommissions
+        })
+
+        // Загрузка заказов
+        const formattedOrders = ordersData.map(order => ({
+          id: order.id,
+          client_name: order.client_name || '',
+          client_phone: order.client_phone || '',
+          total_amount: Number(order.total_amount || 0),
+          commission: Number(order.commission_amount || 0),
+          status: order.status as any,
+          created_at: order.created_at,
+          items: [] // Можно загрузить из orders через order_id
+        }))
+        setOrders(formattedOrders)
+
+        // Загрузка комиссий
+        const { data: commissionsData } = await supabase
+          .from('partner_commissions')
+          .select('*')
+          .eq('partner_id', partnerId)
+          .order('created_at', { ascending: false })
+
+        if (commissionsData) {
+          const formattedCommissions = commissionsData.map(commission => ({
+            id: commission.id,
+            order_id: commission.partner_order_id,
+            amount: Number(commission.amount || 0),
+            status: commission.status as any,
+            paid_at: commission.paid_at,
+            created_at: commission.created_at
+          }))
+          setCommissions(formattedCommissions)
+        }
+      } else {
+        // Если нет данных, используем пустые значения
+        setStats({
+          totalClients: 0,
+          totalOrders: 0,
+          totalRevenue: 0,
+          totalCommissions: 0,
+          pendingCommissions: 0
+        })
+        setOrders([])
+        setCommissions([])
       }
-      setStats(mockStats)
-
-      // Загрузка заказов
-      const mockOrders: Order[] = [
-        {
-          id: 1,
-          client_name: 'Иван Петров',
-          client_phone: '+7 (999) 123-45-67',
-          total_amount: 125000,
-          commission: 12500,
-          status: 'delivered',
-          created_at: '2025-01-15T10:30:00Z',
-          items: [
-            { product_name: 'Кухня Альберо', quantity: 1, price: 125000 }
-          ]
-        },
-        {
-          id: 2,
-          client_name: 'Мария Сидорова',
-          client_phone: '+7 (999) 234-56-78',
-          total_amount: 245000,
-          commission: 24500,
-          status: 'processing',
-          created_at: '2025-01-20T14:20:00Z',
-          items: [
-            { product_name: 'Кухня Френдли', quantity: 1, price: 245000 }
-          ]
-        },
-        {
-          id: 3,
-          client_name: 'Алексей Козлов',
-          client_phone: '+7 (999) 345-67-89',
-          total_amount: 98500,
-          commission: 9850,
-          status: 'completed',
-          created_at: '2025-01-10T09:15:00Z',
-          items: [
-            { product_name: 'Кухня Манго', quantity: 1, price: 98500 }
-          ]
-        }
-      ]
-      setOrders(mockOrders)
-
-      // Загрузка выплат комиссий
-      const mockCommissions: Commission[] = [
-        {
-          id: 1,
-          order_id: 1,
-          amount: 12500,
-          status: 'paid',
-          paid_at: '2025-01-25T12:00:00Z',
-          created_at: '2025-01-15T10:30:00Z'
-        },
-        {
-          id: 2,
-          order_id: 2,
-          amount: 24500,
-          status: 'pending',
-          paid_at: null,
-          created_at: '2025-01-20T14:20:00Z'
-        },
-        {
-          id: 3,
-          order_id: 3,
-          amount: 9850,
-          status: 'paid',
-          paid_at: '2025-01-20T10:00:00Z',
-          created_at: '2025-01-10T09:15:00Z'
-        }
-      ]
-      setCommissions(mockCommissions)
     } catch (error) {
       console.error('Ошибка загрузки данных партнера:', error)
     } finally {
