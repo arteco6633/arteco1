@@ -389,25 +389,25 @@ export default function CategoryPage() {
                       ))}
                     </div>
                     {(product.is_new || product.is_featured || (product as any).is_custom_size) && (
-                      <div className="absolute top-2 left-2 flex gap-2">
-                        {product.is_new && (
-                          <span className="bg-green-500 text-white px-2 py-1 rounded text-xs font-semibold">
-                            NEW
-                          </span>
-                        )}
-                        {product.is_featured && (
-                          <span className="bg-blue-500 text-white px-2 py-1 rounded text-xs font-semibold">
-                            ⭐
-                          </span>
-                        )}
+                      <div className="absolute top-2 left-2 flex flex-col md:flex-row gap-2">
                         {(product as any).is_custom_size && (
                           <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium whitespace-nowrap text-black bg-white/95 border border-black/10 shadow-sm">
                             <svg viewBox="0 0 24 24" className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 7h16M4 12h10M4 17h6"/></svg>
                             Под любые размеры
                           </span>
                         )}
-                      </div>
-                    )}
+                      {product.is_new && (
+                        <span className="bg-green-500 text-white px-2 py-1 rounded text-xs font-semibold">
+                          NEW
+                        </span>
+                      )}
+                      {product.is_featured && (
+                        <span className="bg-blue-500 text-white px-2 py-1 rounded text-xs font-semibold">
+                          ⭐
+                        </span>
+                      )}
+                    </div>
+                  )}
                     {/* Кнопка вишлиста */}
                     <button
                       type="button"
@@ -453,15 +453,15 @@ export default function CategoryPage() {
                         )}
                       </div>
                     )}
-                  </div>
-
+                </div>
+                
                   <div className="pt-2 md:pt-3 min-w-0">
                     <div className="mb-1 text-black font-semibold text-base md:text-lg">
                       {product.price.toLocaleString('ru-RU')} ₽
                     </div>
                     <h3 className="font-medium text-sm md:text-[15px] sm:md:text-[16px] leading-snug line-clamp-2 md:group-hover:text-black transition-colors text-black">
-                      {product.name}
-                    </h3>
+                    {product.name}
+                  </h3>
                     {/* Свотчи цветов */}
                     {!!(product as any).colors?.length && (
                       <div className="mt-2 flex items-center gap-2">
