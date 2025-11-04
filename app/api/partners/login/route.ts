@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseServer } from '@/lib/supabase-server'
-import * as bcrypt from 'bcryptjs'
+import bcrypt from 'bcryptjs'
 
 export async function POST(request: NextRequest) {
   try {
@@ -15,13 +15,22 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Получаем партнера по телефону
-    const { data: partner, error: partnerError } = await supabaseServer
+    // Нормализуем телефон (убираем пробелы, скобки, дефисы, но сохраняем +7)
+    const normalizedPhone = phone.replace(/[\s()-\+]/g, '').replace(/^8/, '7')
+    // Также пробуем формат с +7
+    const phoneWithPlus = phone.startsWith('+') ? phone : `+${normalizedPhone}`
+
+    console.log('Поиск партнера по телефону:', { phone, normalizedPhone, phoneWithPlus })
+
+    // Получаем партнера по телефону (пробуем разные форматы)
+    let { data: partner, error: partnerError } = await supabaseServer
       .from('partners')
       .select('*')
-      .eq('phone', phone)
+      .or(`phone.eq.${phone},phone.eq.${normalizedPhone},phone.eq.${phoneWithPlus}`)
       .eq('is_active', true)
       .maybeSingle()
+
+    console.log('Результат поиска партнера:', { found: !!partner, error: partnerError?.message })
 
     // Если ошибка не связана с отсутствием записи (PGRST116), значит что-то пошло не так
     if (partnerError && partnerError.code !== 'PGRST116') {
@@ -40,19 +49,42 @@ export async function POST(request: NextRequest) {
     }
 
     if (!partner) {
+      console.error('Партнер не найден для телефона:', phone)
       return NextResponse.json(
         { error: 'Неверный телефон или пароль' },
         { status: 401 }
       )
     }
 
-    // Проверяем пароль
-    const isPasswordValid = await bcrypt.compare(password, partner.password_hash)
-
-    if (!isPasswordValid) {
+    // Проверяем, есть ли password_hash
+    if (!partner.password_hash) {
+      console.error('Партнер найден, но password_hash отсутствует для партнера ID:', partner.id)
       return NextResponse.json(
-        { error: 'Неверный телефон или пароль' },
-        { status: 401 }
+        { error: 'Ошибка аутентификации. Обратитесь в поддержку.' },
+        { status: 500 }
+      )
+    }
+
+    // Проверяем пароль
+    console.log('Сравнение пароля для партнера ID:', partner.id)
+    console.log('Длина password_hash:', partner.password_hash?.length)
+    
+    try {
+      const isPasswordValid = await bcrypt.compare(password, partner.password_hash)
+      console.log('Результат сравнения пароля:', isPasswordValid)
+      
+      if (!isPasswordValid) {
+        console.error('Пароль не совпадает для партнера ID:', partner.id)
+        return NextResponse.json(
+          { error: 'Неверный телефон или пароль' },
+          { status: 401 }
+        )
+      }
+    } catch (bcryptError: any) {
+      console.error('Ошибка при сравнении пароля:', bcryptError)
+      return NextResponse.json(
+        { error: 'Ошибка при проверке пароля. Попробуйте позже.' },
+        { status: 500 }
       )
     }
 

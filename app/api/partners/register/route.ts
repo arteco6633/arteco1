@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseServer } from '@/lib/supabase-server'
-import * as bcrypt from 'bcryptjs'
+import bcrypt from 'bcryptjs'
 
 export async function POST(request: NextRequest) {
   try {
@@ -22,11 +22,14 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Проверяем, существует ли партнер с таким телефоном
+    // Нормализуем телефон (убираем пробелы, скобки, дефисы, но сохраняем формат)
+    const normalizedPhone = phone.replace(/[\s()-\+]/g, '').replace(/^8/, '7')
+
+    // Проверяем, существует ли партнер с таким телефоном (пробуем оба формата)
     const { data: existingPartner, error: checkError } = await supabaseServer
       .from('partners')
       .select('id')
-      .eq('phone', phone)
+      .or(`phone.eq.${phone},phone.eq.${normalizedPhone}`)
       .maybeSingle()
 
     // Если ошибка не связана с отсутствием записи (PGRST116), значит что-то пошло не так
@@ -48,12 +51,13 @@ export async function POST(request: NextRequest) {
     // Хешируем пароль
     const saltRounds = 10
     const passwordHash = await bcrypt.hash(password, saltRounds)
+    console.log('Пароль захеширован для телефона:', phone)
 
-    // Создаем партнера
+    // Создаем партнера (используем нормализованный телефон для единообразия)
     const { data: partner, error: partnerError } = await supabaseServer
       .from('partners')
       .insert({
-        phone,
+        phone: normalizedPhone,
         password_hash: passwordHash,
         name: name || null,
         email: email || null,
