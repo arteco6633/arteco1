@@ -649,7 +649,7 @@ export default function AdminProductsPage() {
                   </div>
 
                   {formData.images.length > 0 && (
-                    <div className="mt-3 grid grid-cols-5 gap-2">
+                    <div className="mt-3 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
                       {formData.images.map((url, idx) => (
                         <div 
                           key={idx} 
@@ -687,12 +687,12 @@ export default function AdminProductsPage() {
                             setDragOverImageIndex(null)
                           }}
                         >
-                          <div className="w-full h-20 bg-gray-100 rounded overflow-hidden flex items-center justify-center">
+                          <div className="w-full h-32 sm:h-40 md:h-48 bg-gray-100 rounded overflow-hidden flex items-center justify-center">
                             <img src={url} className="max-w-full max-h-full object-contain rounded pointer-events-none" alt={`Изображение ${idx + 1}`} />
                           </div>
                           <button 
                             type="button" 
-                            className="absolute -top-2 -right-2 bg-white rounded-full border w-6 h-6 text-xs hover:bg-red-50 z-10" 
+                            className="absolute -top-2 -right-2 bg-white rounded-full border w-7 h-7 text-sm hover:bg-red-50 z-10 flex items-center justify-center font-bold" 
                             onClick={(e) => {
                               e.stopPropagation()
                               setFormData({ ...formData, images: formData.images.filter((_,i)=>i!==idx) })
@@ -700,7 +700,7 @@ export default function AdminProductsPage() {
                           >
                             ×
                           </button>
-                          <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs text-center py-1 rounded-b">
+                          <div className="absolute bottom-0 left-0 right-0 bg-black/70 text-white text-sm font-semibold text-center py-1.5 rounded-b">
                             {idx + 1}
                           </div>
                         </div>
