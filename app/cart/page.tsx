@@ -156,6 +156,20 @@ export default function CartPage() {
                         {it.options.hinge && <div>Петли: {it.options.hinge.name} {it.options.hinge.delta_price ? `(+${it.options.hinge.delta_price.toLocaleString('ru-RU')} ₽)` : ''}</div>}
                         {it.options.drawer && <div>Ящики: {it.options.drawer.name} {it.options.drawer.delta_price ? `(+${it.options.drawer.delta_price.toLocaleString('ru-RU')} ₽)` : ''}</div>}
                         {it.options.lighting && <div>Подсветка: {it.options.lighting.name} {it.options.lighting.delta_price ? `(+${it.options.lighting.delta_price.toLocaleString('ru-RU')} ₽)` : ''}</div>}
+                        {/* Модули (если пользователь добавлял) */}
+                        {Array.isArray((it.options as any).modules) && (it.options as any).modules.length > 0 && (
+                          <div className="pt-1">
+                            <div className="font-medium text-gray-700">Модули:</div>
+                            <ul className="mt-1 space-y-0.5">
+                              {(it.options as any).modules.map((m: any, idx: number) => (
+                                <li key={idx} className="flex items-center justify-between gap-2">
+                                  <span className="truncate">— {m.name} {m.qty ? `× ${m.qty}` : ''}</span>
+                                  <span className="text-gray-700">{(m.price * (m.qty || 1)).toLocaleString('ru-RU')} ₽</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
                       </div>
                     )}
                     <div className="mt-3 flex items-center gap-2">
