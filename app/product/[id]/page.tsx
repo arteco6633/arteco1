@@ -599,8 +599,8 @@ export default function ProductPage() {
                 </span>
               )}
               {(product as any).is_custom_size && (
-                <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-sm font-semibold text-white bg-gradient-to-r from-black to-neutral-800 shadow-md ring-1 ring-black/20">
-                  <svg viewBox="0 0 24 24" className="w-4.5 h-4.5 opacity-90" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 8l5-5 13 13-5 5L3 8z"/><path d="M7 3l4 4"/></svg>
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium text-black bg-white border border-black/15 shadow-sm">
+                  <svg viewBox="0 0 24 24" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 7h16M4 12h10M4 17h6"/></svg>
                   Под любые размеры
                 </span>
               )}
