@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { useWishlist } from '@/components/WishlistContext'
 
 interface Product {
@@ -50,11 +51,14 @@ function Card({ product, onAdd }: { product: Product; onAdd?: (product: Product)
       className="bg-white rounded-xl shadow-md transition-all duration-300 group md:hover:-translate-y-1.5 md:hover:shadow-xl md:hover:ring-1 md:hover:ring-black/10 block cursor-pointer"
     >
       {/* Обёртка для изображения с клипом только картинки, не тени */}
-      <div className="relative rounded-t-xl overflow-hidden">
-        <img
+      <div className="relative rounded-t-xl overflow-hidden h-60 sm:h-72">
+        <Image
           src={(product.images && product.images.length > 0) ? product.images[0] : (product.image_url || '/placeholder.jpg')}
           alt={product.name}
-          className="w-full h-60 sm:h-72 object-cover transition-transform duration-300 ease-out md:group-hover:scale-[1.03]"
+          fill
+          sizes="(min-width: 1280px) 25vw, (min-width: 768px) 33vw, 100vw"
+          className="object-cover transition-transform duration-300 ease-out md:group-hover:scale-[1.03]"
+          priority={false}
         />
         <button
           type="button"
