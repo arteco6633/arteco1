@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase'
+import { supabaseServer } from '@/lib/supabase-server'
 import * as bcrypt from 'bcryptjs'
 
 export async function POST(request: NextRequest) {
@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Проверяем, существует ли партнер с таким телефоном
-    const { data: existingPartner, error: checkError } = await supabase
+    const { data: existingPartner, error: checkError } = await supabaseServer
       .from('partners')
       .select('id')
       .eq('phone', phone)
@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
     const passwordHash = await bcrypt.hash(password, saltRounds)
 
     // Создаем партнера
-    const { data: partner, error: partnerError } = await supabase
+    const { data: partner, error: partnerError } = await supabaseServer
       .from('partners')
       .insert({
         phone,

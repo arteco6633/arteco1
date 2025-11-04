@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase'
+import { supabaseServer } from '@/lib/supabase-server'
 import * as bcrypt from 'bcryptjs'
 
 export async function POST(request: NextRequest) {
@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Получаем партнера по телефону
-    const { data: partner, error: partnerError } = await supabase
+    const { data: partner, error: partnerError } = await supabaseServer
       .from('partners')
       .select('*')
       .eq('phone', phone)
