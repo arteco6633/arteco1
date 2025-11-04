@@ -378,7 +378,7 @@ export default function ProductPage() {
                           className={`rounded overflow-hidden ring-2 flex-shrink-0 w-20 ${activeImageIdx===idx ? 'ring-black' : 'ring-transparent hover:ring-gray-300'}`}
                           style={{ aspectRatio: '1', minWidth: '80px' }}
                         >
-                          <Image src={url} alt={`Фото ${idx+1}`} width={80} height={80} className="w-full h-full object-cover" />
+                          <Image src={url} alt={`Фото ${idx+1}`} width={80} height={80} quality={90} className="w-full h-full object-cover" />
                         </button>
                       ))}
                     </div>
@@ -494,6 +494,7 @@ export default function ProductPage() {
                           alt={`${product.name} - фото ${idx + 1}`}
                           fill
                           sizes="(min-width: 1280px) 700px, (min-width: 768px) 50vw, 100vw"
+                          quality={95}
                           priority={idx === 0}
                           className="object-cover"
                           onLoad={() => {
@@ -559,7 +560,7 @@ export default function ProductPage() {
                   <div className="mt-3 md:hidden grid grid-cols-4 gap-2">
                     {product.images.slice(0,10).map((url, idx) => (
                       <button key={idx} type="button" onClick={() => setActiveImageIdx(idx)} className={`rounded overflow-hidden ring-2 ${activeImageIdx===idx ? 'ring-black' : 'ring-transparent'}`}>
-                        <Image src={url} alt={`Фото ${idx+1}`} width={200} height={200} className="w-full h-16 object-cover" />
+                        <Image src={url} alt={`Фото ${idx+1}`} width={200} height={200} quality={85} className="w-full h-16 object-cover" />
                       </button>
                     ))}
                   </div>
@@ -697,7 +698,7 @@ export default function ProductPage() {
                           >
                             <div className="flex items-start gap-2 sm:gap-3">
                               {f.image_url ? (
-                                <Image src={f.image_url} alt={f.name || 'Вариант'} width={128} height={128} className="w-24 h-24 sm:w-32 sm:h-32 min-w-[96px] sm:min-w-[128px] rounded object-cover border border-gray-200 flex-shrink-0" />
+                                <Image src={f.image_url} alt={f.name || 'Вариант'} width={128} height={128} quality={90} className="w-24 h-24 sm:w-32 sm:h-32 min-w-[96px] sm:min-w-[128px] rounded object-cover border border-gray-200 flex-shrink-0" />
                               ) : (
                                 <div className="w-24 h-24 sm:w-32 sm:h-32 min-w-[96px] sm:min-w-[128px] rounded bg-gray-100 border border-gray-200 flex items-center justify-center text-gray-400 text-xs flex-shrink-0">Нет фото</div>
                               )}
@@ -745,7 +746,7 @@ export default function ProductPage() {
                           >
                             <div className="flex items-start gap-2 sm:gap-3">
                               {h.image_url ? (
-                                <Image src={h.image_url} alt={h.name || 'Вариант'} width={128} height={128} className="w-24 h-24 sm:w-32 sm:h-32 min-w-[96px] sm:min-w-[128px] rounded object-cover border border-gray-200 flex-shrink-0" />
+                                <Image src={h.image_url} alt={h.name || 'Вариант'} width={128} height={128} quality={90} className="w-24 h-24 sm:w-32 sm:h-32 min-w-[96px] sm:min-w-[128px] rounded object-cover border border-gray-200 flex-shrink-0" />
                               ) : (
                                 <div className="w-24 h-24 sm:w-32 sm:h-32 min-w-[96px] sm:min-w-[128px] rounded bg-gray-100 border border-gray-200 flex items-center justify-center text-gray-400 text-xs flex-shrink-0">Нет фото</div>
                               )}
@@ -793,7 +794,7 @@ export default function ProductPage() {
                           >
                             <div className="flex items-start gap-2 sm:gap-3">
                               {d.image_url ? (
-                                <Image src={d.image_url} alt={d.name || 'Вариант'} width={128} height={128} className="w-24 h-24 sm:w-32 sm:h-32 min-w-[96px] sm:min-w-[128px] rounded object-cover border border-gray-200 flex-shrink-0" />
+                                <Image src={d.image_url} alt={d.name || 'Вариант'} width={128} height={128} quality={90} className="w-24 h-24 sm:w-32 sm:h-32 min-w-[96px] sm:min-w-[128px] rounded object-cover border border-gray-200 flex-shrink-0" />
                               ) : (
                                 <div className="w-24 h-24 sm:w-32 sm:h-32 min-w-[96px] sm:min-w-[128px] rounded bg-gray-100 border border-gray-200 flex items-center justify-center text-gray-400 text-xs flex-shrink-0">Нет фото</div>
                               )}
@@ -841,7 +842,7 @@ export default function ProductPage() {
                           >
                             <div className="flex items-start gap-2 sm:gap-3">
                               {l.image_url ? (
-                                <Image src={l.image_url} alt={l.name || 'Вариант'} width={128} height={128} className="w-24 h-24 sm:w-32 sm:h-32 min-w-[96px] sm:min-w-[128px] rounded object-cover border border-gray-200 flex-shrink-0" />
+                                <Image src={l.image_url} alt={l.name || 'Вариант'} width={128} height={128} quality={90} className="w-24 h-24 sm:w-32 sm:h-32 min-w-[96px] sm:min-w-[128px] rounded object-cover border border-gray-200 flex-shrink-0" />
                               ) : (
                                 <div className="w-24 h-24 sm:w-32 sm:h-32 min-w-[96px] sm:min-w-[128px] rounded bg-gray-100 border border-gray-200 flex items-center justify-center text-gray-400 text-xs flex-shrink-0">Нет фото</div>
                               )}
@@ -914,7 +915,7 @@ export default function ProductPage() {
                                       <div className="flex items-start gap-3">
                                         {m.image_url ? (
                                           <button type="button" onClick={() => setPreviewImage(m.image_url!)} className="focus:outline-none">
-                                            <Image src={m.image_url} alt={m.name} width={128} height={128} className="w-24 h-24 sm:w-28 sm:h-28 rounded object-cover border" />
+                                            <Image src={m.image_url} alt={m.name} width={128} height={128} quality={90} className="w-24 h-24 sm:w-28 sm:h-28 rounded object-cover border" />
                                           </button>
                                         ) : (
                                           <div className="w-24 h-24 sm:w-28 sm:h-28 rounded bg-gray-100 border flex items-center justify-center text-gray-400 text-xs">Нет фото</div>
@@ -1103,7 +1104,7 @@ export default function ProductPage() {
                 product.schemes.map((url, idx) => (
                   <a key={idx} href={url} target="_blank" rel="noreferrer" className="block w-full rounded-lg overflow-hidden border hover:shadow-lg bg-white transition-shadow">
                     <div className="relative w-full" style={{ maxHeight: '700px' }}>
-                      <Image src={url} alt={`Схема ${idx+1}`} width={1200} height={700} className="w-full object-contain bg-white" />
+                      <Image src={url} alt={`Схема ${idx+1}`} width={1200} height={700} quality={100} className="w-full object-contain bg-white" />
                     </div>
                   </a>
                 ))
