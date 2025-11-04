@@ -377,35 +377,7 @@ export default function ProductPage() {
                       ))}
                     </div>
                   </div>
-                  {/* Стрелки навигации (только на десктопе) */}
-                  {product.images && product.images.length > 1 && (
-                    <>
-                      <button
-                        type="button"
-                        aria-label="Предыдущее фото"
-                        className="hidden md:flex items-center justify-center absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/80 hover:bg-white shadow z-20"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          const prevIdx = activeImageIdx === 0 ? product.images!.length - 1 : activeImageIdx - 1
-                          setActiveImageIdx(prevIdx)
-                        }}
-                      >
-                        <svg viewBox="0 0 24 24" className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 18l-6-6 6-6" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                      </button>
-                      <button
-                        type="button"
-                        aria-label="Следующее фото"
-                        className="hidden md:flex items-center justify-center absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/80 hover:bg-white shadow z-20"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          const nextIdx = activeImageIdx === product.images!.length - 1 ? 0 : activeImageIdx + 1
-                          setActiveImageIdx(nextIdx)
-                        }}
-                      >
-                        <svg viewBox="0 0 24 24" className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 6l6 6-6 6" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                      </button>
-                    </>
-                  )}
+                  
                 </div>
               )}
               
@@ -413,7 +385,7 @@ export default function ProductPage() {
               <div className="flex-1 relative">
                 <div
                   ref={leftMainImageRef}
-                  className="rounded-lg overflow-hidden shadow-lg relative aspect-square"
+                  className="rounded-lg overflow-hidden shadow-lg relative aspect-square group"
                   style={{ 
                     // Используем pan-y для разрешения только вертикальной прокрутки
                     // pinch-zoom для масштабирования
@@ -540,6 +512,36 @@ export default function ProductPage() {
                         <div className="w-2 h-2 rounded-full bg-white/30" />
                       )}
                     </div>
+                  )}
+
+                  {/* Стрелки навигации (только на десктопе, внутри фото) */}
+                  {product.images && product.images.length > 1 && (
+                    <>
+                      <button
+                        type="button"
+                        aria-label="Предыдущее фото"
+                        className="hidden md:flex items-center justify-center absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/80 hover:bg-white shadow z-20 md:opacity-0 md:group-hover:opacity-100 transition-opacity"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          const prevIdx = activeImageIdx === 0 ? product.images!.length - 1 : activeImageIdx - 1
+                          setActiveImageIdx(prevIdx)
+                        }}
+                      >
+                        <svg viewBox="0 0 24 24" className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 18l-6-6 6-6" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                      </button>
+                      <button
+                        type="button"
+                        aria-label="Следующее фото"
+                        className="hidden md:flex items-center justify-center absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/80 hover:bg-white shadow z-20 md:opacity-0 md:group-hover:opacity-100 transition-opacity"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          const nextIdx = activeImageIdx === product.images!.length - 1 ? 0 : activeImageIdx + 1
+                          setActiveImageIdx(nextIdx)
+                        }}
+                      >
+                        <svg viewBox="0 0 24 24" className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 6l6 6-6 6" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                      </button>
+                    </>
                   )}
                 </div>
 
