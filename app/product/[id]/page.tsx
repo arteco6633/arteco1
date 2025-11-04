@@ -518,28 +518,24 @@ export default function ProductPage() {
 
           {/* Информация о товаре */}
           <div className="relative flex flex-col md:overflow-hidden" style={isDesktop && syncedRightHeight ? { height: `${syncedRightHeight}px` } : {}}>
-            <div className="flex-1 md:overflow-y-auto md:h-full">
+            {/* Фиксированный хедер с названием и ценой */}
+            <div className="md:sticky md:top-0 md:z-10 bg-white md:pb-4 md:border-b md:border-gray-200 md:mb-4">
             {category && (
               <Link
                 href={`/catalog/${category.slug}`}
-                className="inline-block text-black hover:underline mb-2"
+                  className="inline-block text-black hover:underline mb-2"
               >
                 ← {category.name}
               </Link>
             )}
 
-            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2 leading-tight">{product.name}</h1>
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2 leading-tight">{product.name}</h1>
 
-            {product.description && (
-              <>
-                <p className="text-gray-600 text-base sm:text-lg leading-snug mb-1">{product.description}</p>
-                <div className="text-3xl sm:text-4xl font-bold text-black mt-1 mb-1">
-                  {finalPrice.toLocaleString('ru-RU')} ₽
-                </div>
-              </>
-            )}
+              <div className="text-3xl sm:text-4xl font-bold text-black mt-1 mb-1">
+                {finalPrice.toLocaleString('ru-RU')} ₽
+              </div>
 
-            <div className="flex gap-2 mb-6">
+              <div className="flex gap-2 mb-4 md:mb-0">
               {product.is_new && (
                 <span className="bg-green-500 text-white px-3 py-1 rounded-full text-sm font-semibold">
                   NEW
@@ -550,7 +546,14 @@ export default function ProductPage() {
                   ⭐ Рекомендуем
                 </span>
               )}
+              </div>
             </div>
+
+            {/* Прокручиваемая область с контентом */}
+            <div className="flex-1 md:overflow-y-auto md:h-full md:pr-1">
+              {product.description && (
+                <p className="text-gray-600 text-base sm:text-lg leading-snug mb-4">{product.description}</p>
+              )}
 
             {/* Блок с опциями и кнопкой */}
             <div className="bg-gray-50 rounded-lg p-3">
@@ -1003,10 +1006,10 @@ export default function ProductPage() {
                 Рассчитать под мои размеры
               </button>
             </div>
-          </div>
-
-            {/* Характеристики перенесены во вкладку ниже */}
             </div>
+            {/* Конец прокручиваемой области */}
+          </div>
+          {/* Конец блока "Информация о товаре" */}
 
 
         {/* Вкладки: Характеристики / Размеры */}
