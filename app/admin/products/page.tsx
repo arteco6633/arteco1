@@ -9,6 +9,7 @@ interface Product {
   name: string
   description: string | null
   price: number
+  original_price?: number | null
   image_url: string
   images?: string[] | null
   colors?: string[] | null
@@ -80,6 +81,7 @@ export default function AdminProductsPage() {
     name: '',
     description: '',
     price: '',
+    original_price: '',
     image_url: '',
     images: [] as string[],
     colors: [] as any,
@@ -219,6 +221,7 @@ export default function AdminProductsPage() {
       name: '',
       description: '',
       price: '',
+      original_price: '',
       image_url: '',
       images: [],
       colors: [],
@@ -257,6 +260,7 @@ export default function AdminProductsPage() {
       name: product.name,
       description: product.description || '',
       price: product.price.toString(),
+      original_price: (product.original_price || '').toString(),
       image_url: product.image_url,
       images: (product.images as any) || [],
       colors: Array.isArray(product.colors) && product.colors.length > 0
@@ -509,6 +513,7 @@ export default function AdminProductsPage() {
         name: formData.name,
         description: formData.description || null,
         price: parseFloat(formData.price),
+        original_price: formData.original_price ? parseFloat(formData.original_price) : null,
         image_url: imageUrl,
         images: formData.images,
         colors: Array.isArray(formData.colors) ? formData.colors : [],
@@ -696,6 +701,18 @@ export default function AdminProductsPage() {
                     value={formData.price}
                     onChange={(e) => setFormData({ ...formData, price: e.target.value })}
                     required
+                  />
+                </div>
+
+                <div className="mb-4">
+                  <label className="block mb-2 font-semibold">Старая цена (необязательно)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    className="w-full px-3 py-2 border rounded-lg"
+                    value={formData.original_price}
+                    onChange={(e) => setFormData({ ...formData, original_price: e.target.value })}
+                    placeholder="Оставьте пустым, если старая цена не нужна"
                   />
                 </div>
 
@@ -1584,7 +1601,7 @@ export default function AdminProductsPage() {
                       checked={formData.is_featured}
                       onChange={(e) => setFormData({ ...formData, is_featured: e.target.checked })}
                     />
-                    <span className="font-semibold">Рекомендуемый</span>
+                    <span className="font-semibold">Sale</span>
                   </label>
                   <label className="flex items-center p-4 border rounded-lg hover:bg-gray-50 cursor-pointer">
                     <input

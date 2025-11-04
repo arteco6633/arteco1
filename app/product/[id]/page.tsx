@@ -16,6 +16,7 @@ interface Product {
   name: string
   description: string | null
   price: number
+  original_price?: number | null
   image_url: string
   images?: string[] | null
   colors?: string[] | null
@@ -591,7 +592,12 @@ export default function ProductPage() {
               <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2 leading-tight">{product.name}</h1>
 
               <div className="text-3xl sm:text-4xl font-bold text-black mt-1 mb-1">
-                {finalPrice.toLocaleString('ru-RU')} ₽
+                {(product as any).original_price && (
+                  <span className="text-gray-400 line-through mr-3 text-2xl sm:text-3xl font-normal">
+                    {(product as any).original_price.toLocaleString('ru-RU')} ₽
+                  </span>
+                )}
+                <span>{finalPrice.toLocaleString('ru-RU')} ₽</span>
               </div>
 
               <div className="flex gap-2 mb-4 md:mb-0">
@@ -601,8 +607,12 @@ export default function ProductPage() {
                 </span>
               )}
               {product.is_featured && (
-                <span className="bg-blue-500 text-white px-3 py-1 rounded-full text-sm font-semibold">
-                  ⭐ Рекомендуем
+                <span className="inline-flex items-center gap-2 px-3 py-1 rounded-[50px] text-sm font-semibold text-white bg-rose-400">
+                  <svg viewBox="0 0 24 24" className="w-4.5 h-4.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
+                    <line x1="7" y1="7" x2="7.01" y2="7"/>
+                  </svg>
+                  Sale
                 </span>
               )}
               {(product as any).is_custom_size && (
@@ -959,7 +969,12 @@ export default function ProductPage() {
             <div className="md:hidden sticky bottom-[140px] z-10 bg-white pt-4 pb-2 border-t border-gray-200 -mx-4 px-4">
               <h1 className="text-2xl font-bold mb-1 leading-tight">{product.name}</h1>
               <div className="text-3xl font-bold text-black">
-                {finalPrice.toLocaleString('ru-RU')} ₽
+                {(product as any).original_price && (
+                  <span className="text-gray-400 line-through mr-2 text-2xl font-normal">
+                    {(product as any).original_price.toLocaleString('ru-RU')} ₽
+                  </span>
+                )}
+                <span>{finalPrice.toLocaleString('ru-RU')} ₽</span>
               </div>
             </div>
 

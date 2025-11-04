@@ -11,6 +11,7 @@ interface Product {
   name: string
   description: string | null
   price: number
+  original_price?: number | null
   image_url: string
   images?: string[] | null
   colors?: string[] | null
@@ -389,23 +390,27 @@ export default function CategoryPage() {
                       ))}
                     </div>
                     {(product.is_new || product.is_featured || (product as any).is_custom_size) && (
-                      <div className="absolute top-2 left-2 flex flex-col md:flex-row gap-2">
+                      <div className="absolute top-2 left-2 flex flex-col items-start md:flex-row md:items-center gap-2">
                         {(product as any).is_custom_size && (
                           <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium whitespace-nowrap text-black bg-white/95 border border-black/10 shadow-sm">
                             <svg viewBox="0 0 24 24" className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 7h16M4 12h10M4 17h6"/></svg>
                             Под любые размеры
                           </span>
                         )}
-                      {product.is_new && (
-                        <span className="bg-green-500 text-white px-2 py-1 rounded text-xs font-semibold">
-                          NEW
-                        </span>
-                      )}
-                      {product.is_featured && (
-                        <span className="bg-blue-500 text-white px-2 py-1 rounded text-xs font-semibold">
-                          ⭐
-                        </span>
-                      )}
+                        {product.is_new && (
+                          <span className="bg-green-500 text-white px-2 py-1 rounded-[50px] text-xs font-semibold inline-block">
+                            NEW
+                          </span>
+                        )}
+                        {product.is_featured && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-[50px] text-[11px] font-semibold whitespace-nowrap bg-rose-400 text-white shadow-sm">
+                            <svg viewBox="0 0 24 24" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
+                              <line x1="7" y1="7" x2="7.01" y2="7"/>
+                            </svg>
+                            Sale
+                          </span>
+                        )}
                     </div>
                   )}
                     {/* Кнопка вишлиста */}
@@ -457,7 +462,12 @@ export default function CategoryPage() {
                 
                   <div className="pt-2 md:pt-3 min-w-0">
                     <div className="mb-1 text-black font-semibold text-base md:text-lg">
-                      {product.price.toLocaleString('ru-RU')} ₽
+                      {(product as any).original_price && (
+                        <span className="text-gray-400 line-through mr-2 text-sm md:text-base font-normal">
+                          {(product as any).original_price.toLocaleString('ru-RU')} ₽
+                        </span>
+                      )}
+                      <span>{product.price.toLocaleString('ru-RU')} ₽</span>
                     </div>
                     <h3 className="font-medium text-sm md:text-[15px] sm:md:text-[16px] leading-snug line-clamp-2 md:group-hover:text-black transition-colors text-black">
                     {product.name}
