@@ -65,6 +65,16 @@ export default function AdminProductsPage() {
   const [dragOverImageIndex, setDragOverImageIndex] = useState<number | null>(null)
   // Состояние для открытия dropdown выбора изображения для цвета
   const [openImageSelect, setOpenImageSelect] = useState<number | null>(null)
+  // Состояния для существующих вариантов наполнения из всех товаров
+  const [existingFillings, setExistingFillings] = useState<any[]>([])
+  const [existingHinges, setExistingHinges] = useState<any[]>([])
+  const [existingDrawers, setExistingDrawers] = useState<any[]>([])
+  const [existingLighting, setExistingLighting] = useState<any[]>([])
+  // Состояния для открытия dropdown выбора существующих вариантов
+  const [openExistingFillings, setOpenExistingFillings] = useState(false)
+  const [openExistingHinges, setOpenExistingHinges] = useState(false)
+  const [openExistingDrawers, setOpenExistingDrawers] = useState(false)
+  const [openExistingLighting, setOpenExistingLighting] = useState(false)
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -106,10 +116,22 @@ export default function AdminProductsPage() {
       if (openImageSelect !== null && !(event.target as HTMLElement).closest('.image-select-dropdown')) {
         setOpenImageSelect(null)
       }
+      if (openExistingFillings && !(event.target as HTMLElement).closest('.existing-options-dropdown')) {
+        setOpenExistingFillings(false)
+      }
+      if (openExistingHinges && !(event.target as HTMLElement).closest('.existing-options-dropdown')) {
+        setOpenExistingHinges(false)
+      }
+      if (openExistingDrawers && !(event.target as HTMLElement).closest('.existing-options-dropdown')) {
+        setOpenExistingDrawers(false)
+      }
+      if (openExistingLighting && !(event.target as HTMLElement).closest('.existing-options-dropdown')) {
+        setOpenExistingLighting(false)
+      }
     }
     document.addEventListener('click', handleClickOutside)
     return () => document.removeEventListener('click', handleClickOutside)
-  }, [openImageSelect])
+  }, [openImageSelect, openExistingFillings, openExistingHinges, openExistingDrawers, openExistingLighting])
 
   async function loadData() {
     try {
@@ -137,6 +159,48 @@ export default function AdminProductsPage() {
 
       setProducts(productsData || [])
       setCategories(categoriesData || [])
+
+      // Собираем все существующие варианты наполнения из всех товаров
+      const allFillings: any[] = []
+      const allHinges: any[] = []
+      const allDrawers: any[] = []
+      const allLighting: any[] = []
+
+      productsData?.forEach(product => {
+        if (product.fillings && Array.isArray(product.fillings)) {
+          product.fillings.forEach((f: any) => {
+            if (f && f.name && !allFillings.find(ex => ex.name === f.name && ex.description === f.description && ex.image_url === f.image_url)) {
+              allFillings.push(f)
+            }
+          })
+        }
+        if (product.hinges && Array.isArray(product.hinges)) {
+          product.hinges.forEach((h: any) => {
+            if (h && h.name && !allHinges.find(ex => ex.name === h.name && ex.description === h.description && ex.image_url === h.image_url)) {
+              allHinges.push(h)
+            }
+          })
+        }
+        if (product.drawers && Array.isArray(product.drawers)) {
+          product.drawers.forEach((d: any) => {
+            if (d && d.name && !allDrawers.find(ex => ex.name === d.name && ex.description === d.description && ex.image_url === d.image_url)) {
+              allDrawers.push(d)
+            }
+          })
+        }
+        if (product.lighting && Array.isArray(product.lighting)) {
+          product.lighting.forEach((l: any) => {
+            if (l && l.name && !allLighting.find(ex => ex.name === l.name && ex.description === l.description && ex.image_url === l.image_url)) {
+              allLighting.push(l)
+            }
+          })
+        }
+      })
+
+      setExistingFillings(allFillings)
+      setExistingHinges(allHinges)
+      setExistingDrawers(allDrawers)
+      setExistingLighting(allLighting)
     } catch (error) {
       console.error('Ошибка загрузки данных:', error)
     } finally {
@@ -1040,7 +1104,60 @@ export default function AdminProductsPage() {
                 <div className="mb-6">
                   <div className="flex items-center justify-between mb-2">
                     <label className="font-semibold">Варианты наполнений</label>
-                    <button type="button" className="px-3 py-1 border rounded" onClick={() => setFormData({ ...formData, fillings: [...formData.fillings, { name: '', description: '', image_url: '', delta_price: 0 }] })}>+ Добавить</button>
+                    <div className="relative existing-options-dropdown">
+                      <button 
+                        type="button" 
+                        className="px-3 py-1 border rounded hover:bg-gray-50" 
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setOpenExistingFillings(!openExistingFillings)
+                          setOpenExistingHinges(false)
+                          setOpenExistingDrawers(false)
+                          setOpenExistingLighting(false)
+                        }}
+                      >
+                        + Добавить {openExistingFillings ? '▲' : '▼'}
+                      </button>
+                      {openExistingFillings && (
+                        <div className="absolute right-0 mt-1 bg-white border rounded-lg shadow-lg z-50 min-w-[300px] max-h-60 overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+                          <button
+                            type="button"
+                            className="w-full px-3 py-2 text-left hover:bg-gray-100 border-b"
+                            onClick={() => {
+                              setFormData({ ...formData, fillings: [...formData.fillings, { name: '', description: '', image_url: '', delta_price: 0 }] })
+                              setOpenExistingFillings(false)
+                            }}
+                          >
+                            + Создать новый
+                          </button>
+                          {existingFillings.length > 0 && (
+                            <>
+                              <div className="px-3 py-2 text-xs text-gray-500 border-b bg-gray-50">Выбрать из существующих:</div>
+                              {existingFillings.map((f, idx) => (
+                                <button
+                                  key={idx}
+                                  type="button"
+                                  className="w-full px-3 py-2 text-left hover:bg-gray-100 flex items-center gap-2"
+                                  onClick={() => {
+                                    setFormData({ ...formData, fillings: [...formData.fillings, { ...f }] })
+                                    setOpenExistingFillings(false)
+                                  }}
+                                >
+                                  {f.image_url && (
+                                    <img src={f.image_url} alt={f.name} className="w-10 h-10 object-contain rounded border bg-gray-50 flex-shrink-0" />
+                                  )}
+                                  <div className="flex-1">
+                                    <div className="text-sm font-medium">{f.name || 'Без названия'}</div>
+                                    {f.description && <div className="text-xs text-gray-500">{f.description}</div>}
+                                    {f.delta_price !== undefined && <div className="text-xs text-gray-500">Δ цена: {f.delta_price} ₽</div>}
+                                  </div>
+                                </button>
+                              ))}
+                            </>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </div>
                   {(formData.fillings as any[]).map((f, idx) => (
                     <div key={idx} className="border rounded-lg p-3 mb-3 grid grid-cols-1 md:grid-cols-4 gap-3">
@@ -1071,7 +1188,60 @@ export default function AdminProductsPage() {
                 <div className="mb-6">
                   <div className="flex items-center justify-between mb-2">
                     <label className="font-semibold">Петли</label>
-                    <button type="button" className="px-3 py-1 border rounded" onClick={() => setFormData({ ...formData, hinges: [...formData.hinges, { name: '', description: '', image_url: '', delta_price: 0 }] })}>+ Добавить</button>
+                    <div className="relative existing-options-dropdown">
+                      <button 
+                        type="button" 
+                        className="px-3 py-1 border rounded hover:bg-gray-50" 
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setOpenExistingHinges(!openExistingHinges)
+                          setOpenExistingFillings(false)
+                          setOpenExistingDrawers(false)
+                          setOpenExistingLighting(false)
+                        }}
+                      >
+                        + Добавить {openExistingHinges ? '▲' : '▼'}
+                      </button>
+                      {openExistingHinges && (
+                        <div className="absolute right-0 mt-1 bg-white border rounded-lg shadow-lg z-50 min-w-[300px] max-h-60 overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+                          <button
+                            type="button"
+                            className="w-full px-3 py-2 text-left hover:bg-gray-100 border-b"
+                            onClick={() => {
+                              setFormData({ ...formData, hinges: [...formData.hinges, { name: '', description: '', image_url: '', delta_price: 0 }] })
+                              setOpenExistingHinges(false)
+                            }}
+                          >
+                            + Создать новый
+                          </button>
+                          {existingHinges.length > 0 && (
+                            <>
+                              <div className="px-3 py-2 text-xs text-gray-500 border-b bg-gray-50">Выбрать из существующих:</div>
+                              {existingHinges.map((h, idx) => (
+                                <button
+                                  key={idx}
+                                  type="button"
+                                  className="w-full px-3 py-2 text-left hover:bg-gray-100 flex items-center gap-2"
+                                  onClick={() => {
+                                    setFormData({ ...formData, hinges: [...formData.hinges, { ...h }] })
+                                    setOpenExistingHinges(false)
+                                  }}
+                                >
+                                  {h.image_url && (
+                                    <img src={h.image_url} alt={h.name} className="w-10 h-10 object-contain rounded border bg-gray-50 flex-shrink-0" />
+                                  )}
+                                  <div className="flex-1">
+                                    <div className="text-sm font-medium">{h.name || 'Без названия'}</div>
+                                    {h.description && <div className="text-xs text-gray-500">{h.description}</div>}
+                                    {h.delta_price !== undefined && <div className="text-xs text-gray-500">Δ цена: {h.delta_price} ₽</div>}
+                                  </div>
+                                </button>
+                              ))}
+                            </>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </div>
                   {(formData.hinges as any[]).map((h, idx) => (
                     <div key={idx} className="border rounded-lg p-3 mb-3 grid grid-cols-1 md:grid-cols-4 gap-3">
@@ -1102,7 +1272,60 @@ export default function AdminProductsPage() {
                 <div className="mb-6">
                   <div className="flex items-center justify-between mb-2">
                     <label className="font-semibold">Ящики</label>
-                    <button type="button" className="px-3 py-1 border rounded" onClick={() => setFormData({ ...formData, drawers: [...formData.drawers, { name: '', description: '', image_url: '', delta_price: 0 }] })}>+ Добавить</button>
+                    <div className="relative existing-options-dropdown">
+                      <button 
+                        type="button" 
+                        className="px-3 py-1 border rounded hover:bg-gray-50" 
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setOpenExistingDrawers(!openExistingDrawers)
+                          setOpenExistingFillings(false)
+                          setOpenExistingHinges(false)
+                          setOpenExistingLighting(false)
+                        }}
+                      >
+                        + Добавить {openExistingDrawers ? '▲' : '▼'}
+                      </button>
+                      {openExistingDrawers && (
+                        <div className="absolute right-0 mt-1 bg-white border rounded-lg shadow-lg z-50 min-w-[300px] max-h-60 overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+                          <button
+                            type="button"
+                            className="w-full px-3 py-2 text-left hover:bg-gray-100 border-b"
+                            onClick={() => {
+                              setFormData({ ...formData, drawers: [...formData.drawers, { name: '', description: '', image_url: '', delta_price: 0 }] })
+                              setOpenExistingDrawers(false)
+                            }}
+                          >
+                            + Создать новый
+                          </button>
+                          {existingDrawers.length > 0 && (
+                            <>
+                              <div className="px-3 py-2 text-xs text-gray-500 border-b bg-gray-50">Выбрать из существующих:</div>
+                              {existingDrawers.map((d, idx) => (
+                                <button
+                                  key={idx}
+                                  type="button"
+                                  className="w-full px-3 py-2 text-left hover:bg-gray-100 flex items-center gap-2"
+                                  onClick={() => {
+                                    setFormData({ ...formData, drawers: [...formData.drawers, { ...d }] })
+                                    setOpenExistingDrawers(false)
+                                  }}
+                                >
+                                  {d.image_url && (
+                                    <img src={d.image_url} alt={d.name} className="w-10 h-10 object-contain rounded border bg-gray-50 flex-shrink-0" />
+                                  )}
+                                  <div className="flex-1">
+                                    <div className="text-sm font-medium">{d.name || 'Без названия'}</div>
+                                    {d.description && <div className="text-xs text-gray-500">{d.description}</div>}
+                                    {d.delta_price !== undefined && <div className="text-xs text-gray-500">Δ цена: {d.delta_price} ₽</div>}
+                                  </div>
+                                </button>
+                              ))}
+                            </>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </div>
                   {(formData.drawers as any[]).map((d, idx) => (
                     <div key={idx} className="border rounded-lg p-3 mb-3 grid grid-cols-1 md:grid-cols-4 gap-3">
@@ -1133,7 +1356,60 @@ export default function AdminProductsPage() {
                 <div className="mb-6">
                   <div className="flex items-center justify-between mb-2">
                     <label className="font-semibold">Подсветка</label>
-                    <button type="button" className="px-3 py-1 border rounded" onClick={() => setFormData({ ...formData, lighting: [...formData.lighting, { name: '', description: '', image_url: '', delta_price: 0 }] })}>+ Добавить</button>
+                    <div className="relative existing-options-dropdown">
+                      <button 
+                        type="button" 
+                        className="px-3 py-1 border rounded hover:bg-gray-50" 
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setOpenExistingLighting(!openExistingLighting)
+                          setOpenExistingFillings(false)
+                          setOpenExistingHinges(false)
+                          setOpenExistingDrawers(false)
+                        }}
+                      >
+                        + Добавить {openExistingLighting ? '▲' : '▼'}
+                      </button>
+                      {openExistingLighting && (
+                        <div className="absolute right-0 mt-1 bg-white border rounded-lg shadow-lg z-50 min-w-[300px] max-h-60 overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+                          <button
+                            type="button"
+                            className="w-full px-3 py-2 text-left hover:bg-gray-100 border-b"
+                            onClick={() => {
+                              setFormData({ ...formData, lighting: [...formData.lighting, { name: '', description: '', image_url: '', delta_price: 0 }] })
+                              setOpenExistingLighting(false)
+                            }}
+                          >
+                            + Создать новый
+                          </button>
+                          {existingLighting.length > 0 && (
+                            <>
+                              <div className="px-3 py-2 text-xs text-gray-500 border-b bg-gray-50">Выбрать из существующих:</div>
+                              {existingLighting.map((l, idx) => (
+                                <button
+                                  key={idx}
+                                  type="button"
+                                  className="w-full px-3 py-2 text-left hover:bg-gray-100 flex items-center gap-2"
+                                  onClick={() => {
+                                    setFormData({ ...formData, lighting: [...formData.lighting, { ...l }] })
+                                    setOpenExistingLighting(false)
+                                  }}
+                                >
+                                  {l.image_url && (
+                                    <img src={l.image_url} alt={l.name} className="w-10 h-10 object-contain rounded border bg-gray-50 flex-shrink-0" />
+                                  )}
+                                  <div className="flex-1">
+                                    <div className="text-sm font-medium">{l.name || 'Без названия'}</div>
+                                    {l.description && <div className="text-xs text-gray-500">{l.description}</div>}
+                                    {l.delta_price !== undefined && <div className="text-xs text-gray-500">Δ цена: {l.delta_price} ₽</div>}
+                                  </div>
+                                </button>
+                              ))}
+                            </>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </div>
                   {(formData.lighting as any[]).map((l, idx) => (
                     <div key={idx} className="border rounded-lg p-3 mb-3 grid grid-cols-1 md:grid-cols-4 gap-3">
