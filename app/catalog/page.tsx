@@ -54,14 +54,14 @@ export default function CatalogPage() {
         <h1 className="text-3xl md:text-4xl font-bold mb-6 md:mb-8">Каталог товаров</h1>
 
         {/* Сетка категорий (на мобилках строго 2 в ряд) */}
-        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3 sm:gap-4 md:gap-6">
+        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-2 sm:gap-3 md:gap-6">
           {categories.map((category) => (
             <Link
               key={category.id}
               href={`/catalog/${category.slug}`}
-              className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg transition-all group flex flex-col items-center text-center p-4 md:p-5"
+              className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg transition-all group flex flex-col items-center text-center p-0"
             >
-              <div className="w-full aspect-square max-w-none md:max-w-[140px] rounded-xl overflow-hidden bg-gray-100 mb-3 relative">
+              <div className="w-full aspect-square max-w-none md:max-w-[140px] overflow-hidden bg-gray-100 relative rounded-2xl">
                 {category.image_url ? (
                   <Image
                     src={category.image_url}
@@ -75,12 +75,14 @@ export default function CatalogPage() {
                   <div className="w-full h-full flex items-center justify-center text-4xl">📦</div>
                 )}
               </div>
-              <h3 className="text-[15px] sm:text-base md:text-lg font-semibold leading-snug mb-1 group-hover:text-black transition-colors text-center">
-                {category.name}
-              </h3>
-              {category.description && (
-                <p className="text-gray-500 text-center text-xs sm:text-sm leading-snug line-clamp-2">{category.description}</p>
-              )}
+              <div className="w-full px-3 pb-3 pt-2 md:px-5 md:pb-5 md:pt-3">
+                <h3 className="text-[15px] sm:text-base md:text-lg font-semibold leading-snug mb-1 group-hover:text-black transition-colors text-center">
+                  {category.name}
+                </h3>
+                {category.description && (
+                  <p className="text-gray-500 text-center text-xs sm:text-sm leading-snug line-clamp-2">{category.description}</p>
+                )}
+              </div>
             </Link>
           ))}
         </div>
