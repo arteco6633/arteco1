@@ -76,10 +76,12 @@ drop policy if exists "Allow update for anon" on public.partner_commissions;
 
 -- Политики для партнеров
 -- Разрешить чтение своих данных партнерам
+-- Партнеры авторизуются через sessionStorage, а не через Supabase Auth,
+-- поэтому они считаются 'anon' пользователями
 create policy "Allow read own partner data" on public.partners
   for select
-  to authenticated
-  using (true); -- Пока разрешаем всем авторизованным, потом можно будет фильтровать по user_id
+  to anon, authenticated
+  using (true); -- Пока разрешаем всем, потом можно будет фильтровать по user_id
 
 -- Разрешить вставку новых партнеров
 create policy "Allow insert for anon" on public.partners
@@ -96,9 +98,11 @@ create policy "Allow update own partner data" on public.partners
 
 -- Политики для заказов партнеров
 -- Разрешить чтение своих заказов
+-- Партнеры авторизуются через sessionStorage, а не через Supabase Auth,
+-- поэтому они считаются 'anon' пользователями
 create policy "Allow read own partner orders" on public.partner_orders
   for select
-  to authenticated
+  to anon, authenticated
   using (true); -- Пока разрешаем всем, потом фильтровать по partner_id
 
 -- Разрешить вставку заказов партнеров
@@ -116,9 +120,11 @@ create policy "Allow update for anon" on public.partner_orders
 
 -- Политики для комиссий партнеров
 -- Разрешить чтение своих комиссий
+-- Партнеры авторизуются через sessionStorage, а не через Supabase Auth,
+-- поэтому они считаются 'anon' пользователями
 create policy "Allow read own commissions" on public.partner_commissions
   for select
-  to authenticated
+  to anon, authenticated
   using (true); -- Пока разрешаем всем, потом фильтровать по partner_id
 
 -- Разрешить вставку комиссий
@@ -162,9 +168,11 @@ drop policy if exists "Allow delete own clients" on public.partner_clients;
 
 -- Политики для клиентов партнеров
 -- Разрешить чтение своих клиентов
+-- Партнеры авторизуются через sessionStorage, а не через Supabase Auth,
+-- поэтому они считаются 'anon' пользователями
 create policy "Allow read own clients" on public.partner_clients
   for select
-  to authenticated
+  to anon, authenticated
   using (true); -- Пока разрешаем всем, потом фильтровать по partner_id
 
 -- Разрешить вставку клиентов

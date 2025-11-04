@@ -168,16 +168,30 @@ export default function PartnerCabinet() {
       }
 
       // Загрузка клиентов партнера
-      const { data: clientsData } = await supabase
+      console.log('Загрузка клиентов для партнера ID:', partnerId)
+      const { data: clientsData, error: clientsError } = await supabase
         .from('partner_clients')
         .select('*')
         .eq('partner_id', partnerId)
         .order('created_at', { ascending: false })
 
-      if (clientsData) {
-        setClients(clientsData)
-      } else {
+      if (clientsError) {
+        console.error('Ошибка загрузки клиентов:', clientsError)
+        console.error('Детали ошибки:', {
+          code: clientsError.code,
+          message: clientsError.message,
+          details: clientsError.details,
+          hint: clientsError.hint
+        })
         setClients([])
+      } else {
+        console.log('Загружено клиентов:', clientsData?.length || 0)
+        console.log('Данные клиентов:', clientsData)
+        if (clientsData) {
+          setClients(clientsData)
+        } else {
+          setClients([])
+        }
       }
     } catch (error) {
       console.error('Ошибка загрузки данных партнера:', error)
@@ -206,12 +220,16 @@ export default function PartnerCabinet() {
       const data = await response.json()
 
       if (!response.ok) {
+        console.error('Ошибка при добавлении клиента:', data)
         alert(data.error || 'Ошибка при добавлении клиента')
         return
       }
 
+      console.log('Клиент успешно добавлен:', data.client)
+
       // Обновляем список клиентов
       if (partner) {
+        console.log('Обновляем данные партнера после добавления клиента...')
         await loadPartnerData(partner.id)
       }
 
