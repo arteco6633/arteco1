@@ -92,8 +92,8 @@ export default function ProductPage() {
   const [openModuleGroup, setOpenModuleGroup] = useState<'base' | 'wall' | 'tall' | 'other' | null>('base')
   const finalPrice = useMemo(() => {
     if (!product) return 0
-    // Убираем основную цену товара (base), считаем только опции и модули
-    const fill = (product.fillings && selectedFillingIdx != null && product.fillings[selectedFillingIdx]?.delta_price) || 0
+    // Цена формируется только из: Петли + Ящики + Подсветка + Модули
+    // БЕЗ основной цены товара и БЕЗ наполнения
     const hinge = (product.hinges && selectedHingeIdx != null && product.hinges[selectedHingeIdx]?.delta_price) || 0
     const drawer = (product.drawers && selectedDrawerIdx != null && product.drawers[selectedDrawerIdx]?.delta_price) || 0
     const lighting = (product.lighting && selectedLightingIdx != null && product.lighting[selectedLightingIdx]?.delta_price) || 0
@@ -101,9 +101,9 @@ export default function ProductPage() {
       const m = modules.find(x => x.id === Number(id))
       return sum + (m ? m.price * (qty || 0) : 0)
     }, 0)
-    // Цена формируется только из опций и модулей, без основной цены товара
-    return fill + hinge + drawer + lighting + modulesSum
-  }, [product, selectedFillingIdx, selectedHingeIdx, selectedDrawerIdx, selectedLightingIdx, selectedModules, modules])
+    // Итоговая цена: Петли + Ящики + Подсветка + Модули
+    return hinge + drawer + lighting + modulesSum
+  }, [product, selectedHingeIdx, selectedDrawerIdx, selectedLightingIdx, selectedModules, modules])
   const [openFilling, setOpenFilling] = useState(true)
   const [openHinge, setOpenHinge] = useState(false)
   const [openDrawer, setOpenDrawer] = useState(false)
