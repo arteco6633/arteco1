@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { supabase } from '@/lib/supabase'
 
 export default function PartnerLogin() {
   const router = useRouter()
@@ -18,36 +17,30 @@ export default function PartnerLogin() {
     setError('')
 
     try {
-      // Получаем партнера по телефону
-      const { data: partner, error: partnerError } = await supabase
-        .from('partners')
-        .select('*')
-        .eq('phone', phone)
-        .eq('is_active', true)
-        .single()
+      // Отправляем запрос на вход через API
+      const response = await fetch('/api/partners/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone, password })
+      })
 
-      if (partnerError || !partner) {
-        setError('Неверный телефон или пароль')
-        setLoading(false)
-        return
-      }
+      const data = await response.json()
 
-      // Проверяем пароль (в реальном приложении нужно использовать bcrypt)
-      // Для демонстрации используем простую проверку
-      // В production нужно использовать bcrypt.compare()
-      if (partner.password_hash !== password) {
-        setError('Неверный телефон или пароль')
+      if (!response.ok) {
+        setError(data.error || 'Неверный телефон или пароль')
         setLoading(false)
         return
       }
 
       // Сохраняем информацию о партнере в sessionStorage
-      sessionStorage.setItem('partner', JSON.stringify({
-        id: partner.id,
-        phone: partner.phone,
-        name: partner.name,
-        partner_type: partner.partner_type
-      }))
+      if (data.partner) {
+        sessionStorage.setItem('partner', JSON.stringify({
+          id: data.partner.id,
+          phone: data.partner.phone,
+          name: data.partner.name,
+          partner_type: data.partner.partner_type
+        }))
+      }
 
       // Перенаправляем в личный кабинет
       router.push('/partners/cabinet')

@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { supabase } from '@/lib/supabase'
 
 export default function PartnerRegister() {
   const router = useRouter()
@@ -52,53 +51,37 @@ export default function PartnerRegister() {
     }
 
     try {
-      // Проверяем, существует ли партнер с таким телефоном
-      const { data: existingPartner } = await supabase
-        .from('partners')
-        .select('id')
-        .eq('phone', formData.phone)
-        .single()
-
-      if (existingPartner) {
-        setError('Партнер с таким телефоном уже зарегистрирован')
-        setLoading(false)
-        return
-      }
-
-      // В реальном приложении нужно использовать bcrypt для хеширования пароля
-      // Для демонстрации сохраняем пароль как есть (в production ОБЯЗАТЕЛЬНО использовать bcrypt)
-      const passwordHash = formData.password // В production: await bcrypt.hash(formData.password, 10)
-
-      // Создаем партнера
-      const { data: partner, error: partnerError } = await supabase
-        .from('partners')
-        .insert({
+      // Отправляем запрос на регистрацию через API
+      const response = await fetch('/api/partners/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
           phone: formData.phone,
-          password_hash: passwordHash,
+          password: formData.password,
           name: formData.name || null,
           email: formData.email || null,
-          company_name: formData.companyName || null,
-          partner_type: formData.partnerType,
-          commission_rate: 10.00, // По умолчанию 10%
-          is_active: true
+          companyName: formData.companyName || null,
+          partnerType: formData.partnerType
         })
-        .select()
-        .single()
+      })
 
-      if (partnerError) {
-        setError('Ошибка при регистрации. Попробуйте позже.')
-        console.error('Ошибка регистрации:', partnerError)
+      const data = await response.json()
+
+      if (!response.ok) {
+        setError(data.error || 'Ошибка при регистрации')
         setLoading(false)
         return
       }
 
       // Сохраняем информацию о партнере в sessionStorage
-      sessionStorage.setItem('partner', JSON.stringify({
-        id: partner.id,
-        phone: partner.phone,
-        name: partner.name,
-        partner_type: partner.partner_type
-      }))
+      if (data.partner) {
+        sessionStorage.setItem('partner', JSON.stringify({
+          id: data.partner.id,
+          phone: data.partner.phone,
+          name: data.partner.name,
+          partner_type: data.partner.partner_type
+        }))
+      }
 
       // Перенаправляем в личный кабинет
       router.push('/partners/cabinet')
