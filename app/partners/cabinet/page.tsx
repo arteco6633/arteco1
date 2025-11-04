@@ -37,14 +37,33 @@ interface Commission {
   created_at: string
 }
 
+interface Client {
+  id: number
+  partner_id: number
+  name: string
+  phone: string
+  email: string | null
+  notes: string | null
+  created_at: string
+  updated_at: string
+}
+
 export default function PartnerCabinet() {
   const router = useRouter()
   const [partner, setPartner] = useState<{ id: number; phone: string; name: string | null; partner_type: string } | null>(null)
   const [stats, setStats] = useState<PartnerStats | null>(null)
   const [orders, setOrders] = useState<Order[]>([])
   const [commissions, setCommissions] = useState<Commission[]>([])
+  const [clients, setClients] = useState<Client[]>([])
   const [loading, setLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState<'orders' | 'commissions' | 'stats'>('orders')
+  const [activeTab, setActiveTab] = useState<'orders' | 'commissions' | 'stats' | 'clients'>('orders')
+  const [showAddClientModal, setShowAddClientModal] = useState(false)
+  const [clientForm, setClientForm] = useState({
+    name: '',
+    phone: '',
+    email: '',
+    notes: ''
+  })
 
   useEffect(() => {
     // Проверяем наличие партнера в sessionStorage
@@ -75,8 +94,15 @@ export default function PartnerCabinet() {
         .select('*')
         .eq('partner_id', partnerId)
 
+      // Загружаем клиентов для подсчета totalClients
+      const { data: clientsData } = await supabase
+        .from('partner_clients')
+        .select('id')
+        .eq('partner_id', partnerId)
+
+      const totalClients = clientsData?.length || 0
+
       if (ordersData && ordersData.length > 0) {
-        const totalClients = new Set(ordersData.map(o => o.client_phone)).size
         const totalOrders = ordersData.length
         const totalRevenue = ordersData.reduce((sum, o) => sum + Number(o.total_amount || 0), 0)
         const totalCommissions = ordersData.reduce((sum, o) => sum + Number(o.commission_amount || 0), 0)
@@ -129,9 +155,9 @@ export default function PartnerCabinet() {
           setCommissions(formattedCommissions)
         }
       } else {
-        // Если нет данных, используем пустые значения
+        // Если нет данных по заказам, используем пустые значения для заказов, но учитываем клиентов
         setStats({
-          totalClients: 0,
+          totalClients,
           totalOrders: 0,
           totalRevenue: 0,
           totalCommissions: 0,
@@ -140,10 +166,61 @@ export default function PartnerCabinet() {
         setOrders([])
         setCommissions([])
       }
+
+      // Загрузка клиентов партнера
+      const { data: clientsData } = await supabase
+        .from('partner_clients')
+        .select('*')
+        .eq('partner_id', partnerId)
+        .order('created_at', { ascending: false })
+
+      if (clientsData) {
+        setClients(clientsData)
+      } else {
+        setClients([])
+      }
     } catch (error) {
       console.error('Ошибка загрузки данных партнера:', error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  async function handleAddClient(e: React.FormEvent) {
+    e.preventDefault()
+    if (!partner) return
+
+    try {
+      const response = await fetch('/api/partners/clients', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          partnerId: partner.id,
+          name: clientForm.name,
+          phone: clientForm.phone,
+          email: clientForm.email || null,
+          notes: clientForm.notes || null
+        })
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        alert(data.error || 'Ошибка при добавлении клиента')
+        return
+      }
+
+      // Обновляем список клиентов
+      if (partner) {
+        await loadPartnerData(partner.id)
+      }
+
+      // Закрываем модальное окно и сбрасываем форму
+      setShowAddClientModal(false)
+      setClientForm({ name: '', phone: '', email: '', notes: '' })
+    } catch (error) {
+      console.error('Ошибка добавления клиента:', error)
+      alert('Ошибка при добавлении клиента')
     }
   }
 
@@ -265,6 +342,16 @@ export default function PartnerCabinet() {
               }`}
             >
               Статистика
+            </button>
+            <button
+              onClick={() => setActiveTab('clients')}
+              className={`px-6 py-4 font-semibold whitespace-nowrap border-b-2 transition-colors ${
+                activeTab === 'clients'
+                  ? 'border-black text-black'
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              Клиенты
             </button>
           </div>
 
@@ -399,9 +486,146 @@ export default function PartnerCabinet() {
                 )}
               </div>
             )}
+
+            {activeTab === 'clients' && (
+              <div className="space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+                  <h2 className="text-xl md:text-2xl font-bold">Мои клиенты</h2>
+                  <button
+                    onClick={() => setShowAddClientModal(true)}
+                    className="px-6 py-3 bg-black text-white rounded-[50px] hover:bg-gray-800 transition-colors font-semibold text-sm md:text-base whitespace-nowrap"
+                  >
+                    + Добавить клиента
+                  </button>
+                </div>
+                {clients.length === 0 ? (
+                  <div className="text-center py-12 text-gray-500">
+                    <div className="text-4xl mb-4">👥</div>
+                    <div className="text-lg mb-2">Нет клиентов</div>
+                    <div className="text-sm">Добавьте первого клиента, чтобы начать отслеживать заказы</div>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {clients.map((client) => (
+                      <div key={client.id} className="border rounded-xl p-4 md:p-6 hover:shadow-md transition-shadow bg-white">
+                        <div className="flex items-start justify-between mb-3">
+                          <div className="flex-1">
+                            <div className="font-semibold text-lg mb-1">{client.name}</div>
+                            <div className="text-gray-600 text-sm mb-1">{client.phone}</div>
+                            {client.email && (
+                              <div className="text-gray-500 text-xs mb-1">{client.email}</div>
+                            )}
+                            {client.notes && (
+                              <div className="text-gray-500 text-xs mt-2 italic">{client.notes}</div>
+                            )}
+                            <div className="text-gray-400 text-xs mt-2">
+                              Добавлен: {formatDate(client.created_at)}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </main>
+
+      {/* Модальное окно добавления клиента */}
+      {showAddClientModal && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+          onClick={() => setShowAddClientModal(false)}
+        >
+          <div
+            className="bg-white rounded-2xl shadow-xl p-6 md:p-8 max-w-md w-full"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold">Добавить клиента</h2>
+              <button
+                onClick={() => setShowAddClientModal(false)}
+                className="text-gray-400 hover:text-gray-600 text-2xl"
+              >
+                ×
+              </button>
+            </div>
+            <form onSubmit={handleAddClient} className="space-y-4">
+              <div>
+                <label htmlFor="clientName" className="block text-sm font-medium text-gray-700 mb-2">
+                  Имя <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  id="clientName"
+                  value={clientForm.name}
+                  onChange={(e) => setClientForm({ ...clientForm, name: e.target.value })}
+                  placeholder="Имя клиента"
+                  required
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
+                />
+              </div>
+              <div>
+                <label htmlFor="clientPhone" className="block text-sm font-medium text-gray-700 mb-2">
+                  Телефон <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="tel"
+                  id="clientPhone"
+                  value={clientForm.phone}
+                  onChange={(e) => setClientForm({ ...clientForm, phone: e.target.value })}
+                  placeholder="+7 (999) 123-45-67"
+                  required
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
+                />
+              </div>
+              <div>
+                <label htmlFor="clientEmail" className="block text-sm font-medium text-gray-700 mb-2">
+                  Email
+                </label>
+                <input
+                  type="email"
+                  id="clientEmail"
+                  value={clientForm.email}
+                  onChange={(e) => setClientForm({ ...clientForm, email: e.target.value })}
+                  placeholder="email@example.com"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
+                />
+              </div>
+              <div>
+                <label htmlFor="clientNotes" className="block text-sm font-medium text-gray-700 mb-2">
+                  Заметки
+                </label>
+                <textarea
+                  id="clientNotes"
+                  value={clientForm.notes}
+                  onChange={(e) => setClientForm({ ...clientForm, notes: e.target.value })}
+                  placeholder="Дополнительная информация о клиенте"
+                  rows={3}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent resize-none"
+                />
+              </div>
+              <div className="flex gap-4 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setShowAddClientModal(false)}
+                  className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-[50px] hover:bg-gray-50 transition-colors font-semibold"
+                >
+                  Отмена
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 px-6 py-3 bg-black text-white rounded-[50px] hover:bg-gray-800 transition-colors font-semibold"
+                >
+                  Добавить
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -134,3 +134,55 @@ create policy "Allow update for anon" on public.partner_commissions
   using (true)
   with check (true);
 
+-- Таблица для клиентов партнеров
+create table if not exists public.partner_clients (
+  id bigserial primary key,
+  partner_id bigint not null references public.partners(id) on delete cascade,
+  name text not null,
+  phone text not null,
+  email text,
+  notes text,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+-- Индексы для быстрого поиска
+create index if not exists partner_clients_partner_id_idx on public.partner_clients(partner_id);
+create index if not exists partner_clients_phone_idx on public.partner_clients(phone);
+create index if not exists partner_clients_created_at_idx on public.partner_clients(created_at desc);
+
+-- RLS политики для клиентов партнеров
+alter table public.partner_clients enable row level security;
+
+-- Удаляем старые политики если они есть
+drop policy if exists "Allow read own clients" on public.partner_clients;
+drop policy if exists "Allow insert for anon" on public.partner_clients;
+drop policy if exists "Allow update own clients" on public.partner_clients;
+drop policy if exists "Allow delete own clients" on public.partner_clients;
+
+-- Политики для клиентов партнеров
+-- Разрешить чтение своих клиентов
+create policy "Allow read own clients" on public.partner_clients
+  for select
+  to authenticated
+  using (true); -- Пока разрешаем всем, потом фильтровать по partner_id
+
+-- Разрешить вставку клиентов
+create policy "Allow insert for anon" on public.partner_clients
+  for insert
+  to anon, authenticated
+  with check (true);
+
+-- Разрешить обновление своих клиентов
+create policy "Allow update own clients" on public.partner_clients
+  for update
+  to authenticated
+  using (true)
+  with check (true);
+
+-- Разрешить удаление своих клиентов
+create policy "Allow delete own clients" on public.partner_clients
+  for delete
+  to authenticated
+  using (true);
+
