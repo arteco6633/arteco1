@@ -7,19 +7,24 @@ import Link from 'next/link'
 
 interface Order {
   id: number
-  order_number: string
-  user_name: string | null
-  user_phone: string | null
-  user_email: string | null
-  total_amount: number
+  order_number?: string
+  user_name?: string | null
+  user_phone?: string | null
+  user_email?: string | null
+  total_amount?: number
+  total?: number
   status: string
-  payment_method: string | null
-  delivery_type: string | null
-  address: string | null
-  need_assembly: boolean | null
-  need_utilization: boolean | null
+  payment_method?: string | null
+  delivery_type?: string | null
+  address?: string | null
+  need_assembly?: boolean | null
+  need_utilization?: boolean | null
+  contact?: any // JSONB
+  delivery?: any // JSONB
+  payment?: any // JSONB
+  items?: any // JSONB
   created_at: string
-  updated_at: string
+  updated_at?: string
 }
 
 interface OrderItem {
@@ -62,20 +67,50 @@ export default function OrderDetailPage() {
         return
       }
 
-      setOrder(orderData)
-
-      // Загружаем товары заказа
-      const { data: itemsData, error: itemsError } = await supabaseServer
-        .from('order_items')
-        .select('*')
-        .eq('order_id', orderId)
-
-      if (itemsError) {
-        console.error('Ошибка загрузки товаров заказа:', itemsError)
-        return
+      // Преобразуем данные из JSONB полей
+      const formattedOrder = {
+        ...orderData,
+        order_number: orderData.order_number || `#${orderData.id}`,
+        user_name: orderData.user_name || orderData.contact?.name || orderData.contact?.user_name || null,
+        user_phone: orderData.user_phone || orderData.contact?.phone || orderData.contact?.user_phone || null,
+        user_email: orderData.user_email || orderData.contact?.email || orderData.contact?.user_email || null,
+        total_amount: orderData.total_amount || orderData.total || 0,
+        payment_method: orderData.payment_method || orderData.payment?.method || null,
+        delivery_type: orderData.delivery_type || orderData.delivery?.type || null,
+        address: orderData.address || orderData.delivery?.address || null,
+        need_assembly: orderData.need_assembly || orderData.delivery?.need_assembly || null,
+        need_utilization: orderData.need_utilization || orderData.delivery?.need_utilization || null
       }
 
-      setOrderItems(itemsData || [])
+      setOrder(formattedOrder)
+
+      // Загружаем товары заказа (из таблицы order_items или из JSONB поля items)
+      if (orderData.items && Array.isArray(orderData.items) && orderData.items.length > 0) {
+        // Если товары в JSONB поле items
+        const items = orderData.items.map((item: any, index: number) => ({
+          id: index + 1,
+          order_id: orderData.id,
+          product_id: item.product_id || null,
+          product_name: item.product_name || item.name || 'Товар',
+          quantity: item.quantity || 1,
+          price: item.price || 0,
+          options: item.options || item
+        }))
+        setOrderItems(items)
+      } else {
+        // Если товары в отдельной таблице order_items
+        const { data: itemsData, error: itemsError } = await supabaseServer
+          .from('order_items')
+          .select('*')
+          .eq('order_id', orderId)
+
+        if (itemsError) {
+          console.error('Ошибка загрузки товаров заказа:', itemsError)
+          setOrderItems([])
+        } else {
+          setOrderItems(itemsData || [])
+        }
+      }
     } catch (error) {
       console.error('Ошибка загрузки заказа:', error)
     } finally {

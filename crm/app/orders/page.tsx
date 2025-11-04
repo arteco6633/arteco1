@@ -6,13 +6,17 @@ import Link from 'next/link'
 
 interface Order {
   id: number
-  order_number: string
-  user_name: string | null
-  user_phone: string | null
-  total_amount: number
+  order_number?: string
+  user_name?: string | null
+  user_phone?: string | null
+  total_amount?: number
+  total?: number
   status: string
-  payment_method: string | null
-  delivery_type: string | null
+  payment_method?: string | null
+  delivery_type?: string | null
+  contact?: any // JSONB
+  delivery?: any // JSONB
+  payment?: any // JSONB
   created_at: string
 }
 
@@ -44,7 +48,23 @@ export default function OrdersPage() {
         return
       }
 
-      setOrders(data || [])
+      // Преобразуем данные из JSONB полей в удобный формат
+      const formattedOrders = (data || []).map((order: any) => ({
+        id: order.id,
+        order_number: order.order_number || `#${order.id}`,
+        user_name: order.user_name || order.contact?.name || order.contact?.user_name || null,
+        user_phone: order.user_phone || order.contact?.phone || order.contact?.user_phone || null,
+        total_amount: order.total_amount || order.total || 0,
+        status: order.status || 'pending',
+        payment_method: order.payment_method || order.payment?.method || null,
+        delivery_type: order.delivery_type || order.delivery?.type || null,
+        contact: order.contact,
+        delivery: order.delivery,
+        payment: order.payment,
+        created_at: order.created_at
+      }))
+
+      setOrders(formattedOrders)
     } catch (error) {
       console.error('Ошибка загрузки заказов:', error)
     } finally {
