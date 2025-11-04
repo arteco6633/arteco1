@@ -158,7 +158,7 @@ export default function CartPage() {
   }
 
   return (
-    <div className="max-w-[1400px] mx-auto px-4 md:px-3 xl:px-6 2xl:px-9 py-10">
+    <div className="mx-auto max-w-[1680px] 2xl:max-w-none px-4 md:px-2 xl:px-4 2xl:px-6 py-10">
       <h1 className="text-2xl md:text-3xl font-bold mb-6">Корзина</h1>
       {items.length === 0 ? (
         <div className="bg-white border rounded-xl p-8 text-center">
@@ -175,9 +175,11 @@ export default function CartPage() {
                   <div className="flex items-start gap-4">
                     <img src={it.image_url || '/placeholder.jpg'} alt={it.name} className="w-24 h-24 rounded object-cover" />
                     <div className="flex-1 min-w-0">
-                      <div className="font-medium line-clamp-2">{it.name}</div>
-                      {/* Цена справа наверху */}
-                      <div className="text-right font-semibold">{(it.price * it.qty).toLocaleString('ru-RU')} ₽</div>
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="font-medium line-clamp-2">{it.name}</div>
+                        {/* Цена справа на одном уровне с названием */}
+                        <div className="text-right font-semibold whitespace-nowrap">{(it.price * it.qty).toLocaleString('ru-RU')} ₽</div>
+                      </div>
                     {it.color && <div className="text-xs text-gray-500 mt-0.5">Цвет: {it.color}</div>}
                     {/* Опции */}
                     {it.options && (
