@@ -95,7 +95,8 @@ export default function AdminProductsPage() {
       back_wall_material: '',
       delivery_option: '',
       feet: '',
-      country: ''
+      country: '',
+      custom: [] as Array<{ label: string; value: string }>
     } as any,
     schemes: [] as string[],
     videos: [] as string[],
@@ -265,7 +266,10 @@ export default function AdminProductsPage() {
       hinges: (product.hinges as any) || [],
       drawers: (product.drawers as any) || [],
       lighting: (product.lighting as any) || [],
-      specs: (product.specs as any) || { 
+      specs: ((product.specs as any) && typeof (product.specs as any) === 'object') ? { 
+        ...product.specs,
+        custom: Array.isArray((product.specs as any).custom) ? (product.specs as any).custom : []
+      } : { 
         body_material: '', 
         facade_material: '', 
         additional: '',
@@ -274,7 +278,8 @@ export default function AdminProductsPage() {
         back_wall_material: '',
         delivery_option: '',
         feet: '',
-        country: ''
+        country: '',
+        custom: []
       },
       schemes: (product.schemes as any) || [],
       videos: (product.videos as any) || [],
@@ -1476,6 +1481,62 @@ export default function AdminProductsPage() {
                       <label className="block mb-2 font-semibold">Страна производства</label>
                       <input className="w-full px-3 py-2 border rounded-lg" value={(formData.specs && (formData.specs as any).country) || ''} onChange={(e)=> setFormData({ ...formData, specs: { ...(formData.specs || {}), country: e.target.value } })} />
                     </div>
+                  </div>
+
+                  {/* Дополнительные характеристики */}
+                  <div className="mt-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="font-semibold">Дополнительные характеристики</label>
+                      <button
+                        type="button"
+                        className="px-3 py-1 border rounded hover:bg-gray-50"
+                        onClick={() => {
+                          const current = (formData.specs as any)?.custom || []
+                          setFormData({ ...formData, specs: { ...(formData.specs as any), custom: [...current, { label: '', value: '' }] } })
+                        }}
+                      >
+                        + Добавить
+                      </button>
+                    </div>
+                    {Array.isArray((formData.specs as any)?.custom) && (formData.specs as any).custom.length > 0 && (
+                      <div className="space-y-2">
+                        {(formData.specs as any).custom.map((row: any, idx: number) => (
+                          <div key={idx} className="grid grid-cols-1 md:grid-cols-6 gap-2 items-center">
+                            <input
+                              className="md:col-span-2 px-3 py-2 border rounded"
+                              placeholder="Название характеристики"
+                              value={row.label || ''}
+                              onChange={(e) => {
+                                const list = [ ...((formData.specs as any).custom || []) ]
+                                list[idx] = { ...list[idx], label: e.target.value }
+                                setFormData({ ...formData, specs: { ...(formData.specs as any), custom: list } })
+                              }}
+                            />
+                            <input
+                              className="md:col-span-3 px-3 py-2 border rounded"
+                              placeholder="Значение"
+                              value={row.value || ''}
+                              onChange={(e) => {
+                                const list = [ ...((formData.specs as any).custom || []) ]
+                                list[idx] = { ...list[idx], value: e.target.value }
+                                setFormData({ ...formData, specs: { ...(formData.specs as any), custom: list } })
+                              }}
+                            />
+                            <button
+                              type="button"
+                              className="px-3 py-2 border rounded text-red-600 hover:bg-red-50"
+                              onClick={() => {
+                                const list = [ ...((formData.specs as any).custom || []) ]
+                                list.splice(idx, 1)
+                                setFormData({ ...formData, specs: { ...(formData.specs as any), custom: list } })
+                              }}
+                            >
+                              Удалить
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
 

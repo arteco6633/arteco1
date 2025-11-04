@@ -32,6 +32,7 @@ interface Product {
     delivery_option?: string
     feet?: string
     country?: string
+    custom?: Array<{ label: string; value: string }>
   } | null
   schemes?: string[] | null
   videos?: string[] | null
@@ -1139,8 +1140,21 @@ export default function ProductPage() {
                   {product.specs?.country && (
                     <div className="p-3 bg-gray-50 rounded-lg"><span className="font-semibold block mb-1">Страна производства</span><span>{product.specs.country}</span></div>
                   )}
-                  {!product.specs || Object.keys(product.specs).length === 0 && (
+                  {(!product.specs || (Object.keys(product.specs).length === 0 && !Array.isArray((product.specs as any).custom))) && (
                     <div className="text-gray-500">Характеристики отсутствуют</div>
+                  )}
+
+                  {Array.isArray((product.specs as any)?.custom) && (product.specs as any).custom.length > 0 && (
+                    <>
+                      {(product.specs as any).custom.map((row: any, idx: number) => (
+                        (row?.label || row?.value) && (
+                          <div key={idx} className="p-3 bg-gray-50 rounded-lg">
+                            {row.label && <span className="font-semibold block mb-1">{row.label}</span>}
+                            {row.value && <span>{row.value}</span>}
+                          </div>
+                        )
+                      ))}
+                    </>
                   )}
             </div>
           </div>
