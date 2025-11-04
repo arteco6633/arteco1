@@ -687,7 +687,9 @@ export default function AdminProductsPage() {
                             setDragOverImageIndex(null)
                           }}
                         >
-                          <img src={url} className="w-full h-20 object-cover rounded pointer-events-none" alt={`Изображение ${idx + 1}`} />
+                          <div className="w-full h-20 bg-gray-100 rounded overflow-hidden flex items-center justify-center">
+                            <img src={url} className="max-w-full max-h-full object-contain rounded pointer-events-none" alt={`Изображение ${idx + 1}`} />
+                          </div>
                           <button 
                             type="button" 
                             className="absolute -top-2 -right-2 bg-white rounded-full border w-6 h-6 text-xs hover:bg-red-50 z-10" 
