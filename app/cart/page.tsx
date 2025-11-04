@@ -28,6 +28,7 @@ export default function CartPage() {
   const [errors, setErrors] = useState<{name?: boolean; phone?: boolean; privacy?: boolean; delivery?: boolean}>({})
   const [showFillModal, setShowFillModal] = useState(false)
   const [modulesOpenByKey, setModulesOpenByKey] = useState<Record<string, boolean>>({})
+  const [moduleImages, setModuleImages] = useState<Record<number, string>>({})
 
   function toggleAcceptAll() {
     const next = !acceptAll
@@ -93,6 +94,31 @@ export default function CartPage() {
       }
     }
     loadSuggestions()
+  }, [items])
+
+  // Подгружаем изображения модулей для тех, у кого они отсутствуют в корзине
+  useEffect(() => {
+    (async () => {
+      try {
+        const ids = Array.from(new Set(
+          items.flatMap((it) => {
+            const mods = (it.options as any)?.modules || []
+            return mods.filter((m: any) => m && !m.image_url && m.id).map((m: any) => Number(m.id))
+          })
+        )) as number[]
+        if (ids.length === 0) return
+        const { data, error } = await supabase
+          .from('product_modules')
+          .select('id, image_url')
+          .in('id', ids)
+        if (error) throw error
+        const map: Record<number, string> = {}
+        ;(data || []).forEach((row: any) => { if (row?.id && row?.image_url) map[row.id] = row.image_url })
+        if (Object.keys(map).length > 0) setModuleImages((prev) => ({ ...prev, ...map }))
+      } catch (e) {
+        // ignore
+      }
+    })()
   }, [items])
 
   async function placeOrder() {
@@ -189,11 +215,11 @@ export default function CartPage() {
                               <div className="mt-2 overflow-x-auto -mx-1 px-1">
                                 <div className="flex gap-2">
                                   {(it.options as any).modules.map((m: any, idx: number) => (
-                                    <div key={idx} className="w-[180px] flex-shrink-0 border rounded-lg bg-white overflow-hidden">
+                                    <div key={idx} className="w-[200px] flex-shrink-0 border rounded-lg bg-white overflow-hidden">
                                       <div className="relative w-full h-24 bg-gray-100">
-                                        {m.image_url ? (
+                                        {(m.image_url || moduleImages[m.id as number]) ? (
                                           // eslint-disable-next-line @next/next/no-img-element
-                                          <img src={m.image_url} alt={m.name} className="w-full h-full object-cover" />
+                                          <img src={(m.image_url || moduleImages[m.id as number])} alt={m.name} className="w-full h-full object-cover" />
                                         ) : null}
                                       </div>
                                       <div className="p-2">
