@@ -94,13 +94,13 @@ export default function PartnerCabinet() {
         .select('*')
         .eq('partner_id', partnerId)
 
-      // Загружаем клиентов для подсчета totalClients
-      const { data: clientsData } = await supabase
+      // Загружаем клиентов для подсчета totalClients (только id для быстрого подсчета)
+      const { data: clientsCountData } = await supabase
         .from('partner_clients')
         .select('id')
         .eq('partner_id', partnerId)
 
-      const totalClients = clientsData?.length || 0
+      const totalClients = clientsCountData?.length || 0
 
       if (ordersData && ordersData.length > 0) {
         const totalOrders = ordersData.length
