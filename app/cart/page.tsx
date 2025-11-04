@@ -171,10 +171,11 @@ export default function CartPage() {
             {items.map((it) => {
               const key = `${it.id}|${it.color || ''}|${it.options ? JSON.stringify(it.options) : ''}`
               return (
-                <div key={key} className="bg-white border rounded-xl p-4 flex gap-4">
-                  <img src={it.image_url || '/placeholder.jpg'} alt={it.name} className="w-24 h-24 rounded object-cover" />
-                  <div className="flex-1 min-w-0">
-                    <div className="font-medium line-clamp-2">{it.name}</div>
+                <div key={key} className="bg-white border rounded-xl p-4 flex flex-col gap-3">
+                  <div className="flex items-start gap-4">
+                    <img src={it.image_url || '/placeholder.jpg'} alt={it.name} className="w-24 h-24 rounded object-cover" />
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium line-clamp-2">{it.name}</div>
                     {it.color && <div className="text-xs text-gray-500 mt-0.5">Цвет: {it.color}</div>}
                     {/* Опции */}
                     {it.options && (
@@ -236,7 +237,8 @@ export default function CartPage() {
                         )}
                       </div>
                     )}
-                    <div className="mt-3 flex items-center gap-2">
+                    </div>
+                    <div className="ml-auto flex items-center gap-2">
                       <button className="w-8 h-8 border rounded" onClick={() => updateQty(it.id, it.qty - 1, key)}>-</button>
                       <div className="px-2 text-sm">{it.qty}</div>
                       <button className="w-8 h-8 border rounded" onClick={() => updateQty(it.id, it.qty + 1, key)}>+</button>
@@ -247,7 +249,9 @@ export default function CartPage() {
                 </div>
               )
             })}
-            <button className="text-sm text-gray-500 hover:text-black" onClick={clear}>Очистить корзину</button>
+            <div className="flex justify-end">
+              <button className="text-sm text-gray-500 hover:text-black" onClick={clear}>Очистить корзину</button>
+            </div>
 
             {/* Рекомендации над формой */}
             {suggested.length > 0 && (
