@@ -62,13 +62,13 @@ export default function CatalogPage() {
               href={`/catalog/${category.slug}`}
               className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg transition-all group flex flex-col items-center text-center p-0"
             >
-              <div className="w-full aspect-square max-w-none md:max-w-[140px] overflow-hidden bg-gray-100 relative rounded-2xl">
+              <div className="w-full aspect-[4/3] min-h-[200px] md:min-h-[240px] overflow-hidden bg-gray-100 relative rounded-2xl rounded-b-none">
                 {category.image_url ? (
                   <Image
                     src={category.image_url}
                     alt={category.name}
                     fill
-                    sizes="(max-width: 640px) 50vw, (min-width: 1024px) 180px, 33vw"
+                    sizes="(max-width: 640px) 50vw, (min-width: 1024px) 33vw, 33vw"
                     className="object-cover"
                     quality={90}
                   />
@@ -76,7 +76,7 @@ export default function CatalogPage() {
                   <div className="w-full h-full flex items-center justify-center text-4xl">📦</div>
                 )}
               </div>
-              <div className="w-full px-3 pb-3 pt-2 md:px-5 md:pb-5 md:pt-3 text-left">
+              <div className="w-full px-3 pb-4 pt-3 md:px-5 md:pb-5 md:pt-4 text-left">
                 <h3 className="text-[15px] sm:text-base md:text-lg font-semibold leading-snug mb-1 group-hover:text-black transition-colors">
                   {category.name}
                 </h3>
