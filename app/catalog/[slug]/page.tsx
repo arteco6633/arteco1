@@ -286,7 +286,7 @@ export default function CategoryPage() {
               className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform duration-200 ${onlyCustom ? 'translate-x-6' : 'translate-x-1'}`}
             />
           </button>
-          <span className="text-sm md:text-base select-none">Под любые размеры</span>
+          <span className="text-sm md:text-base select-none">Индивидуальная коллекция</span>
         </div>
 
         {/* Сетка товаров */}
