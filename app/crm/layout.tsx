@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   description: 'Внутренняя CRM система ARTECO',
 }
 
-export default function RootLayout({
+export default function CRMLayout({
   children,
 }: {
   children: React.ReactNode
@@ -19,3 +19,4 @@ export default function RootLayout({
     </html>
   )
 }
+

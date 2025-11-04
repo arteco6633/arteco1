@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { supabaseServer } from '@/lib/supabase-server'
 import Link from 'next/link'
 
-export default function Dashboard() {
+export default function CRMDashboard() {
   const [stats, setStats] = useState({
     totalOrders: 0,
     totalUsers: 0,
@@ -61,19 +61,19 @@ export default function Dashboard() {
                 <h1 className="text-2xl font-bold text-gray-900">ARTECO CRM</h1>
               </div>
               <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
-                <Link href="/" className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                <Link href="/crm" className="border-blue-500 text-gray-900 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
                   Дашборд
                 </Link>
-                <Link href="/orders" className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                <Link href="/crm/orders" className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
                   Заказы
                 </Link>
-                <Link href="/users" className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                <Link href="/crm/users" className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
                   Пользователи
                 </Link>
-                <Link href="/partners" className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                <Link href="/crm/partners" className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
                   Партнеры
                 </Link>
-                <Link href="/clients" className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                <Link href="/crm/clients" className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
                   Клиенты партнеров
                 </Link>
               </div>
@@ -113,7 +113,7 @@ export default function Dashboard() {
                 </div>
                 <div className="bg-gray-50 px-5 py-3">
                   <div className="text-sm">
-                    <Link href="/orders" className="font-medium text-blue-600 hover:text-blue-500">
+                    <Link href="/crm/orders" className="font-medium text-blue-600 hover:text-blue-500">
                       Просмотреть все →
                     </Link>
                   </div>
@@ -139,7 +139,7 @@ export default function Dashboard() {
                 </div>
                 <div className="bg-gray-50 px-5 py-3">
                   <div className="text-sm">
-                    <Link href="/orders?status=pending" className="font-medium text-blue-600 hover:text-blue-500">
+                    <Link href="/crm/orders?status=pending" className="font-medium text-blue-600 hover:text-blue-500">
                       Просмотреть →
                     </Link>
                   </div>
@@ -184,7 +184,7 @@ export default function Dashboard() {
                 </div>
                 <div className="bg-gray-50 px-5 py-3">
                   <div className="text-sm">
-                    <Link href="/users" className="font-medium text-blue-600 hover:text-blue-500">
+                    <Link href="/crm/users" className="font-medium text-blue-600 hover:text-blue-500">
                       Просмотреть всех →
                     </Link>
                   </div>
@@ -210,7 +210,7 @@ export default function Dashboard() {
                 </div>
                 <div className="bg-gray-50 px-5 py-3">
                   <div className="text-sm">
-                    <Link href="/partners" className="font-medium text-blue-600 hover:text-blue-500">
+                    <Link href="/crm/partners" className="font-medium text-blue-600 hover:text-blue-500">
                       Просмотреть всех →
                     </Link>
                   </div>
@@ -236,7 +236,7 @@ export default function Dashboard() {
                 </div>
                 <div className="bg-gray-50 px-5 py-3">
                   <div className="text-sm">
-                    <Link href="/clients" className="font-medium text-blue-600 hover:text-blue-500">
+                    <Link href="/crm/clients" className="font-medium text-blue-600 hover:text-blue-500">
                       Просмотреть всех →
                     </Link>
                   </div>
@@ -249,3 +249,4 @@ export default function Dashboard() {
     </div>
   )
 }
+
