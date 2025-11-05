@@ -211,7 +211,7 @@ export default function CartPage() {
         const paymentItems = items.map((it) => ({
           label: it.name,
           quantity: { count: it.qty },
-          amount: { value: (it.price * it.qty).toFixed(2), currency: 'RUB' }
+          amount: { amount: (it.price * it.qty).toFixed(2), currencyCode: 'RUB' }
         }))
 
         const merchantId = data.merchantId || (process.env.NEXT_PUBLIC_YANDEX_MERCHANT_ID as any)
@@ -222,7 +222,7 @@ export default function CartPage() {
           countryCode: 'RU',
           order: {
             id: data.orderId,
-            total: { label: 'ARTECO', amount: { value: Number(data.amount || total).toFixed(2), currency: 'RUB' } },
+            total: { label: 'ARTECO', amount: { amount: Number(data.amount || total).toFixed(2), currencyCode: 'RUB' } },
             items: paymentItems
           },
           buyer: { phone: contact.phone || '' }
