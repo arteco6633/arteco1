@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { supabaseServer } from '@/lib/supabase-server'
 import Link from 'next/link'
 
@@ -14,6 +14,7 @@ export default function CRMDashboard() {
     pendingOrders: 0
   })
   const [loading, setLoading] = useState(true)
+  const [orders, setOrders] = useState<any[]>([])
 
   useEffect(() => {
     loadStats()
@@ -31,9 +32,10 @@ export default function CRMDashboard() {
         supabaseServer.from('partner_clients').select('id')
       ])
 
-      const orders = ordersData.data || []
-      const totalRevenue = orders.reduce((sum, o) => sum + Number(o.total_amount || 0), 0)
-      const pendingOrders = orders.filter(o => o.status === 'pending' || o.status === 'processing').length
+      const ord = ordersData.data || []
+      setOrders(ord)
+      const totalRevenue = ord.reduce((sum, o) => sum + Number(o.total_amount || 0), 0)
+      const pendingOrders = ord.filter(o => o.status === 'pending' || o.status === 'processing' || o.status === 'new').length
 
       setStats({
         totalOrders: orders.length,
@@ -49,6 +51,41 @@ export default function CRMDashboard() {
       setLoading(false)
     }
   }
+
+  // Воронка по статусам
+  const funnel = useMemo(() => {
+    const map: Record<string, number> = { new: 0, processing: 0, pending: 0, delivered: 0, completed: 0, cancelled: 0 }
+    orders.forEach(o => { map[o.status || 'new'] = (map[o.status || 'new'] || 0) + 1 })
+    return map
+  }, [orders])
+
+  // Последние 10 заказов (новые)
+  const recent = useMemo(() => {
+    return [...orders].sort((a,b)=> new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0,10)
+  }, [orders])
+
+  // Доход по дням за 7 дней (sparkline)
+  const revenue7 = useMemo(() => {
+    const days: Record<string, number> = {}
+    for (let i=6; i>=0; i--) {
+      const d = new Date(); d.setDate(d.getDate()-i)
+      const key = d.toISOString().slice(0,10)
+      days[key] = 0
+    }
+    orders.forEach(o => {
+      const key = (o.created_at||'').slice(0,10)
+      if (key in days) days[key] += Number(o.total_amount || 0)
+    })
+    const labels = Object.keys(days)
+    const values = Object.values(days)
+    const max = Math.max(1, ...values)
+    const points = values.map((v, i) => {
+      const x = (i/(values.length-1))*100
+      const y = 100 - (v/max)*100
+      return `${x},${y}`
+    }).join(' ')
+    return { labels, values, max, points }
+  }, [orders])
 
   return (
     <div className="min-h-screen">
@@ -162,6 +199,13 @@ export default function CRMDashboard() {
                       </dl>
                     </div>
                   </div>
+                  {/* Мини‑график */}
+                  <div className="mt-4 bg-gray-50 rounded-md p-3">
+                    <svg viewBox="0 0 100 100" className="w-full h-16">
+                      <polyline fill="none" stroke="#16a34a" strokeWidth="2" points={revenue7.points} />
+                    </svg>
+                    <div className="mt-2 text-xs text-gray-500">Выручка за 7 дней</div>
+                  </div>
                 </div>
               </div>
 
@@ -240,6 +284,55 @@ export default function CRMDashboard() {
                       Просмотреть всех →
                     </Link>
                   </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Воронка по статусам и Новые заявки */}
+          {!loading && (
+            <div className="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-2 bg-white rounded-lg shadow p-5">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="text-lg font-semibold">Новые заявки</div>
+                  <Link href="/crm/orders" className="text-sm text-blue-600 hover:text-blue-500">Все заказы →</Link>
+                </div>
+                {recent.length === 0 ? (
+                  <div className="text-sm text-gray-500">Пока нет заказов</div>
+                ) : (
+                  <div className="divide-y">
+                    {recent.map(o => (
+                      <Link key={o.id} href={`/crm/orders/${o.id}`} className="flex items-center justify-between py-3 hover:bg-gray-50 px-2 rounded">
+                        <div>
+                          <div className="font-medium text-sm">#{o.order_number || o.id} — {o.user_name || o.contact?.name || 'Без имени'}</div>
+                          <div className="text-xs text-gray-500">{new Date(o.created_at).toLocaleString('ru-RU')}</div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-sm font-semibold">{Number(o.total_amount||0).toLocaleString('ru-RU')} ₽</div>
+                          <div className="text-xs text-gray-500 capitalize">{o.status || 'new'}</div>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="bg-white rounded-lg shadow p-5">
+                <div className="text-lg font-semibold mb-4">Воронка статусов</div>
+                <div className="space-y-2 text-sm">
+                  {([
+                    ['new','Новые'],
+                    ['processing','В работе'],
+                    ['pending','Ожидают'],
+                    ['delivered','Доставлены'],
+                    ['completed','Завершены'],
+                    ['cancelled','Отменены'],
+                  ] as Array<[keyof typeof funnel, string]>).map(([k, label]) => (
+                    <div key={k} className="flex items-center justify-between">
+                      <div className="text-gray-600">{label}</div>
+                      <div className="font-semibold">{funnel[k] || 0}</div>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>

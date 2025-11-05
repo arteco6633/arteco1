@@ -6,17 +6,17 @@ export const metadata: Metadata = {
   description: 'Внутренняя CRM система ARTECO',
 }
 
+// Вложенный layout в App Router не должен заново рендерить <html>/<body>,
+// иначе возникает расхождение разметки (hydration mismatch) с корневым layout.
 export default function CRMLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
   return (
-    <html lang="ru">
-      <body className="antialiased bg-gray-50">
-        {children}
-      </body>
-    </html>
+    <div className="min-h-screen bg-gray-50">
+      {children}
+    </div>
   )
 }
 

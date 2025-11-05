@@ -121,8 +121,15 @@ export default function CRMOrdersPage() {
     try {
       // сразу оптимистично меняем в UI
       setOrders(prev => prev.map(o => (o.id === id ? { ...o, status } : o)))
-      const { error } = await supabaseServer.from('orders').update({ status }).eq('id', id)
-      if (error) throw error
+      const resp = await fetch('/api/crm/orders/status', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, status })
+      })
+      if (!resp.ok) {
+        const data = await resp.json().catch(()=>({}))
+        throw new Error(data?.error || 'update failed')
+      }
     } catch (err) {
       console.error('Не удалось изменить статус', err)
       // перезагрузим для консистентности
