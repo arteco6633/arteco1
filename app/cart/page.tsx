@@ -219,6 +219,8 @@ export default function CartPage() {
         const paymentData = {
           version: 2,
           merchant: { id: String(merchantId), name: 'ARTECO' },
+          currencyCode: 'RUB',
+          countryCode: 'RU',
           order: {
             id: data.orderId,
             total: { label: 'ARTECO', amount: Number(data.amount || total).toFixed(2), currencyCode: 'RUB' },
