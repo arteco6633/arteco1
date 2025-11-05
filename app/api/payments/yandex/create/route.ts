@@ -23,7 +23,16 @@ export async function POST(req: Request) {
     // Пока возвращаем данные для инициализации Web SDK на клиенте.
     const orderId = body?.orderId || `draft_${Date.now()}`
 
-    return NextResponse.json({ ok: true, merchantId, env, amount, currency: 'RUB', orderId })
+    // Вернём структуру, удобную для SDK на клиенте
+    return NextResponse.json({
+      ok: true,
+      env,
+      merchant: { id: merchantId },
+      amount,
+      currency: 'RUB',
+      country: 'RU',
+      orderId
+    })
   } catch (e: any) {
     return NextResponse.json({ ok: false, error: e?.message || 'Unknown' }, { status: 500 })
   }
