@@ -23,16 +23,8 @@ export async function POST(req: Request) {
     // Пока возвращаем данные для инициализации Web SDK на клиенте.
     const orderId = body?.orderId || `draft_${Date.now()}`
 
-    // Вернём структуру, удобную для SDK на клиенте
-    return NextResponse.json({
-      ok: true,
-      env,
-      merchant: { id: merchantId },
-      amount,
-      currency: 'RUB',
-      country: 'RU',
-      orderId
-    })
+    // Вернём минимально необходимое для формирования paymentData на клиенте
+    return NextResponse.json({ ok: true, env, merchantId, orderId, amount, currency: 'RUB' })
   } catch (e: any) {
     return NextResponse.json({ ok: false, error: e?.message || 'Unknown' }, { status: 500 })
   }

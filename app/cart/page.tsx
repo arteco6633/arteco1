@@ -210,19 +210,20 @@ export default function CartPage() {
         // Сбор корзины для SDK
         const paymentItems = items.map((it) => ({
           label: it.name,
-          amount: Math.round(it.price * it.qty * 100), // в копейках
-          quantity: it.qty
+          quantity: it.qty,
+          amount: { value: (it.price * it.qty).toFixed(2), currency: 'RUB' }
         }))
 
+        const merchantId = data.merchantId || (process.env.NEXT_PUBLIC_YANDEX_MERCHANT_ID as any)
         const paymentData = {
-          version: '1.0',
-          countryCode: data.country || 'RU',
-          currencyCode: data.currency || 'RUB',
-          merchant: data.merchant || { id: (process.env.NEXT_PUBLIC_YANDEX_MERCHANT_ID as any) },
-          orderId: data.orderId,
-          buyer: { phone: contact.phone || '' },
-          total: { label: 'ARTECO', amount: Math.round(Number(data.amount || total) * 100) },
-          items: paymentItems
+          version: 2,
+          merchant: merchantId,
+          order: {
+            id: data.orderId,
+            total: { label: 'ARTECO', amount: { value: Number(data.amount || total).toFixed(2), currency: 'RUB' } },
+            items: paymentItems
+          },
+          buyer: { phone: contact.phone || '' }
         }
 
         let checkout = ya.createCheckout(paymentData, { env: data.env || 'test' })
@@ -242,34 +243,7 @@ export default function CartPage() {
           }
           throw new Error('Платеж не завершён')
         } catch (e) {
-          // Повторим попытку с альтернативным форматом сумм { value, currency }
-          try {
-            const itemsAlt = items.map((it) => ({
-              label: it.name,
-              amount: { value: (it.price * it.qty).toFixed(2), currency: 'RUB' },
-              quantity: it.qty
-            }))
-            const paymentDataAlt = {
-              version: '1.0',
-              countryCode: 'RU',
-              currencyCode: 'RUB',
-              merchant: data.merchant || { id: (process.env.NEXT_PUBLIC_YANDEX_MERCHANT_ID as any) },
-              order: { id: data.orderId },
-              buyer: { phone: contact.phone || '' },
-              total: { label: 'ARTECO', amount: { value: Number(data.amount || total).toFixed(2), currency: 'RUB' } },
-              items: itemsAlt
-            }
-            checkout = ya.createCheckout(paymentDataAlt, { env: data.env || 'test' })
-            const res2 = typeof checkout.open === 'function' ? await checkout.open() : (await checkout.pay?.())
-            if (res2 && (res2.status === 'success' || res2.paid || res2.result === 'success')) {
-              setPaymentMethod('yap')
-              await placeOrder()
-              return
-            }
-            throw new Error(typeof res2?.error === 'string' ? res2.error : 'Платеж не завершён')
-          } catch (e2:any) {
-            throw new Error(e2?.message || (e as any)?.message || 'Платеж не завершён')
-          }
+          throw new Error((e as any)?.message || 'Платеж не завершён')
         }
       } else {
         // Фоллбек: если SDK не предоставил createCheckout, используем обычный флоу
