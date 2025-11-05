@@ -37,7 +37,7 @@ export default function CartPage() {
       }
       const s = document.createElement('script')
       s.id = id
-      s.src = 'https://pay.yandex.ru/sdk/v1/pay.js'
+      s.src = 'https://pay.yandex.ru/sdk/v2/pay.js'
       s.async = true
       s.onload = () => resolve()
       s.onerror = () => reject(new Error('SDK load error'))
