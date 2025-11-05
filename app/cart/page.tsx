@@ -221,6 +221,7 @@ export default function CartPage() {
           merchant: { id: String(merchantId), name: 'ARTECO' },
           currencyCode: 'RUB',
           countryCode: 'RU',
+          subscriptions: ['process', 'success', 'abort', 'fail'],
           order: {
             id: data.orderId,
             total: { label: 'ARTECO', amount: Number(data.amount || total).toFixed(2), currencyCode: 'RUB' },
