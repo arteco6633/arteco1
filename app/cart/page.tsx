@@ -210,21 +210,17 @@ export default function CartPage() {
         // Сбор корзины для SDK
         const paymentItems = items.map((it) => ({
           label: it.name,
-          quantity: { count: it.qty },
-          amount: (it.price * it.qty).toFixed(2),
-          currencyCode: 'RUB'
+          quantity: it.qty,
+          amount: { value: (it.price * it.qty).toFixed(2), currency: 'RUB' }
         }))
 
         const merchantId = data.merchantId || (process.env.NEXT_PUBLIC_YANDEX_MERCHANT_ID as any)
         const paymentData = {
           version: 2,
           merchant: { id: String(merchantId), name: 'ARTECO' },
-          currencyCode: 'RUB',
-          countryCode: 'RU',
-          subscriptions: ['process', 'success', 'abort', 'fail'],
           order: {
             id: data.orderId,
-            total: { label: 'ARTECO', amount: Number(data.amount || total).toFixed(2), currencyCode: 'RUB' },
+            total: { label: 'ARTECO', amount: { value: Number(data.amount || total).toFixed(2), currency: 'RUB' } },
             items: paymentItems
           },
           buyer: { phone: contact.phone || '' }
@@ -232,16 +228,18 @@ export default function CartPage() {
 
         let checkout = ya.createCheckout(paymentData, {
           env: data.env || 'test',
-          onProcess: () => {},
-          onAbort: () => {},
-          onFail: (ev: any) => { console.warn('Yandex Pay onFail:', ev) },
-          onSuccess: async (ev: any) => {
-            try {
-              console.log('Yandex Pay onSuccess:', ev)
-              setPaymentMethod('yap')
-              await placeOrder()
-            } catch (e) {
-              console.error('placeOrder after onSuccess error', e)
+          subscriptions: {
+            process: () => {},
+            abort: () => {},
+            fail: (ev: any) => { console.warn('Yandex Pay fail:', ev) },
+            success: async (ev: any) => {
+              try {
+                console.log('Yandex Pay success:', ev)
+                setPaymentMethod('yap')
+                await placeOrder()
+              } catch (e) {
+                console.error('placeOrder after success error', e)
+              }
             }
           }
         })
