@@ -210,17 +210,17 @@ export default function CartPage() {
         // Сбор корзины для SDK
         const paymentItems = items.map((it) => ({
           label: it.name,
-          quantity: it.qty,
-          amount: { value: (it.price * it.qty).toFixed(2), currency: 'RUB' }
+          quantity: { count: it.qty },
+          amount: { amount: (it.price * it.qty).toFixed(2), currencyCode: 'RUB' }
         }))
 
         const merchantId = data.merchantId || (process.env.NEXT_PUBLIC_YANDEX_MERCHANT_ID as any)
         const paymentData = {
           version: 2,
-          merchant: String(merchantId),
+          merchant: { id: String(merchantId), name: 'ARTECO' },
           order: {
             id: data.orderId,
-            total: { label: 'ARTECO', amount: { value: Number(data.amount || total).toFixed(2), currency: 'RUB' } },
+            total: { label: 'ARTECO', amount: { amount: Number(data.amount || total).toFixed(2), currencyCode: 'RUB' } },
             items: paymentItems
           },
           buyer: { phone: contact.phone || '' }
@@ -228,20 +228,7 @@ export default function CartPage() {
 
         let checkout = ya.createCheckout(paymentData, {
           env: data.env || 'test',
-          subscriptions: {
-            process: () => {},
-            abort: () => {},
-            fail: (ev: any) => { console.warn('Yandex Pay fail:', ev) },
-            success: async (ev: any) => {
-              try {
-                console.log('Yandex Pay success:', ev)
-                setPaymentMethod('yap')
-                await placeOrder()
-              } catch (e) {
-                console.error('placeOrder after success error', e)
-              }
-            }
-          }
+          subscriptions: { process: () => {} }
         })
 
         // В v2 SDK требуется подписка хотя бы на событие process
