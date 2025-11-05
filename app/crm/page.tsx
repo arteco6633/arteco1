@@ -120,9 +120,9 @@ export default function CRMDashboard() {
       </nav>
 
       {/* Основной контент */}
-      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        <div className="px-4 py-6 sm:px-0">
-          <h2 className="text-3xl font-bold text-gray-900 mb-8">Дашборд</h2>
+      <main className="max-w-[1400px] mx-auto py-6 sm:px-6 lg:px-8">
+        <div className="px-3 sm:px-0 py-6">
+          <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-gray-900 mb-6 sm:mb-8">Дашборд</h2>
 
           {loading ? (
             <div className="text-center py-12">
@@ -130,73 +130,56 @@ export default function CRMDashboard() {
               <p className="mt-4 text-gray-600">Загрузка статистики...</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid grid-cols-1 gap-4 sm:gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {/* Заказы */}
-              <div className="bg-white overflow-hidden shadow rounded-lg">
+              <div className="bg-white/90 backdrop-blur-sm border border-gray-100 overflow-hidden shadow-sm hover:shadow-md transition rounded-2xl">
                 <div className="p-5">
-                  <div className="flex items-center">
-                    <div className="flex-shrink-0">
-                      <div className="w-10 h-10 bg-blue-500 rounded-md flex items-center justify-center">
-                        <span className="text-white text-xl">📦</span>
-                      </div>
+                  <div className="flex items-center gap-4">
+                    <div className="flex-shrink-0 inline-grid place-items-center w-12 h-12 rounded-xl bg-blue-50 text-blue-700 ring-1 ring-blue-200">
+                      {/* box icon */}
+                      <svg viewBox="0 0 24 24" className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.3 7L12 12l8.7-5"/></svg>
                     </div>
-                    <div className="ml-5 w-0 flex-1">
-                      <dl>
-                        <dt className="text-sm font-medium text-gray-500 truncate">Всего заказов</dt>
-                        <dd className="text-lg font-medium text-gray-900">{stats.totalOrders}</dd>
-                      </dl>
+                    <div className="min-w-0">
+                      <div className="text-xs uppercase tracking-wide text-gray-500">Всего заказов</div>
+                      <div className="text-2xl font-bold text-gray-900">{stats.totalOrders}</div>
                     </div>
                   </div>
                 </div>
-                <div className="bg-gray-50 px-5 py-3">
-                  <div className="text-sm">
-                    <Link href="/crm/orders" className="font-medium text-blue-600 hover:text-blue-500">
-                      Просмотреть все →
-                    </Link>
-                  </div>
+                <div className="bg-gray-50/80 px-5 py-3">
+                  <Link href="/crm/orders" className="text-sm text-blue-600 hover:text-blue-500">Просмотреть все →</Link>
                 </div>
               </div>
 
               {/* Ожидающие заказы */}
-              <div className="bg-white overflow-hidden shadow rounded-lg">
+              <div className="bg-white/90 backdrop-blur-sm border border-gray-100 overflow-hidden shadow-sm hover:shadow-md transition rounded-2xl">
                 <div className="p-5">
-                  <div className="flex items-center">
-                    <div className="flex-shrink-0">
-                      <div className="w-10 h-10 bg-yellow-500 rounded-md flex items-center justify-center">
-                        <span className="text-white text-xl">⏳</span>
-                      </div>
+                  <div className="flex items-center gap-4">
+                    <div className="flex-shrink-0 inline-grid place-items-center w-12 h-12 rounded-xl bg-amber-50 text-amber-700 ring-1 ring-amber-200">
+                      {/* hourglass */}
+                      <svg viewBox="0 0 24 24" className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 2h12"/><path d="M6 22h12"/><path d="M18 2v6a6 6 0 0 1-6 6 6 6 0 0 1-6-6V2"/><path d="M6 22v-6a6 6 0 0 1 6-6 6 6 0 0 1 6 6v6"/></svg>
                     </div>
-                    <div className="ml-5 w-0 flex-1">
-                      <dl>
-                        <dt className="text-sm font-medium text-gray-500 truncate">Ожидающие заказы</dt>
-                        <dd className="text-lg font-medium text-gray-900">{stats.pendingOrders}</dd>
-                      </dl>
+                    <div className="min-w-0">
+                      <div className="text-xs uppercase tracking-wide text-gray-500">Ожидающие заказы</div>
+                      <div className="text-2xl font-bold text-gray-900">{stats.pendingOrders}</div>
                     </div>
                   </div>
                 </div>
-                <div className="bg-gray-50 px-5 py-3">
-                  <div className="text-sm">
-                    <Link href="/crm/orders?status=pending" className="font-medium text-blue-600 hover:text-blue-500">
-                      Просмотреть →
-                    </Link>
-                  </div>
+                <div className="bg-gray-50/80 px-5 py-3">
+                  <Link href="/crm/orders?status=pending" className="text-sm text-blue-600 hover:text-blue-500">Просмотреть →</Link>
                 </div>
               </div>
 
               {/* Выручка */}
-              <div className="bg-white overflow-hidden shadow rounded-lg">
+              <div className="bg-white/90 backdrop-blur-sm border border-gray-100 overflow-hidden shadow-sm hover:shadow-md transition rounded-2xl">
                 <div className="p-5">
-                  <div className="flex items-center">
-                    <div className="flex-shrink-0">
-                      <div className="w-10 h-10 bg-green-500 rounded-md flex items-center justify-center">
-                        <span className="text-white text-xl">💰</span>
-                      </div>
+                  <div className="flex items-center gap-4">
+                    <div className="flex-shrink-0 inline-grid place-items-center w-12 h-12 rounded-xl bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200">
+                      {/* cash */}
+                      <svg viewBox="0 0 24 24" className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10v0"/><path d="M18 14v0"/><circle cx="12" cy="12" r="3"/></svg>
                     </div>
-                    <div className="ml-5 w-0 flex-1">
-                      <dl>
-                        <dt className="text-sm font-medium text-gray-500 truncate">Общая выручка</dt>
-                        <dd className="text-lg font-medium text-gray-900">{stats.totalRevenue.toLocaleString('ru-RU')} ₽</dd>
-                      </dl>
+                    <div className="min-w-0">
+                      <div className="text-xs uppercase tracking-wide text-gray-500">Общая выручка</div>
+                      <div className="text-2xl font-bold text-gray-900">{stats.totalRevenue.toLocaleString('ru-RU')} ₽</div>
                     </div>
                   </div>
                   {/* Мини‑график */}
@@ -291,7 +274,7 @@ export default function CRMDashboard() {
 
           {/* Воронка по статусам и Новые заявки */}
           {!loading && (
-            <div className="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="mt-6 sm:mt-8 grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
               <div className="lg:col-span-2 bg-white rounded-lg shadow p-5">
                 <div className="flex items-center justify-between mb-4">
                   <div className="text-lg font-semibold">Новые заявки</div>
@@ -303,11 +286,11 @@ export default function CRMDashboard() {
                   <div className="divide-y">
                     {recent.map(o => (
                       <Link key={o.id} href={`/crm/orders/${o.id}`} className="flex items-center justify-between py-3 hover:bg-gray-50 px-2 rounded">
-                        <div>
+                        <div className="min-w-0">
                           <div className="font-medium text-sm">#{o.order_number || o.id} — {o.user_name || o.contact?.name || 'Без имени'}</div>
-                          <div className="text-xs text-gray-500">{new Date(o.created_at).toLocaleString('ru-RU')}</div>
+                          <div className="text-xs text-gray-500 truncate">{new Date(o.created_at).toLocaleString('ru-RU')}</div>
                         </div>
-                        <div className="text-right">
+                        <div className="text-right flex-shrink-0">
                           <div className="text-sm font-semibold">{Number(o.total_amount||0).toLocaleString('ru-RU')} ₽</div>
                           <div className="text-xs text-gray-500 capitalize">{o.status || 'new'}</div>
                         </div>
@@ -330,7 +313,7 @@ export default function CRMDashboard() {
                   ] as Array<[keyof typeof funnel, string]>).map(([k, label]) => (
                     <div key={k} className="flex items-center justify-between">
                       <div className="text-gray-600">{label}</div>
-                      <div className="font-semibold">{funnel[k] || 0}</div>
+                      <div className="inline-flex items-center justify-center w-8 h-6 rounded-full bg-gray-100 text-gray-800 font-semibold">{funnel[k] || 0}</div>
                     </div>
                   ))}
                 </div>
@@ -342,4 +325,5 @@ export default function CRMDashboard() {
     </div>
   )
 }
+
 

@@ -24,6 +24,26 @@ export default function CartPage() {
   const [addrOpen, setAddrOpen] = useState(false)
   const [addrLoading, setAddrLoading] = useState(false)
   const [paymentMethod, setPaymentMethod] = useState<string>('cod')
+  const [ypLoading, setYpLoading] = useState(false)
+
+  // Lazy‑загрузка Web SDK Yandex Pay
+  function loadYandexPaySdk(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      if (typeof window !== 'undefined' && (window as any).YaPay) return resolve()
+      const id = 'yandex-pay-sdk'
+      if (document.getElementById(id)) {
+        ;(document.getElementById(id) as HTMLScriptElement).addEventListener('load', () => resolve())
+        return
+      }
+      const s = document.createElement('script')
+      s.id = id
+      s.src = 'https://pay.yandex.ru/sdk/v1/pay.js'
+      s.async = true
+      s.onload = () => resolve()
+      s.onerror = () => reject(new Error('SDK load error'))
+      document.head.appendChild(s)
+    })
+  }
   const [placing, setPlacing] = useState(false)
   const [errors, setErrors] = useState<{name?: boolean; phone?: boolean; privacy?: boolean; delivery?: boolean}>({})
   const [showFillModal, setShowFillModal] = useState(false)
@@ -153,6 +173,85 @@ export default function CartPage() {
       alert(e?.message || 'Не удалось оформить заказ')
     } finally {
       setPlacing(false)
+    }
+  }
+
+  async function startYandexPay() {
+    // те же проверки формы, что и placeOrder
+    if (placing) return
+    const nextErrors = {
+      name: !contact.name,
+      phone: !contact.phone,
+      privacy: !consents.privacy,
+      delivery: !deliveryType,
+    }
+    setErrors(nextErrors)
+    if (nextErrors.name || nextErrors.phone || nextErrors.privacy || nextErrors.delivery) {
+      setShowFillModal(true)
+      return
+    }
+
+    try {
+      setYpLoading(true)
+      // 1) Получаем параметры для SDK
+      const resp = await fetch('/api/payments/yandex/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount: total, orderId: undefined })
+      })
+      const data = await resp.json()
+      if (!resp.ok || !data?.ok) throw new Error(data?.error || 'yandex create failed')
+
+      // 2) Инициализируем Web SDK Яндекс Пэй
+      await loadYandexPaySdk()
+      const ya: any = (window as any).YaPay
+
+      if (ya && typeof ya.createCheckout === 'function') {
+        // Сбор корзины для SDK
+        const paymentItems = items.map((it) => ({
+          label: it.name,
+          amount: (it.price * it.qty).toFixed(2),
+          quantity: it.qty
+        }))
+
+        const paymentData = {
+          version: '1.0',
+          countryCode: 'RU',
+          currencyCode: 'RUB',
+          merchantId: data.merchantId,
+          orderId: data.orderId,
+          total: { label: 'ARTECO', amount: Number(data.amount || total).toFixed(2) },
+          items: paymentItems
+        }
+
+        const checkout = ya.createCheckout(paymentData, { env: data.env || 'test' })
+
+        try {
+          let result: any = null
+          if (typeof checkout.open === 'function') {
+            result = await checkout.open()
+          } else if (typeof checkout.pay === 'function') {
+            result = await checkout.pay()
+          }
+          if (!result || result.error) throw new Error(result?.error || 'Платеж не завершён')
+          if (result && (result.status === 'success' || result.paid || result.result === 'success')) {
+            setPaymentMethod('yap')
+            await placeOrder()
+            return
+          }
+          throw new Error('Платеж не завершён')
+        } catch (e) {
+          throw e
+        }
+      } else {
+        // Фоллбек: если SDK не предоставил createCheckout, используем обычный флоу
+        setPaymentMethod('yap')
+        await placeOrder()
+      }
+    } catch (e: any) {
+      alert(e?.message || 'Не удалось открыть Yandex Pay')
+    } finally {
+      setYpLoading(false)
     }
   }
 
@@ -411,9 +510,19 @@ export default function CartPage() {
               <div className="text-2xl font-bold">{total.toLocaleString('ru-RU')} ₽</div>
             </div>
             <div className="text-sm text-gray-500 mb-4">Доставка и сборка будут рассчитаны менеджером после подтверждения заказа.</div>
-            <button onClick={placeOrder} disabled={placing} className="block w-full text-center py-3 rounded-full bg-black text-white font-semibold disabled:opacity-60">
-              {placing ? 'Оформляем…' : 'Оформить заказ'}
-            </button>
+            {paymentMethod === 'yap' ? (
+              <button
+                onClick={startYandexPay}
+                disabled={placing || ypLoading}
+                className="block w-full text-center py-3 rounded-full bg-black text-white font-semibold disabled:opacity-60"
+              >
+                {ypLoading ? 'Открываем Yandex Pay…' : 'Оплатить через Yandex Pay'}
+              </button>
+            ) : (
+              <button onClick={placeOrder} disabled={placing} className="block w-full text-center py-3 rounded-full bg-black text-white font-semibold disabled:opacity-60">
+                {placing ? 'Оформляем…' : 'Оформить заказ'}
+              </button>
+            )}
             <div className="mt-3 text-xs text-gray-500">Нажимая кнопку, вы принимаете условия оферты.</div>
           </div>
         </div>
