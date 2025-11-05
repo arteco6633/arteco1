@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { supabaseServer } from '@/lib/supabase-server'
 import Link from 'next/link'
 
@@ -23,11 +23,11 @@ interface Order {
 export default function CRMOrdersPage() {
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
-  const [filterStatus, setFilterStatus] = useState<string>('all')
+  const [viewMode, setViewMode] = useState<'kanban' | 'list'>('kanban')
 
   useEffect(() => {
     loadOrders()
-  }, [filterStatus])
+  }, [])
 
   async function loadOrders() {
     try {
@@ -36,10 +36,6 @@ export default function CRMOrdersPage() {
         .from('orders')
         .select('*')
         .order('created_at', { ascending: false })
-
-      if (filterStatus !== 'all') {
-        query = query.eq('status', filterStatus)
-      }
 
       const { data, error } = await query
 
@@ -74,6 +70,7 @@ export default function CRMOrdersPage() {
 
   function getStatusColor(status: string) {
     const colors: Record<string, string> = {
+      new: 'bg-blue-100 text-blue-800',
       pending: 'bg-yellow-100 text-yellow-800',
       processing: 'bg-blue-100 text-blue-800',
       delivered: 'bg-green-100 text-green-800',
@@ -85,6 +82,7 @@ export default function CRMOrdersPage() {
 
   function getStatusText(status: string) {
     const texts: Record<string, string> = {
+      new: 'Новый',
       pending: 'Ожидает',
       processing: 'В обработке',
       delivered: 'Доставлен',
@@ -92,6 +90,69 @@ export default function CRMOrdersPage() {
       cancelled: 'Отменен'
     }
     return texts[status] || status
+  }
+
+  const columns = useMemo(() => (
+    [
+      { key: 'new', title: 'Новые заявки' },
+      { key: 'processing', title: 'В работе' },
+      { key: 'pending', title: 'Ожидают' },
+      { key: 'delivered', title: 'Доставлены' },
+      { key: 'completed', title: 'Завершены' },
+      { key: 'cancelled', title: 'Отменены' },
+    ] as Array<{ key: string; title: string }>
+  ), [])
+
+  const grouped = useMemo(() => {
+    const map: Record<string, Order[]> = {}
+    columns.forEach(c => { map[c.key] = [] })
+    orders.forEach(o => {
+      const k = (o.status || 'new') as string
+      if (!map[k]) map[k] = []
+      map[k].push(o)
+    })
+    return map
+  }, [orders, columns])
+
+  async function handleDrop(e: React.DragEvent<HTMLDivElement>, status: string) {
+    e.preventDefault()
+    const id = Number(e.dataTransfer.getData('text/plain'))
+    if (!id) return
+    try {
+      // сразу оптимистично меняем в UI
+      setOrders(prev => prev.map(o => (o.id === id ? { ...o, status } : o)))
+      const { error } = await supabaseServer.from('orders').update({ status }).eq('id', id)
+      if (error) throw error
+    } catch (err) {
+      console.error('Не удалось изменить статус', err)
+      // перезагрузим для консистентности
+      loadOrders()
+    }
+  }
+
+  function allowDrop(e: React.DragEvent<HTMLDivElement>) {
+    e.preventDefault()
+  }
+
+  function OrderCard({ order }: { order: Order }) {
+    return (
+      <div
+        draggable
+        onDragStart={(e) => e.dataTransfer.setData('text/plain', String(order.id))}
+        className="bg-white border rounded-lg p-3 shadow-sm hover:shadow-md transition cursor-grab active:cursor-grabbing"
+      >
+        <div className="flex items-center justify-between">
+          <div className="font-medium text-sm">#{order.order_number}</div>
+          <div className={`px-2 py-0.5 rounded-full text-[11px] ${getStatusColor(order.status)}`}>{getStatusText(order.status)}</div>
+        </div>
+        <div className="mt-1 text-sm text-gray-900 truncate">{order.user_name || 'Без имени'}</div>
+        <div className="text-xs text-gray-500">{order.user_phone}</div>
+        <div className="mt-2 flex items-center justify-between">
+          <div className="text-sm font-semibold">{(order.total_amount || order.total || 0).toLocaleString('ru-RU')} ₽</div>
+          <Link className="text-xs text-blue-600 hover:text-blue-500" href={`/crm/orders/${order.id}`}>Открыть →</Link>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -125,22 +186,14 @@ export default function CRMOrdersPage() {
         </div>
       </nav>
 
-      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+      <main className="max-w-[1400px] mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-3xl font-bold text-gray-900">Заказы</h2>
-            <select
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            >
-              <option value="all">Все заказы</option>
-              <option value="pending">Ожидающие</option>
-              <option value="processing">В обработке</option>
-              <option value="delivered">Доставленные</option>
-              <option value="completed">Завершенные</option>
-              <option value="cancelled">Отмененные</option>
-            </select>
+            <div className="flex items-center gap-2">
+              <button onClick={() => setViewMode('kanban')} className={`px-3 py-1.5 text-sm rounded-full border ${viewMode==='kanban' ? 'bg-black text-white border-black' : 'bg-white'}`}>Канбан</button>
+              <button onClick={() => setViewMode('list')} className={`px-3 py-1.5 text-sm rounded-full border ${viewMode==='list' ? 'bg-black text-white border-black' : 'bg-white'}`}>Список</button>
+            </div>
           </div>
 
           {loading ? (
@@ -152,48 +205,31 @@ export default function CRMOrdersPage() {
             <div className="text-center py-12">
               <p className="text-gray-600">Заказов не найдено</p>
             </div>
-          ) : (
+          ) : viewMode === 'list' ? (
             <div className="bg-white shadow overflow-hidden sm:rounded-md">
               <ul className="divide-y divide-gray-200">
                 {orders.map((order) => (
-                  <li key={order.id}>
-                    <Link href={`/crm/orders/${order.id}`}>
-                      <div className="px-4 py-4 sm:px-6 hover:bg-gray-50 cursor-pointer">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center">
-                            <div className="flex-shrink-0">
-                              <span className="text-sm font-medium text-gray-900">#{order.order_number}</span>
-                            </div>
-                            <div className="ml-4">
-                              <div className="text-sm font-medium text-gray-900">
-                                {order.user_name || 'Без имени'}
-                              </div>
-                              <div className="text-sm text-gray-500">{order.user_phone}</div>
-                            </div>
-                          </div>
-                          <div className="flex items-center space-x-4">
-                            <div className="text-right">
-                              <div className="text-sm font-medium text-gray-900">
-                                {(order.total_amount || order.total || 0).toLocaleString('ru-RU')} ₽
-                              </div>
-                              <div className="text-xs text-gray-500">
-                                {new Date(order.created_at).toLocaleDateString('ru-RU')}
-                              </div>
-                            </div>
-                            <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(order.status)}`}>
-                              {getStatusText(order.status)}
-                            </span>
-                          </div>
-                        </div>
-                        <div className="mt-2 text-xs text-gray-500">
-                          {order.delivery_type && <span>Доставка: {order.delivery_type}</span>}
-                          {order.payment_method && <span className="ml-4">Оплата: {order.payment_method}</span>}
-                        </div>
-                      </div>
-                    </Link>
+                  <li key={order.id} className="px-4 py-4 sm:px-6">
+                    <OrderCard order={order} />
                   </li>
                 ))}
               </ul>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-6 gap-4">
+              {columns.map(col => (
+                <div key={col.key} className="bg-gray-50 border rounded-xl p-3">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="font-semibold">{col.title}</div>
+                    <div className="text-xs text-gray-500">{grouped[col.key]?.length || 0}</div>
+                  </div>
+                  <div onDrop={(e)=>handleDrop(e, col.key)} onDragOver={allowDrop} className="min-h-[120px] space-y-3">
+                    {(grouped[col.key] || []).map(o => (
+                      <OrderCard key={o.id} order={o} />
+                    ))}
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </div>
