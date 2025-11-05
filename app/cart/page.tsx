@@ -207,11 +207,11 @@ export default function CartPage() {
       const ya: any = (window as any).YaPay
 
       if (ya && typeof ya.createCheckout === 'function') {
-        // Сбор корзины для SDK (формат v2)
+        // Сбор корзины для SDK (формат v2 согласно документации)
         const paymentItems = items.map((it) => ({
           label: it.name,
           quantity: { count: it.qty },
-          amount: { amount: (it.price * it.qty).toFixed(2), currencyCode: 'RUB' }
+          amount: { value: (it.price * it.qty).toFixed(2), currency: 'RUB' }
         }))
 
         const merchantId = data.merchantId || (process.env.NEXT_PUBLIC_YANDEX_MERCHANT_ID as any)
@@ -222,7 +222,7 @@ export default function CartPage() {
           countryCode: 'RU',
           order: {
             id: data.orderId,
-            total: { label: 'ARTECO', amount: { amount: Number(data.amount || total).toFixed(2), currencyCode: 'RUB' } },
+            total: { label: 'ARTECO', amount: { value: Number(data.amount || total).toFixed(2), currency: 'RUB' } },
             items: paymentItems
           },
           buyer: { phone: contact.phone || '' }
