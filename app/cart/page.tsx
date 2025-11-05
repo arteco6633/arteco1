@@ -237,18 +237,43 @@ export default function CartPage() {
             // no-op обработчики для требований SDK
             checkout.subscribe('process', () => {})
             checkout.subscribe('abort', () => {})
-            checkout.subscribe('success', () => {})
-            checkout.subscribe('fail', () => {})
+            checkout.subscribe('fail', (ev: any) => { console.warn('Yandex Pay fail event:', ev) })
+            checkout.subscribe('success', async (ev: any) => {
+              try {
+                console.log('Yandex Pay success event:', ev)
+                setPaymentMethod('yap')
+                await placeOrder()
+              } catch (e) {
+                console.error('placeOrder after success event error', e)
+              }
+            })
+          }
+          // На всякий случай поддержим альтернативный API on()
+          if (checkout && typeof (checkout as any).on === 'function') {
+            ;(checkout as any).on('process', () => {})
+            ;(checkout as any).on('abort', () => {})
+            ;(checkout as any).on('fail', (ev: any) => { console.warn('Yandex Pay fail event (on):', ev) })
+            ;(checkout as any).on('success', async (ev: any) => {
+              try {
+                console.log('Yandex Pay success event (on):', ev)
+                setPaymentMethod('yap')
+                await placeOrder()
+              } catch (e) {
+                console.error('placeOrder after success (on) error', e)
+              }
+            })
           }
         } catch (_) {}
 
         try {
           let result: any = null
+          console.log('Yandex Pay paymentData:', paymentData)
           if (typeof checkout.open === 'function') {
             result = await checkout.open()
           } else if (typeof checkout.pay === 'function') {
             result = await checkout.pay()
           }
+          console.log('Yandex Pay result:', result)
           if (!result || result.error) throw new Error(result?.error || 'Платеж не завершён')
           if (result && (result.status === 'success' || result.paid || result.result === 'success')) {
             setPaymentMethod('yap')
