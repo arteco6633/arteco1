@@ -228,22 +228,22 @@ export default function CartPage() {
           buyer: { phone: contact.phone || '' }
         }
 
+        // Создаём checkout с обработчиками событий сразу в subscriptions
         let checkout = ya.createCheckout(paymentData, {
           env: data.env || 'test',
-          subscriptions: { process: () => {} }
-        })
-
-        // В v2 SDK требуется подписка хотя бы на событие process
-        try {
-          if (checkout && typeof checkout.subscribe === 'function') {
-            // no-op обработчики для требований SDK
-            checkout.subscribe('process', () => {})
-            checkout.subscribe('abort', () => { setYpLoading(false) })
-            checkout.subscribe('fail', (ev: any) => { 
+          subscriptions: {
+            process: () => {
+              console.log('Yandex Pay process event')
+            },
+            abort: () => {
+              console.log('Yandex Pay abort event')
+              setYpLoading(false)
+            },
+            fail: (ev: any) => {
               console.warn('Yandex Pay fail event:', ev)
               setYpLoading(false)
-            })
-            checkout.subscribe('success', async (ev: any) => {
+            },
+            success: async (ev: any) => {
               try {
                 console.log('Yandex Pay success event:', ev)
                 setPaymentMethod('yap')
@@ -253,40 +253,49 @@ export default function CartPage() {
               } finally {
                 setYpLoading(false)
               }
-            })
+            }
           }
-          // На всякий случай поддержим альтернативный API on()
-          if (checkout && typeof (checkout as any).on === 'function') {
-            ;(checkout as any).on('process', () => {})
-            ;(checkout as any).on('abort', () => { setYpLoading(false) })
-            ;(checkout as any).on('fail', (ev: any) => { 
-              console.warn('Yandex Pay fail event (on):', ev)
+        })
+
+        // Дополнительная подписка через subscribe (если SDK требует)
+        try {
+          if (checkout && typeof checkout.subscribe === 'function') {
+            checkout.subscribe('process', () => {})
+            checkout.subscribe('abort', () => { setYpLoading(false) })
+            checkout.subscribe('fail', (ev: any) => { 
+              console.warn('Yandex Pay fail event (subscribe):', ev)
               setYpLoading(false)
             })
-            ;(checkout as any).on('success', async (ev: any) => {
+            checkout.subscribe('success', async (ev: any) => {
               try {
-                console.log('Yandex Pay success event (on):', ev)
+                console.log('Yandex Pay success event (subscribe):', ev)
                 setPaymentMethod('yap')
                 await placeOrder()
               } catch (e) {
-                console.error('placeOrder after success (on) error', e)
+                console.error('placeOrder after success (subscribe) error', e)
               } finally {
                 setYpLoading(false)
               }
             })
           }
-        } catch (_) {}
+        } catch (e) {
+          console.warn('Subscribe error (non-critical):', e)
+        }
 
         let windowOpened = false
         try {
           console.log('Yandex Pay paymentData:', paymentData)
+          console.log('Yandex Pay checkout:', checkout)
           // В SDK v2 open() открывает окно, результат приходит через события
           if (typeof checkout.open === 'function') {
-            await checkout.open()
+            console.log('Calling checkout.open()...')
+            const openResult = await checkout.open()
+            console.log('checkout.open() result:', openResult)
             windowOpened = true // Окно открыто, не сбрасываем ypLoading в finally
             // Окно открыто, ждём результат через события (success/fail уже подписаны выше)
             // Не проверяем результат синхронно, так как в v2 результат приходит через события
           } else if (typeof checkout.pay === 'function') {
+            console.log('Calling checkout.pay()...')
             const result = await checkout.pay()
             console.log('Yandex Pay result:', result)
             if (result && (result.status === 'success' || result.paid || result.result === 'success')) {
@@ -297,16 +306,21 @@ export default function CartPage() {
             }
             if (result?.error) throw new Error(result.error)
           } else {
+            console.error('Checkout does not support open() or pay()')
             throw new Error('SDK не поддерживает open() или pay()')
           }
         } catch (e) {
           console.error('Yandex Pay error:', e)
+          console.error('Error details:', (e as any)?.stack || (e as any)?.message)
           alert((e as any)?.message || 'Не удалось открыть Yandex Pay')
           setYpLoading(false)
         }
         // Сбрасываем ypLoading только если окно не открылось
         if (!windowOpened) {
+          console.warn('Window did not open, resetting ypLoading')
           setYpLoading(false)
+        } else {
+          console.log('Window opened successfully, waiting for events')
         }
       } else {
         // Фоллбек: если SDK не предоставил createCheckout, используем обычный флоу
