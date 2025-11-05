@@ -229,7 +229,21 @@ export default function CartPage() {
           buyer: { phone: contact.phone || '' }
         }
 
-        let checkout = ya.createCheckout(paymentData, { env: data.env || 'test' })
+        let checkout = ya.createCheckout(paymentData, {
+          env: data.env || 'test',
+          onProcess: () => {},
+          onAbort: () => {},
+          onFail: (ev: any) => { console.warn('Yandex Pay onFail:', ev) },
+          onSuccess: async (ev: any) => {
+            try {
+              console.log('Yandex Pay onSuccess:', ev)
+              setPaymentMethod('yap')
+              await placeOrder()
+            } catch (e) {
+              console.error('placeOrder after onSuccess error', e)
+            }
+          }
+        })
 
         // В v2 SDK требуется подписка хотя бы на событие process
         try {
