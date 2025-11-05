@@ -37,7 +37,7 @@ export default function CartPage() {
       }
       const s = document.createElement('script')
       s.id = id
-      s.src = 'https://pay.yandex.ru/sdk/v2/pay.js'
+      s.src = 'https://pay.yandex.ru/sdk/v1/pay.js'
       s.async = true
       s.onload = () => resolve()
       s.onerror = () => reject(new Error('SDK load error'))
@@ -207,22 +207,21 @@ export default function CartPage() {
       const ya: any = (window as any).YaPay
 
       if (ya && typeof ya.createCheckout === 'function') {
-        // Сбор корзины для SDK
+        // Сбор корзины для SDK v1
         const paymentItems = items.map((it) => ({
           label: it.name,
-          quantity: { count: it.qty },
-          amount: { value: (it.price * it.qty).toFixed(2), currency: 'RUB' }
+          quantity: it.qty,
+          amount: { amount: (it.price * it.qty).toFixed(2), currencyCode: 'RUB' }
         }))
 
         const merchantId = data.merchantId || (process.env.NEXT_PUBLIC_YANDEX_MERCHANT_ID as any)
         const paymentData = {
-          version: 2,
-          merchant: { id: String(merchantId), name: 'ARTECO' },
+          merchant: String(merchantId),
           currencyCode: 'RUB',
           countryCode: 'RU',
           order: {
             id: data.orderId,
-            total: { label: 'ARTECO', amount: { value: Number(data.amount || total).toFixed(2), currency: 'RUB' } },
+            total: { label: 'ARTECO', amount: { amount: Number(data.amount || total).toFixed(2), currencyCode: 'RUB' } },
             items: paymentItems
           },
           buyer: { phone: contact.phone || '' }
