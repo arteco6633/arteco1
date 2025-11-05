@@ -228,6 +228,17 @@ export default function CartPage() {
 
         let checkout = ya.createCheckout(paymentData, { env: data.env || 'test' })
 
+        // В v2 SDK требуется подписка хотя бы на событие process
+        try {
+          if (checkout && typeof checkout.subscribe === 'function') {
+            // no-op обработчики для требований SDK
+            checkout.subscribe('process', () => {})
+            checkout.subscribe('abort', () => {})
+            checkout.subscribe('success', () => {})
+            checkout.subscribe('fail', () => {})
+          }
+        } catch (_) {}
+
         try {
           let result: any = null
           if (typeof checkout.open === 'function') {
@@ -243,6 +254,7 @@ export default function CartPage() {
           }
           throw new Error('Платеж не завершён')
         } catch (e) {
+          console.error('Yandex Pay error:', e)
           throw new Error((e as any)?.message || 'Платеж не завершён')
         }
       } else {
