@@ -217,7 +217,7 @@ export default function CartPage() {
         const merchantId = data.merchantId || (process.env.NEXT_PUBLIC_YANDEX_MERCHANT_ID as any)
         const paymentData = {
           version: 2,
-          merchant: merchantId,
+          merchant: { id: String(merchantId) },
           order: {
             id: data.orderId,
             total: { label: 'ARTECO', amount: { value: Number(data.amount || total).toFixed(2), currency: 'RUB' } },
