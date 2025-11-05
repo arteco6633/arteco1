@@ -87,15 +87,37 @@ export default function CRMOrderDetailPage() {
       // Загружаем товары заказа (из таблицы order_items или из JSONB поля items)
       if (orderData.items && Array.isArray(orderData.items) && orderData.items.length > 0) {
         // Если товары в JSONB поле items
-        const items = orderData.items.map((item: any, index: number) => ({
-          id: index + 1,
-          order_id: orderData.id,
-          product_id: item.product_id || null,
-          product_name: item.product_name || item.name || 'Товар',
-          quantity: item.quantity || 1,
-          price: item.price || 0,
-          options: item.options || item
-        }))
+        const items = orderData.items.map((item: any, index: number) => {
+          // Извлекаем опции из item
+          const options: any = {}
+          
+          // Если есть явное поле options
+          if (item.options && typeof item.options === 'object') {
+            Object.assign(options, item.options)
+          }
+          
+          // Если есть colorName отдельно
+          if (item.colorName) {
+            options.colorName = item.colorName
+          } else if (item.color) {
+            options.colorName = item.color
+          }
+          
+          // Если есть color отдельно
+          if (item.color && !options.colorName) {
+            options.colorName = item.color
+          }
+          
+          return {
+            id: index + 1,
+            order_id: orderData.id,
+            product_id: item.product_id || item.id || null,
+            product_name: item.product_name || item.name || 'Товар',
+            quantity: item.quantity || item.qty || 1,
+            price: item.price || 0,
+            options: Object.keys(options).length > 0 ? options : null
+          }
+        })
         setOrderItems(items)
       } else {
         // Если товары в отдельной таблице order_items
@@ -120,6 +142,7 @@ export default function CRMOrderDetailPage() {
 
   function getStatusColor(status: string) {
     const colors: Record<string, string> = {
+      new: 'bg-blue-100 text-blue-800',
       pending: 'bg-yellow-100 text-yellow-800',
       processing: 'bg-blue-100 text-blue-800',
       delivered: 'bg-green-100 text-green-800',
@@ -131,6 +154,7 @@ export default function CRMOrderDetailPage() {
 
   function getStatusText(status: string) {
     const texts: Record<string, string> = {
+      new: 'Новый',
       pending: 'Ожидает',
       processing: 'В обработке',
       delivered: 'Доставлен',
@@ -242,10 +266,92 @@ export default function CRMOrderDetailPage() {
                             <h4 className="text-sm font-medium text-gray-900">{item.product_name}</h4>
                             <p className="text-sm text-gray-500 mt-1">Количество: {item.quantity}</p>
                             {item.options && Object.keys(item.options).length > 0 && (
-                              <div className="mt-2 text-xs text-gray-500">
-                                {Object.entries(item.options).map(([key, value]) => (
-                                  <div key={key}>{key}: {String(value)}</div>
-                                ))}
+                              <div className="mt-3 space-y-2">
+                                {/* Цвет */}
+                                {item.options.colorName && (
+                                  <div className="text-xs text-gray-700">
+                                    <span className="font-medium">Цвет:</span> {String(item.options.colorName)}
+                                  </div>
+                                )}
+                                
+                                {/* Петли */}
+                                {item.options.hinge && (
+                                  <div className="text-xs text-gray-700">
+                                    <span className="font-medium">Петли:</span> {
+                                      typeof item.options.hinge === 'object' && item.options.hinge !== null
+                                        ? (item.options.hinge.name || 'Не указано') + 
+                                          (item.options.hinge.delta_price ? ` (+${item.options.hinge.delta_price} ₽)` : '')
+                                        : String(item.options.hinge)
+                                    }
+                                  </div>
+                                )}
+                                
+                                {/* Ящики */}
+                                {item.options.drawer && (
+                                  <div className="text-xs text-gray-700">
+                                    <span className="font-medium">Ящики:</span> {
+                                      typeof item.options.drawer === 'object' && item.options.drawer !== null
+                                        ? (item.options.drawer.name || 'Не указано') + 
+                                          (item.options.drawer.delta_price ? ` (+${item.options.drawer.delta_price} ₽)` : '')
+                                        : String(item.options.drawer)
+                                    }
+                                  </div>
+                                )}
+                                
+                                {/* Наполнение */}
+                                {item.options.filling && (
+                                  <div className="text-xs text-gray-700">
+                                    <span className="font-medium">Наполнение:</span> {
+                                      typeof item.options.filling === 'object' && item.options.filling !== null
+                                        ? (item.options.filling.name || 'Не указано') + 
+                                          (item.options.filling.delta_price ? ` (+${item.options.filling.delta_price} ₽)` : '')
+                                        : String(item.options.filling)
+                                    }
+                                  </div>
+                                )}
+                                
+                                {/* Подсветка */}
+                                {item.options.lighting && (
+                                  <div className="text-xs text-gray-700">
+                                    <span className="font-medium">Подсветка:</span> {
+                                      typeof item.options.lighting === 'object' && item.options.lighting !== null
+                                        ? (item.options.lighting.name || 'Не указано') + 
+                                          (item.options.lighting.delta_price ? ` (+${item.options.lighting.delta_price} ₽)` : '')
+                                        : String(item.options.lighting)
+                                    }
+                                  </div>
+                                )}
+                                
+                                {/* Модули */}
+                                {item.options.modules && Array.isArray(item.options.modules) && item.options.modules.length > 0 && (
+                                  <div className="text-xs text-gray-700">
+                                    <span className="font-medium">Модули:</span>
+                                    <div className="mt-1 ml-3 space-y-1">
+                                      {item.options.modules.map((module: any, idx: number) => (
+                                        <div key={idx}>
+                                          • {module.name || 'Модуль'} 
+                                          {module.qty > 1 ? ` (${module.qty} шт.)` : ''}
+                                          {module.price ? ` — ${module.price.toLocaleString('ru-RU')} ₽` : ''}
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+                                
+                                {/* Другие опции (если есть) */}
+                                {Object.entries(item.options).map(([key, value]) => {
+                                  if (['colorName', 'hinge', 'drawer', 'filling', 'lighting', 'modules'].includes(key)) return null
+                                  if (value === null || value === undefined) return null
+                                  return (
+                                    <div key={key} className="text-xs text-gray-700">
+                                      <span className="font-medium">{key}:</span> {
+                                        typeof value === 'object' && value !== null
+                                          ? JSON.stringify(value, null, 2)
+                                          : String(value)
+                                      }
+                                    </div>
+                                  )
+                                })}
                               </div>
                             )}
                           </div>
@@ -282,7 +388,11 @@ export default function CRMOrderDetailPage() {
                   {order.delivery_type && (
                     <div>
                       <dt className="text-sm font-medium text-gray-500">Способ доставки</dt>
-                      <dd className="mt-1 text-sm text-gray-900">{order.delivery_type}</dd>
+                      <dd className="mt-1 text-sm text-gray-900">
+                        {order.delivery_type === 'courier' ? 'Курьер' : 
+                         order.delivery_type === 'pickup' ? 'Самовывоз' : 
+                         order.delivery_type}
+                      </dd>
                     </div>
                   )}
                   {order.address && (
@@ -294,7 +404,16 @@ export default function CRMOrderDetailPage() {
                   {order.payment_method && (
                     <div>
                       <dt className="text-sm font-medium text-gray-500">Способ оплаты</dt>
-                      <dd className="mt-1 text-sm text-gray-900">{order.payment_method}</dd>
+                      <dd className="mt-1 text-sm text-gray-900">
+                        {order.payment_method === 'cod' ? 'Наличными при получении' :
+                         order.payment_method === 'yandex_pay' ? 'Яндекс Пэй' :
+                         order.payment_method === 'card_online' ? 'Картой онлайн' :
+                         order.payment_method === 'bank_transfer' ? 'Безналичная' :
+                         order.payment_method === 'sberpay' ? 'SberPay' :
+                         order.payment_method === 'yandex_split' ? 'Яндекс Сплит' :
+                         order.payment_method === 'installment' ? 'Рассрочка' :
+                         order.payment_method}
+                      </dd>
                     </div>
                   )}
                   {order.need_assembly && (
