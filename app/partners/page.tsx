@@ -56,7 +56,6 @@ export default function PartnersPage() {
   const MAX_VISIBLE_THUMBS = 5
   const touchStartXRef = useRef<number | null>(null)
   const touchCurrentXRef = useRef<number | null>(null)
-  const closeTimeoutRef = useRef<number | null>(null)
   const mediaTransitionTimeoutRef = useRef<number | null>(null)
 
   useEffect(() => {
@@ -72,9 +71,6 @@ export default function PartnersPage() {
   useEffect(() => {
     return () => {
       if (typeof window !== 'undefined') {
-        if (closeTimeoutRef.current !== null) {
-          window.clearTimeout(closeTimeoutRef.current)
-        }
         if (mediaTransitionTimeoutRef.current !== null) {
           window.clearTimeout(mediaTransitionTimeoutRef.current)
         }
@@ -308,7 +304,7 @@ export default function PartnersPage() {
     : []
   const imageMedia = activeInteriorMedia.filter((media) => media.type === 'image')
   const videoMedia: InteriorMediaItem[] = activeInterior?.video_urls?.map((url) => ({ type: 'video', url })) ?? []
-  const isGalleryModalOpen = isModalVisible && activeInteriorIndex !== null
+  const isGalleryModalOpen = activeInteriorIndex !== null
   const activeMediaItem = imageMedia[displayedMediaIndex] ?? null
   const maxThumbnailOffset = Math.max(0, imageMedia.length - MAX_VISIBLE_THUMBS)
   const visibleThumbnails = imageMedia.slice(thumbnailOffset, thumbnailOffset + MAX_VISIBLE_THUMBS)
@@ -383,17 +379,6 @@ export default function PartnersPage() {
   }, [isModalVisible])
 
   function openInterior(index: number) {
-    if (typeof window !== 'undefined') {
-      if (closeTimeoutRef.current !== null) {
-        window.clearTimeout(closeTimeoutRef.current)
-        closeTimeoutRef.current = null
-      }
-      if (mediaTransitionTimeoutRef.current !== null) {
-        window.clearTimeout(mediaTransitionTimeoutRef.current)
-        mediaTransitionTimeoutRef.current = null
-      }
-    }
-
     setActiveInteriorIndex(index)
     setActiveMediaIndex(0)
     setDisplayedMediaIndex(0)
@@ -418,29 +403,14 @@ export default function PartnersPage() {
       mediaTransitionTimeoutRef.current = null
     }
 
-    const finalize = () => {
-      setIsModalVisible(false)
-      setActiveInteriorIndex(null)
-      setActiveMediaIndex(0)
-      setDisplayedMediaIndex(0)
-      setIsMediaEntering(true)
-      setActiveVideoIndex(0)
-      setThumbnailOffset(0)
-      touchStartXRef.current = null
-      touchCurrentXRef.current = null
-    }
-
-    if (typeof window !== 'undefined') {
-      if (closeTimeoutRef.current !== null) {
-        window.clearTimeout(closeTimeoutRef.current)
-      }
-      closeTimeoutRef.current = window.setTimeout(() => {
-        finalize()
-        closeTimeoutRef.current = null
-      }, 360)
-    } else {
-      finalize()
-    }
+    setActiveInteriorIndex(null)
+    setActiveMediaIndex(0)
+    setDisplayedMediaIndex(0)
+    setIsMediaEntering(true)
+    setActiveVideoIndex(0)
+    setThumbnailOffset(0)
+    touchStartXRef.current = null
+    touchCurrentXRef.current = null
   }
 
   function showNextMedia() {
@@ -1106,18 +1076,10 @@ export default function PartnersPage() {
           <button
             type="button"
             aria-label="Закрыть просмотр интерьера"
-            className={`absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-400 ease-out ${
-              isModalAnimatedIn ? 'opacity-100' : 'opacity-0'
-            }`}
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
             onClick={closeInterior}
           />
-          <div
-            className={`relative z-10 w-full h-full max-h-none overflow-hidden rounded-none sm:rounded-[32px] bg-white shadow-[0_40px_140px_-60px_rgba(15,23,42,0.65)] transition-all duration-400 ease-[cubic-bezier(0.22,1,0.36,1)] transform ${
-              isModalAnimatedIn
-                ? 'opacity-100 translate-y-0 scale-100'
-                : 'opacity-0 translate-y-6 sm:translate-y-4 scale-[0.97]'
-            }`}
-          >
+          <div className="relative z-10 w-full h-full max-h-none overflow-hidden.rounded-none sm:rounded-[32px] bg-white shadow-[0_40px_140px_-60px_rgба(15,23,42,0.65)]">
             <div className="flex items-center justify-between border-b border-gray-100 px-6 sm:px-8 py-4">
               <div>
                 <div className="text-[11px] uppercase tracking-[0.35em] text-gray-400 mb-1">Проект</div>
@@ -1135,7 +1097,10 @@ export default function PartnersPage() {
               </button>
           </div>
 
-            <div className="h-[calc(100vh-120px)] overflow-y-auto px-4 pt-4 pb-16 sm:px-8 sm:pt-8 sm:pb-16 space-y-6">
+            <div
+              className="h-[calc(100vh-120px)] overflow-y-auto px-4 pt-4 pb-16 sm:px-8 sm:pt-8 sm:pb-16 space-y-6"
+              style={{ paddingBottom: 'calc(4rem + env(safe-area-inset-bottom, 0px))' }}
+            >
               <div>
                 <div className="lg:flex lg:gap-4">
                   {imageMedia.length > 1 && (
@@ -1289,15 +1254,15 @@ export default function PartnersPage() {
                 {videoMedia.length > 0 && (
                   <div className="space-y-4 flex flex-col">
                      <div className="text-[10px] uppercase tracking-[0.35em] text-gray-400">Видео проекта</div>
-                    <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm h-[240px] sm:h-[360px] md:h-[400px] lg:h-[460px] xl:h-[500px]">
-                       <video
-                         key={`${videoMedia[activeVideoIndex]?.url}-${activeVideoIndex}`}
-                         src={videoMedia[activeVideoIndex]?.url}
-                         controls
-                         playsInline
-                        className="w-full h-full object-cover"
-                       />
-                     </div>
+                    <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm w-full aspect-[9/16] sm:aspect-auto sm:h-[360px] md:h-[400px] lg:h-[460px] xl:h-[500px]">
+                        <video
+                          key={`${videoMedia[activeVideoIndex]?.url}-${activeVideoIndex}`}
+                          src={videoMedia[activeVideoIndex]?.url}
+                          controls
+                          playsInline
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
                      {videoMedia.length > 1 && (
                        <div className="flex flex-wrap gap-2 pt-2">
                          {videoMedia.map((media, index) => (
