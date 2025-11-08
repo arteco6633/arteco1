@@ -626,6 +626,21 @@ export default function PartnersPage() {
     }
   }, [closeVideoModal, isVideoModalOpen, showNextVideo, showPrevVideo, videoMedia.length])
 
+  useEffect(() => {
+    if (!isVideoModalOpen) {
+      return
+    }
+    const originalBodyOverflow = document.body.style.overflow
+    const originalHtmlOverflow = document.documentElement.style.overflow
+    document.body.style.overflow = 'hidden'
+    document.documentElement.style.overflow = 'hidden'
+
+    return () => {
+      document.body.style.overflow = originalBodyOverflow
+      document.documentElement.style.overflow = originalHtmlOverflow
+    }
+  }, [isVideoModalOpen])
+
   return (
     <div className="min-h-screen w-full modern-2025-bg overflow-x-hidden m-0 p-0">
       {/* Hero Section - Minimalist */}
@@ -1617,7 +1632,8 @@ export default function PartnersPage() {
                     style={{
                       transform: `translateY(${videoModalSwipeOffset}px)`,
                       transition: isVideoModalDragging ? 'none' : 'transform 220ms cubic-bezier(0.16, 1, 0.3, 1)',
-                      touchAction: videoMedia.length > 1 ? 'none' : 'auto'
+                      touchAction: videoMedia.length > 1 ? 'none' : 'auto',
+                      overscrollBehavior: 'contain'
                     }}
                   >
                     <video
