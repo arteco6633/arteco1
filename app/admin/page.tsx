@@ -38,6 +38,7 @@ export default function AdminHomePage() {
         {card('/admin/banners', 'Баннеры', 'Промо и визуальные блоки')}
         {card('/admin/modules', 'Модули кухонь', 'Создание, редактирование и импорт модулей')}
         {card('/admin/journal', 'Журнал', 'Статьи и публикации')}
+        {card('/admin/interiors', 'Интерьеры', 'Галерея проектов для партнёрской страницы')}
       </div>
     </main>
   )

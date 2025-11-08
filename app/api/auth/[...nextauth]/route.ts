@@ -3,9 +3,21 @@ import YandexProvider from 'next-auth/providers/yandex'
 import Credentials from 'next-auth/providers/credentials'
 import { createClient } from '@supabase/supabase-js'
 
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+if (!supabaseUrl) {
+  console.error('[nextauth] Missing NEXT_PUBLIC_SUPABASE_URL env')
+  throw new Error('Supabase URL is not configured')
+}
+
+const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+if (!serviceRoleKey) {
+  console.error('[nextauth] Missing SUPABASE_SERVICE_ROLE_KEY env')
+  throw new Error('Supabase service role key is not configured')
+}
+
 const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
+  supabaseUrl,
+  serviceRoleKey
 )
 
 const handler = NextAuth({

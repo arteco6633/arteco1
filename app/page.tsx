@@ -170,7 +170,7 @@ export default function HomePage() {
   const bottomBanner2 = bottom2ByPosition[0] || availableBanners[0]
 
   return (
-    <div className="min-h-screen overflow-x-hidden max-w-full">
+    <div className="min-h-screen overflow-x-hidden max-w-full bg-white">
       <main className="overflow-x-hidden contain-inline">
         {/* Первый блок: Один большой банер слева + кнопка справа */}
         {!hideSet.has('top') && topBanner && (
@@ -196,7 +196,7 @@ export default function HomePage() {
                     {(topBanner.button_text || topBanner.link_url) && (
                       <div className="group">
                         <a
-                          href={topBanner.link_url || '/catalog'}
+                          href={topBanner.link_url || (topBanner.title?.toLowerCase().includes('семейная') ? '/family-price' : '/catalog')}
                           className="inline-flex items-center gap-2 bg-white text-black font-semibold text-sm sm:text-base px-4 py-2 rounded-full shadow-md hover:shadow-lg transition-all duration-300 cursor-pointer hover:scale-[1.03]"
                         >
                           <span className="text-lg -translate-x-1 opacity-70 transition-all duration-300 group-hover:translate-x-0 group-hover:opacity-100">→</span>

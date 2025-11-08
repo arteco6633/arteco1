@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { supabase } from '@/lib/supabase'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -18,16 +19,58 @@ interface Product {
   is_new: boolean
 }
 
+interface Interior {
+  id: number
+  title: string
+  subtitle?: string | null
+  description?: string | null
+  cover_image: string
+  cover_preview?: string | null
+  gallery_images?: string[] | null
+  gallery_previews?: string[] | null
+  video_urls?: string[] | null
+  document_files?: { url: string; name?: string | null }[] | null
+  location?: string | null
+  area?: string | null
+  style?: string | null
+  created_at?: string
+}
+
 export default function PartnersPage() {
   const [products, setProducts] = useState<Product[]>([])
   const [wishlistProducts, setWishlistProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [typedTeam, setTypedTeam] = useState('')
+  const [interiors, setInteriors] = useState<Interior[]>([])
+  const [interiorsLoading, setInteriorsLoading] = useState(true)
+  const [activeInteriorIndex, setActiveInteriorIndex] = useState<number | null>(null)
+  const [activeMediaIndex, setActiveMediaIndex] = useState(0)
+  const [isMounted, setIsMounted] = useState(false)
+  const modalRootRef = useRef<HTMLElement | null>(null)
   const isMountedRef = useRef(true)
+  const [activeVideoIndex, setActiveVideoIndex] = useState(0)
+  const [thumbnailOffset, setThumbnailOffset] = useState(0)
+  const MAX_VISIBLE_THUMBS = 5
+
+  useEffect(() => {
+    setIsMounted(true)
+    if (typeof document !== 'undefined') {
+      const existing = document.getElementById('modal-root')
+      if (existing) {
+        modalRootRef.current = existing as HTMLElement
+      } else {
+        const container = document.createElement('div')
+        container.setAttribute('id', 'modal-root')
+        document.body.appendChild(container)
+        modalRootRef.current = container
+      }
+    }
+  }, [])
 
   useEffect(() => {
     loadProducts()
     loadWishlistProducts()
+    loadInteriors()
   }, [])
 
 
@@ -180,9 +223,174 @@ export default function PartnersPage() {
     }
   }
 
+  async function loadInteriors() {
+    try {
+      setInteriorsLoading(true)
+      const { data, error } = await supabase
+        .from('client_interiors')
+        .select('*')
+        .order('created_at', { ascending: false })
+
+      if (error) throw error
+      setInteriors(data || [])
+    } catch (error) {
+      console.error('Ошибка загрузки интерьеров клиентов:', error)
+      setInteriors([])
+    } finally {
+      setInteriorsLoading(false)
+    }
+  }
+
   function formatPrice(price: number) {
     return new Intl.NumberFormat('ru-RU').format(price)
   }
+
+  const topProducts = products.slice(0, 4)
+  const recommendedProducts = wishlistProducts.length > 0 ? wishlistProducts.slice(0, 4) : topProducts
+  const totalPrice = recommendedProducts.reduce((sum, product) => sum + product.price, 0)
+  const averagePrice = recommendedProducts.length ? Math.round(totalPrice / recommendedProducts.length) : null
+  const newProductsCount = recommendedProducts.filter(product => product.is_new).length
+  const maxPrice = recommendedProducts.reduce((max, product) => Math.max(max, product.price), 0)
+  const minPrice = recommendedProducts.length > 0
+    ? recommendedProducts.reduce((min, product) => Math.min(min, product.price), Infinity)
+    : 0
+  const priceRange = maxPrice - minPrice
+  const chartWidth = 110
+  const chartHeight = 60
+  const chartPaddingX = 10
+  const chartPaddingTop = 6
+  const chartPaddingBottom = 12
+  const chartHorizontalStep = recommendedProducts.length > 1
+    ? (chartWidth - chartPaddingX * 2) / (recommendedProducts.length - 1)
+    : 0
+  const chartPoints = recommendedProducts.map((product, index) => {
+    const normalizedValue = priceRange > 0 ? (product.price - minPrice) / priceRange : 0.5
+    const x = recommendedProducts.length > 1
+      ? chartPaddingX + index * chartHorizontalStep
+      : chartWidth / 2
+    const y = chartHeight - chartPaddingBottom - normalizedValue * (chartHeight - chartPaddingTop - chartPaddingBottom)
+    const baseLabel = (product.name?.split(' ')[0] ?? product.name ?? '').trim()
+    const cleanedLabel = baseLabel.length > 0 ? baseLabel : 'Товар'
+    const label = cleanedLabel.slice(0, 9)
+    return { x, y, label, key: product.id ?? index }
+  })
+  const hasTrend = chartPoints.length > 1
+  const chartAreaPath = hasTrend
+    ? `M ${chartPoints[0].x},${chartHeight - chartPaddingBottom} ${chartPoints
+        .map(point => `L ${point.x},${point.y}`)
+        .join(' ')} L ${chartPoints[chartPoints.length - 1].x},${chartHeight - chartPaddingBottom} Z`
+    : ''
+  const chartPolylinePoints = hasTrend
+    ? chartPoints.map(point => `${point.x},${point.y}`).join(' ')
+    : ''
+
+  const activeInterior = activeInteriorIndex !== null ? interiors[activeInteriorIndex] : null
+  type InteriorMediaItem = { type: 'image' | 'video'; url: string; preview?: string | null }
+  const activeInteriorMedia = activeInterior
+    ? [
+        activeInterior.cover_image
+          ? { type: 'image' as const, url: activeInterior.cover_image, preview: activeInterior.cover_preview ?? null }
+          : null,
+        ...(activeInterior.gallery_images?.map((url, index) => ({
+          type: 'image' as const,
+          url,
+          preview: activeInterior.gallery_previews?.[index] ?? null,
+        })) ?? []),
+      ].filter(Boolean) as InteriorMediaItem[]
+    : []
+  const imageMedia = activeInteriorMedia.filter((media) => media.type === 'image')
+  const videoMedia: InteriorMediaItem[] = activeInterior?.video_urls?.map((url) => ({ type: 'video', url })) ?? []
+  const isGalleryModalOpen = activeInteriorIndex !== null
+  const activeMediaItem = imageMedia[activeMediaIndex] ?? null
+  const maxThumbnailOffset = Math.max(0, imageMedia.length - MAX_VISIBLE_THUMBS)
+  const visibleThumbnails = imageMedia.slice(thumbnailOffset, thumbnailOffset + MAX_VISIBLE_THUMBS)
+
+  useEffect(() => {
+    if (activeMediaIndex >= imageMedia.length) {
+      setActiveMediaIndex(0)
+    }
+  }, [activeMediaIndex, imageMedia.length])
+
+  useEffect(() => {
+    if (activeMediaIndex < thumbnailOffset) {
+      setThumbnailOffset(activeMediaIndex)
+    } else if (activeMediaIndex >= thumbnailOffset + MAX_VISIBLE_THUMBS) {
+      setThumbnailOffset(Math.min(activeMediaIndex - MAX_VISIBLE_THUMBS + 1, maxThumbnailOffset))
+    }
+  }, [activeMediaIndex, thumbnailOffset, MAX_VISIBLE_THUMBS, maxThumbnailOffset])
+
+  useEffect(() => {
+    if (activeVideoIndex >= videoMedia.length) {
+      setActiveVideoIndex(0)
+    }
+  }, [activeVideoIndex, videoMedia.length])
+
+  function openInterior(index: number) {
+    setActiveInteriorIndex(index)
+    setActiveMediaIndex(0)
+    setActiveVideoIndex(0)
+    setThumbnailOffset(0)
+  }
+
+  function closeInterior() {
+    setActiveInteriorIndex(null)
+    setActiveMediaIndex(0)
+    setActiveVideoIndex(0)
+    setThumbnailOffset(0)
+  }
+
+  function showNextMedia() {
+    if (imageMedia.length <= 1) return
+    setActiveMediaIndex((prev) => (prev + 1) % imageMedia.length)
+  }
+
+  function showPrevMedia() {
+    if (imageMedia.length <= 1) return
+    setActiveMediaIndex((prev) => (prev - 1 + imageMedia.length) % imageMedia.length)
+  }
+
+  function selectMedia(index: number) {
+    if (index < 0 || index >= imageMedia.length) return
+    setActiveMediaIndex(index)
+  }
+
+  function shiftThumbnails(direction: 'up' | 'down') {
+    if (direction === 'up') {
+      setThumbnailOffset((prev) => Math.max(0, prev - 1))
+    } else {
+      setThumbnailOffset((prev) => Math.min(maxThumbnailOffset, prev + 1))
+    }
+  }
+
+  useEffect(() => {
+    if (!isGalleryModalOpen) return
+
+    const originalOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault()
+        setActiveInteriorIndex(null)
+        setActiveMediaIndex(0)
+      }
+      if (event.key === 'ArrowRight' && imageMedia.length > 1) {
+        event.preventDefault()
+        setActiveMediaIndex((prev) => (prev + 1) % imageMedia.length)
+      }
+      if (event.key === 'ArrowLeft' && imageMedia.length > 1) {
+        event.preventDefault()
+        setActiveMediaIndex((prev) => (prev - 1 + imageMedia.length) % imageMedia.length)
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+
+    return () => {
+      document.body.style.overflow = originalOverflow
+      window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [isGalleryModalOpen, imageMedia.length])
 
   return (
     <div className="min-h-screen w-full modern-2025-bg overflow-x-hidden m-0 p-0">
@@ -482,101 +690,174 @@ export default function PartnersPage() {
         </div>
       </section>
 
-      {/* New Products Section */}
+      {/* Popular Products Visualization */}
       <section className="py-12 sm:py-16 md:py-20 lg:py-24 border-b border-gray-100/50">
         <div className="max-w-[1680px] 2xl:max-w-none mx-auto px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 2xl:px-20">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-10 md:gap-12 lg:gap-16 items-center">
-            {/* Text - Left */}
-            <div className="relative order-1 lg:order-1 lg:pr-8 mb-8 lg:mb-0 text-center">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-10 md:gap-12 lg:gap-16 items-start">
+            {/* Insight - Left */}
+            <div className="relative order-1 lg:order-1 lg:pr-8 text-center lg:text-left">
               <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-light text-black mb-4 sm:mb-6 tracking-tight">
-                В курсе новостей
+                Популярные товары
               </h2>
-              <p className="text-sm sm:text-base md:text-lg text-gray-600 font-light leading-relaxed mb-8">
-                Узнавайте о новых товара и предложениях первыми
+              <p className="text-sm sm:text-base md:text-lg text-gray-600 font-light leading-relaxed mb-10">
+                Посмотрите, какие позиции рекомендуют партнёры чаще всего и как меняется спрос в реальном времени
               </p>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-10">
+                <div className="rounded-2xl bg-black text-white p-4 sm:p-6 flex flex-col justify-between">
+                  <span className="text-[10px] sm:text-xs uppercase tracking-[0.2em] text-gray-400 font-medium mb-4">Средняя стоимость</span>
+                  <span className="text-2xl sm:text-3xl font-light">
+                    {averagePrice !== null ? `${formatPrice(averagePrice)} ₽` : '—'}
+                  </span>
+                </div>
+                <div className="rounded-2xl border border-gray-200 p-4 sm:p-6 bg-white/60 backdrop-blur flex flex-col justify-between">
+                  <span className="text-[10px] sm:text-xs uppercase tracking-[0.2em] text-gray-500 font-medium mb-4">Новинки в топе</span>
+                  <span className="text-2xl sm:text-3xl font-light text-black">
+                    {newProductsCount > 0 ? newProductsCount : 'Нет'}
+                  </span>
+                </div>
+              </div>
+
+              <Link
+                href="/catalog"
+                className="inline-flex items-center gap-2 sm:gap-3 px-8 sm:px-10 md:px-12 py-3 sm:py-4 bg-black text-white font-normal text-xs sm:text-sm uppercase tracking-[0.1em] hover:bg-gray-900 transition-colors duration-200 rounded-[50px]"
+              >
+                <span>Перейти в каталог</span>
+                <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                </svg>
+              </Link>
             </div>
 
             {/* Visualization - Right */}
-            <div className="relative order-2 lg:order-2">
+            <div className="relative order-2 lg:order-2 mt-8 lg:mt-0">
               <div className="bg-white rounded-2xl border border-gray-200 p-4 sm:p-5 md:p-6 shadow-lg">
-                {/* Notification Header */}
                 <div className="flex items-center justify-between mb-4 sm:mb-6 pb-3 sm:pb-4 border-b border-gray-100">
-                  <div className="flex items-center gap-2 sm:gap-3">
-                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
-                      <svg className="w-4 h-4 sm:w-5 sm:h-5 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
-                      </svg>
+                  <div>
+                    <div className="text-[10px] sm:text-xs uppercase tracking-[0.2em] text-gray-500 font-medium mb-1">Визуализация каталога</div>
+                    <div className="text-lg sm:text-xl font-light text-black">Топ рекомендации</div>
                     </div>
-                    <div className="min-w-0">
-                      <div className="text-xs sm:text-sm font-light text-black truncate">Уведомления</div>
-                      <div className="text-[10px] sm:text-xs text-gray-500 font-light">3 новых</div>
-                    </div>
-                  </div>
-                  <div className="w-2 h-2 bg-red-500 rounded-full flex-shrink-0"></div>
+                  <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-100 text-emerald-600 text-[10px] sm:text-xs font-medium">
+                    <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
+                    Live
+                  </span>
                 </div>
 
-                {/* Notifications List */}
                 <div className="space-y-2 sm:space-y-3 mb-4 sm:mb-6">
-                  {[
-                    { 
-                      title: 'Новая коллекция кухонь', 
-                      description: 'Добавлено 12 новых моделей', 
-                      time: '5 минут назад', 
-                      iconType: 'new' 
-                    },
-                    { 
-                      title: 'Специальное предложение', 
-                      description: 'Скидка до 15% на все шкафы', 
-                      time: '1 час назад', 
-                      iconType: 'offer' 
-                    },
-                    { 
-                      title: 'Новинка в каталоге', 
-                      description: 'Комод Вегас - теперь доступен', 
-                      time: '2 часа назад', 
-                      iconType: 'product' 
-                    },
-                  ].map((notification, index) => (
-                    <div key={index} className="flex items-start gap-2 sm:gap-3 p-2 sm:p-3 bg-gray-50 rounded-xl border border-gray-100 hover:border-gray-200 transition-colors duration-200">
-                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
-                        {notification.iconType === 'new' && (
-                          <svg className="w-4 h-4 sm:w-5 sm:h-5 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                  {loading ? (
+                    Array.from({ length: 4 }).map((_, index) => (
+                      <div key={index} className="animate-pulse flex items-center gap-3 sm:gap-4 p-3 sm:p-4 bg-gray-50 rounded-xl border border-gray-100">
+                        <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-lg bg-gray-200 flex-shrink-0"></div>
+                        <div className="flex-1 space-y-2">
+                          <div className="h-3 bg-gray-200 rounded w-3/4"></div>
+                          <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                        </div>
+                        <div className="w-10 h-3 bg-gray-200 rounded flex-shrink-0"></div>
+                      </div>
+                    ))
+                  ) : recommendedProducts.length > 0 ? (
+                    recommendedProducts.map((product, index) => (
+                      <div key={product.id} className="flex items-center gap-3 sm:gap-4 p-3 sm:p-4 bg-gray-50 rounded-xl border border-gray-100 hover:border-gray-200 transition-colors duration-200">
+                        <div className="relative w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
+                          {product.image_url ? (
+                            <Image
+                              src={product.image_url}
+                              alt={product.name}
+                              fill
+                              className="object-cover"
+                              sizes="64px"
+                              unoptimized={product.image_url?.includes('unsplash') || false}
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                              <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                           </svg>
-                        )}
-                        {notification.iconType === 'offer' && (
-                          <svg className="w-4 h-4 sm:w-5 sm:h-5 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z" />
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 6h.008v.008H6V6z" />
-                          </svg>
-                        )}
-                        {notification.iconType === 'product' && (
-                          <svg className="w-4 h-4 sm:w-5 sm:h-5 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M11.25 4.533A9 9 0 1021.75 12c0-1.81-.53-3.5-1.44-4.913L11.25 4.533zM12 9a3 3 0 100 6 3 3 0 000-6z" />
-                          </svg>
+                            </div>
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="text-xs sm:text-sm font-light text-black mb-1 truncate">{notification.title}</div>
-                        <div className="text-[10px] sm:text-xs text-gray-600 font-light mb-1">{notification.description}</div>
-                        <div className="text-[10px] sm:text-xs text-gray-400 font-light">{notification.time}</div>
+                          <div className="flex items-center justify-between gap-2 mb-1">
+                            <span className="text-xs sm:text-sm font-light text-black truncate">{product.name}</span>
+                            <span className="text-[10px] sm:text-xs text-gray-400 font-light">#{String(index + 1).padStart(2, '0')}</span>
                       </div>
+                          <div className="text-[10px] sm:text-xs text-gray-500 font-light truncate">
+                            {product.description || 'Описание появится скоро'}
                     </div>
-                  ))}
                 </div>
-
-                {/* Notification Settings */}
-                <div className="pt-4 sm:pt-6 border-t border-gray-100">
-                  <div className="text-[10px] sm:text-xs text-gray-500 font-light mb-2 sm:mb-3">Настройки уведомлений</div>
-                  <div className="space-y-2">
-                    {['Новые товары', 'Специальные предложения', 'Акции и скидки'].map((setting, index) => (
-                      <div key={index} className="flex items-center justify-between p-2 sm:p-3 bg-gray-50 rounded-lg border border-gray-200">
-                        <span className="text-[10px] sm:text-xs font-light text-black">{setting}</span>
-                        <div className="relative inline-block w-10 h-6 rounded-full bg-black cursor-pointer flex-shrink-0">
-                          <div className="absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform duration-200"></div>
+                        <div className="text-xs sm:text-sm font-light text-black flex-shrink-0 whitespace-nowrap">
+                          {formatPrice(product.price)} ₽
                         </div>
                       </div>
-                    ))}
+                    ))
+                  ) : (
+                    <div className="p-6 text-center text-sm text-gray-500 border border-dashed border-gray-200 rounded-xl">
+                      Товары появятся здесь, когда они будут доступны
+                    </div>
+                  )}
+                </div>
+
+                <div className="pt-4 sm:pt-6 border-t border-gray-100">
+                  <div className="text-[10px] sm:text-xs text-gray-500 font-light mb-2 sm:mb-3 uppercase tracking-[0.2em]">Динамика интереса</div>
+                  <div className="h-24 sm:h-28 md:h-32 bg-gray-50 rounded-xl border border-gray-100 flex items-center justify-center p-2 sm:p-3 md:p-4">
+                    {(!loading && chartPoints.length > 0) ? (
+                      <svg className="w-full h-full" viewBox={`0 0 ${chartWidth} ${chartHeight}`} preserveAspectRatio="xMidYMid meet">
+                        <defs>
+                          <linearGradient id="popularTrendGradient" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="#1f2937" stopOpacity="0.18" />
+                            <stop offset="100%" stopColor="#1f2937" stopOpacity="0" />
+                          </linearGradient>
+                        </defs>
+                        <line
+                          x1={chartPaddingX}
+                          y1={chartHeight - chartPaddingBottom}
+                          x2={chartWidth - chartPaddingX}
+                          y2={chartHeight - chartPaddingBottom}
+                          stroke="#e5e7eb"
+                          strokeWidth="0.6"
+                          strokeLinecap="round"
+                        />
+                        {chartAreaPath && (
+                          <path
+                            d={chartAreaPath}
+                            fill="url(#popularTrendGradient)"
+                          />
+                        )}
+                        {chartPolylinePoints && (
+                          <polyline
+                            points={chartPolylinePoints}
+                            fill="none"
+                            stroke="#1f2937"
+                            strokeWidth="1.1"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        )}
+                        {chartPoints.map((point) => (
+                          <circle key={`point-${point.key}`} cx={point.x} cy={point.y} r="1.8" fill="#1f2937" />
+                        ))}
+                        {chartPoints.map((point) => {
+                          const label = point.label.length > 8 ? `${point.label.slice(0, 7)}…` : point.label
+                          return (
+                            <text
+                              key={`label-${point.key}`}
+                              x={point.x}
+                              y={chartHeight - chartPaddingBottom + 7.5}
+                              textAnchor="middle"
+                              fontSize="5"
+                              fill="#a0aec0"
+                              fontWeight="400"
+                            >
+                              {label.toUpperCase()}
+                            </text>
+                          )
+                        })}
+                      </svg>
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-xs text-gray-400 font-light">
+                        Данные появятся позже
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -585,81 +866,7 @@ export default function PartnersPage() {
         </div>
       </section>
 
-      {/* Products Section - Minimalist */}
-      <section className="py-12 sm:py-16 md:py-20 lg:py-24 border-b border-gray-100/50">
-        <div className="max-w-[1680px] 2xl:max-w-none mx-auto px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 2xl:px-20">
-          <div className="text-center mb-12 sm:mb-16 md:mb-20">
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-light text-black mb-4 sm:mb-6 tracking-tight">
-              Популярные товары
-            </h2>
-            <p className="text-sm sm:text-base text-gray-600 max-w-xl mx-auto font-light px-4">
-              Посмотрите примеры товаров, которые вы можете рекомендовать своим клиентам
-            </p>
-          </div>
-
-          {loading ? (
-            <div className="text-center py-8 sm:py-12">
-              <div className="inline-block animate-spin rounded-full h-10 w-10 sm:h-12 sm:w-12 border-b-2 border-black"></div>
-            </div>
-          ) : products.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
-              {products.map((product) => (
-                <Link
-                  key={product.id}
-                  href={`/product/${product.id}`}
-                  className="group bg-white border border-gray-200 hover:border-black transition-colors duration-200 rounded-lg overflow-hidden"
-                >
-                  <div className="relative aspect-square overflow-hidden bg-gray-50">
-                    <Image
-                      src={product.image_url}
-                      alt={product.name}
-                      fill
-                      className="object-cover group-hover:scale-105 transition-transform duration-500"
-                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                    />
-                    {product.is_new && (
-                      <div className="absolute top-3 left-3 sm:top-4 sm:left-4 bg-white text-black px-2 sm:px-3 py-1 text-[10px] sm:text-xs font-normal uppercase tracking-wider border border-black rounded-md">
-                        NEW
-                      </div>
-                    )}
-                  </div>
-                  <div className="p-4 sm:p-5 md:p-6">
-                    <h3 className="text-base sm:text-lg font-light text-black mb-2 group-hover:underline transition-all">
-                      {product.name}
-                    </h3>
-                    <p className="text-xs sm:text-sm text-gray-600 mb-3 sm:mb-4 line-clamp-2 font-light">
-                      {product.description}
-                    </p>
-                    <div className="flex items-baseline gap-3">
-                      <span className="text-xl sm:text-2xl font-light text-black">
-                        {formatPrice(product.price)} ₽
-                      </span>
-                    </div>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-12 text-gray-600 font-light">
-              Товары загружаются...
-            </div>
-          )}
-
-          <div className="text-center mt-12 sm:mt-16">
-            <Link
-              href="/catalog"
-              className="inline-flex items-center gap-2 sm:gap-3 px-8 sm:px-10 md:px-12 py-3 sm:py-4 bg-black text-white font-normal text-xs sm:text-sm uppercase tracking-[0.1em] hover:bg-gray-900 transition-colors duration-200 rounded-md"
-            >
-              <span>Смотреть весь каталог</span>
-              <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-              </svg>
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* Gallery Section - Minimalist */}
+      {/* Gallery Section */}
       <section className="py-12 sm:py-16 md:py-20 lg:py-24 border-b border-gray-100/50">
         <div className="max-w-[1680px] 2xl:max-w-none mx-auto px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 2xl:px-20">
           <div className="text-center mb-12 sm:mb-16 md:mb-20">
@@ -671,31 +878,359 @@ export default function PartnersPage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-            {[
-              'https://images.unsplash.com/photo-1556912172-45b7abe8b7e8?w=800',
-              'https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?w=800',
-              'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=800',
-              'https://images.unsplash.com/photo-1556912172-45b7abe8b7e8?w=800',
-              'https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?w=800',
-              'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=800',
-            ].map((src, index) => (
-              <div
-                key={index}
-                className="relative aspect-[4/3] overflow-hidden border border-gray-200 hover:border-black transition-colors duration-200 group rounded-lg"
-              >
-                <Image
-                  src={src}
-                  alt={`Интерьер ${index + 1}`}
-                  fill
-                  className="object-cover group-hover:scale-105 transition-transform duration-500"
-                  sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                />
-              </div>
-            ))}
-          </div>
+          {interiorsLoading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+              {Array.from({ length: 6 }).map((_, index) => (
+                <div
+                  key={index}
+                  className="relative aspect-[4/3] overflow-hidden rounded-[30px] border border-gray-200/70 bg-gradient-to-br from-gray-100 via-gray-50 to-white animate-pulse"
+                >
+                  <div className="absolute inset-4 rounded-[26px] border border-dashed border-gray-200" />
+            </div>
+              ))}
+            </div>
+          ) : interiors.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+              {interiors.map((interior, index) => (
+                <button
+                  type="button"
+                  key={interior.id}
+                  onClick={() => openInterior(index)}
+                  className="group relative aspect-[4/3] overflow-hidden rounded-[30px] border border-gray-200 bg-gray-50 text-left transition-all duration-500 hover:-translate-y-1 hover:border-gray-300 hover:shadow-[0_32px_90px_-45px_rgba(15,23,42,0.55)] focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-4"
+                >
+                  {interior.cover_image ? (
+                    <Image
+                      src={interior.cover_image}
+                      alt={interior.title}
+                      fill
+                      className="object-cover transition-transform duration-500 group-hover:scale-105"
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                      unoptimized={interior.cover_image?.includes('unsplash.com') || false}
+                      priority={index < 3}
+                    />
+                  ) : (
+                    <div className="flex h-full items-center justify-center bg-gray-100 text-sm text-gray-400">
+                      Изображение готовится
+                      </div>
+                    )}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent opacity-60 transition-opacity duration-500 group-hover:opacity-80" />
+                  <div className="absolute top-5 left-5 px-3 py-1 rounded-full bg-white/85 text-[10px] sm:text-xs tracking-[0.4em] text-gray-700 shadow-sm">
+                    {String(index + 1).padStart(2, '0')}
+                  </div>
+                  {(interior.video_urls?.length || interior.document_files?.length) && (
+                    <div className="absolute top-5 right-5 flex items-center gap-2 text-[10px] font-medium uppercase tracking-[0.25em] text-white/80">
+                      {interior.video_urls?.length ? (
+                        <span className="flex items-center gap-1 rounded-full bg-white/15 px-3 py-1 backdrop-blur">
+                          <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M8 5v14l11-7-11-7z" />
+                          </svg>
+                          {interior.video_urls.length}
+                      </span>
+                      ) : null}
+                      {interior.document_files?.length ? (
+                        <span className="flex items-center gap-1 rounded-full bg-white/15 px-3 py-1 backdrop-blur">
+                          <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M7 7h4.5a2.5 2.5 0 012.5 2.5V21" />
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M7 7v12a2 2 0 002 2h8" />
+                          </svg>
+                          {interior.document_files.length}
+                        </span>
+                      ) : null}
+                    </div>
+                  )}
+                  <div className="absolute inset-x-0 bottom-0 p-5 sm:p-6">
+                    <div className="text-xs uppercase tracking-[0.35em] text-white/70 mb-2">
+                      Квартира · Проект
+                  </div>
+                    <div className="text-lg sm:text-xl font-light text-white leading-tight line-clamp-2">
+                      {interior.title}
+                    </div>
+                    {(interior.location || interior.subtitle) && (
+                      <div className="mt-2 text-[11px] sm:text-xs text-white/70 tracking-wide">
+                        {interior.location || interior.subtitle}
+                      </div>
+                    )}
+                  </div>
+                </button>
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-3xl border border-dashed border-gray-300 bg-white/60 py-16 px-6 text-center text-sm sm:text-base text-gray-500">
+              Добавьте реальные интерьеры через админ-панель, чтобы вдохновлять партнёров и их клиентов.
+            </div>
+          )}
         </div>
       </section>
+
+      {isGalleryModalOpen && activeInterior && isMounted && modalRootRef.current
+        ? createPortal(
+        <div className="fixed inset-0 z-[80] flex items-center justify-center px-0 py-4 sm:px-4 sm:py-6">
+          <button
+            type="button"
+            aria-label="Закрыть просмотр интерьера"
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            onClick={closeInterior}
+          />
+          <div className="relative z-10 w-full h-full max-h-none overflow-hidden rounded-none sm:rounded-[32px] bg-white shadow-[0_40px_140px_-60px_rgba(15,23,42,0.65)]">
+            <div className="flex items-center justify-between border-b border-gray-100 px-6 sm:px-8 py-4">
+              <div>
+                <div className="text-[11px] uppercase tracking-[0.35em] text-gray-400 mb-1">Проект</div>
+                <h3 className="text-xl sm:text-2xl font-light text-gray-900 leading-tight">{activeInterior.title}</h3>
+              </div>
+              <button
+                type="button"
+                onClick={closeInterior}
+                className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-700 shadow-sm transition-colors hover:bg-gray-50"
+                aria-label="Закрыть"
+              >
+                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+              </button>
+          </div>
+
+            <div className="h-[calc(100vh-120px)] overflow-y-auto px-4 pt-4 pb-16 sm:px-8 sm:pt-8 sm:pb-16 space-y-6">
+              <div>
+                <div className="lg:flex lg:gap-4">
+                  {imageMedia.length > 1 && (
+                    <div className="hidden lg:flex lg:flex-col lg:gap-3 lg:pr-4">
+                      <button
+                        type="button"
+                        disabled={thumbnailOffset === 0}
+                        onClick={() => shiftThumbnails('up')}
+                        className={`h-8 w-36 rounded-full border text-xs uppercase tracking-[0.2em] transition ${
+                          thumbnailOffset === 0
+                            ? 'cursor-not-allowed border-gray-200 text-gray-300'
+                            : 'border-gray-300 text-gray-500 hover:border-gray-400'
+                        }`}
+                      >
+                        ↑
+                      </button>
+                      {visibleThumbnails.map((media, idx) => {
+                        const realIndex = idx + thumbnailOffset
+                        return (
+                          <button
+                            type="button"
+                            key={`${media.type}-${media.url}-${realIndex}`}
+                            onClick={() => selectMedia(realIndex)}
+                            className={`relative h-20 w-36 overflow-hidden rounded-2xl border transition-all.duration-200 ${
+                              realIndex === activeMediaIndex
+                                ? 'border-gray-900 ring-2 ring-gray-900/40 shadow-lg'
+                                : 'border-transparent opacity-70 hover:opacity-100 hover:border-gray-300'
+                            }`}
+                          >
+                            <Image
+                              src={media.preview || media.url}
+                              alt={`Превью ${realIndex + 1}`}
+                              fill
+                              className="object-cover"
+                              sizes="144px"
+                              unoptimized={(media.preview || media.url)?.includes('unsplash.com') || false}
+                            />
+                          </button>
+                        )
+                      })}
+                      <button
+                        type="button"
+                        disabled={thumbnailOffset >= maxThumbnailOffset}
+                        onClick={() => shiftThumbnails('down')}
+                        className={`h-8 w-36 rounded-full border text-xs uppercase tracking-[0.2em] transition ${
+                          thumbnailOffset >= maxThumbnailOffset
+                            ? 'cursor-not-allowed border-gray-200 text-gray-300'
+                            : 'border-gray-300 text-gray-500 hover:border-gray-400'
+                        }`}
+                      >
+                        ↓
+                      </button>
+        </div>
+                  )}
+                  <div className="relative flex-1 h-[300px] sm:h-[380px] md:h-[460px] lg:h-[520px] xl:h-[600px] overflow-hidden rounded-[28px] bg-gray-100">
+                    {activeMediaItem ? (
+                      activeMediaItem.type === 'video' ? (
+                        <video
+                          key={activeMediaIndex}
+                          src={activeMediaItem.url}
+                          controls
+                          playsInline
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <Image
+                          src={activeMediaItem.url}
+                          alt={activeInterior.title}
+                          fill
+                          className="object-cover"
+                          sizes="(max-width: 1024px) 100vw, 60vw"
+                          unoptimized={activeMediaItem.url?.includes('unsplash.com') || false}
+                        />
+                      )
+                    ) : (
+                      <div className="flex h-full items-center justify-center text-sm text-gray-400">
+                        Медиа временно недоступно
+        </div>
+                    )}
+
+                    {imageMedia.length > 1 && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={showPrevMedia}
+                          aria-label="Предыдущее медиа"
+                          className="absolute left-4 top-1/2 -translate-y-1/2 flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-gray-700 shadow transition hover:bg-white"
+                        >
+                          <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+                          </svg>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={showNextMedia}
+                          aria-label="Следующее медиа"
+                          className="absolute right-4 top-1/2 -translate-y-1/2 flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-gray-700 shadow transition hover:bg-white"
+                        >
+                          <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                          </svg>
+                        </button>
+                      </>
+                    )}
+                  </div>
+          </div>
+
+                {imageMedia.length > 1 && (
+                  <div className="mt-3 flex gap-3 overflow-x-auto pb-2 lg:hidden snap-x snap-mandatory">
+                    {imageMedia.map((media, index) => (
+                      <button
+                        type="button"
+                        key={`${media.type}-${media.url}-${index}`}
+                        onClick={() => selectMedia(index)}
+                        className={`relative h-16 w-24 flex-shrink-0 overflow-hidden.rounded-2xl border transition-all duration-200 snap-start ${
+                          index === activeMediaIndex
+                            ? 'border-gray-900 ring-2 ring-gray-900/40 shadow-lg'
+                            : 'border-transparent opacity-70 hover:opacity-100 hover:border-gray-300'
+                        }`}
+                      >
+                        <Image
+                          src={media.preview || media.url}
+                          alt={`Превью ${index + 1}`}
+                          fill
+                          className="object-cover"
+                          sizes="(max-width: 640px) 33vw, 96px"
+                          unoptimized={(media.preview || media.url)?.includes('unsplash.com') || false}
+                        />
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="flex flex-col gap-6 lg:grid lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)] lg:gap-10 lg:items-stretch">
+                {videoMedia.length > 0 && (
+                  <div className="space-y-4 flex flex-col">
+                     <div className="text-[10px] uppercase tracking-[0.35em] text-gray-400">Видео проекта</div>
+                    <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm h-[240px] sm:h-[360px] md:h-[400px] lg:h-[460px] xl:h-[500px]">
+                       <video
+                         key={`${videoMedia[activeVideoIndex]?.url}-${activeVideoIndex}`}
+                         src={videoMedia[activeVideoIndex]?.url}
+                         controls
+                         playsInline
+                        className="w-full h-full object-cover"
+                       />
+                     </div>
+                     {videoMedia.length > 1 && (
+                       <div className="flex flex-wrap gap-2 pt-2">
+                         {videoMedia.map((media, index) => (
+                           <button
+                             key={`${media.url}-${index}`}
+                             onClick={() => setActiveVideoIndex(index)}
+                             className={`rounded-full border px-3 py-1 text-xs uppercase tracking-[0.2em] transition ${
+                               index === activeVideoIndex
+                                 ? 'border-gray-900 bg-gray-900 text-white'
+                                 : 'border-gray-200 text-gray-500 hover:border-gray-300'
+                             }`}
+                           >
+                             Видео {index + 1}
+                           </button>
+            ))}
+          </div>
+                     )}
+        </div>
+                   )}
+
+                <div className="space-y-5 flex flex-col h-full">
+                   {activeInterior.subtitle && (
+                     <p className="text-sm text-gray-500 leading-relaxed">
+                       {activeInterior.subtitle}
+                     </p>
+                   )}
+
+                   {activeInterior.description && (
+                     <p className="text-sm leading-relaxed text-gray-600 whitespace-pre-line">
+                       {activeInterior.description}
+                     </p>
+                   )}
+
+                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                     {activeInterior.location && (
+                       <div className="rounded-2xl border border-gray-200 bg-gray-50/70 p-4">
+                         <div className="text-[10px] uppercase tracking-[0.35em] text-gray-400 mb-1">Локация</div>
+                         <div className="text-sm text-gray-700">{activeInterior.location}</div>
+                       </div>
+                     )}
+                     {activeInterior.area && (
+                       <div className="rounded-2xl border border-gray-200 bg-gray-50/70 p-4">
+                         <div className="text-[10px] uppercase tracking-[0.35em] text-gray-400 mb-1">Площадь</div>
+                         <div className="text-sm text-gray-700">{activeInterior.area}</div>
+                       </div>
+                     )}
+                     {activeInterior.style && (
+                       <div className="rounded-2xl border border-gray-200 bg-gray-50/70 p-4">
+                         <div className="text-[10px] uppercase tracking-[0.35em] text-gray-400 mb-1">Стиль</div>
+                         <div className="text-sm text-gray-700">{activeInterior.style}</div>
+                       </div>
+                     )}
+                   </div>
+
+                   {activeInterior.document_files?.length ? (
+                     <div className="rounded-2xl border border-gray-200 bg-white/80 p-4 shadow-sm">
+                       <div className="text-[10px] uppercase tracking-[0.35em] text-gray-400 mb-3">Материалы проекта</div>
+                       <div className="space-y-2">
+                         {activeInterior.document_files.map((doc, index) => (
+                           <a
+                             key={`${doc.url}-${index}`}
+                             href={doc.url}
+                             target="_blank"
+                             rel="noopener noreferrer"
+                             className="flex items-center justify-between rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-700 transition hover:border-gray-300 hover:bg-gray-50"
+                           >
+                             <span className="flex items-center gap-2">
+                               <svg className="h-4 w-4 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                                 <path strokeLinecap="round" strokeLinejoin="round" d="M7 7v10a4 4 0 004 4h6" />
+                                 <path strokeLinecap="round" strokeLinejoin="round" d="M7 7h4a4 4 0 014 4v10" />
+                                 <path strokeLinecap="round" strokeLinejoin="round" d="M11 3.5V7" />
+                               </svg>
+                               <span>{doc.name || `Файл ${index + 1}`}</span>
+                             </span>
+                             <span className="text-xs uppercase tracking-[0.3em] text-gray-400">PDF</span>
+                           </a>
+                         ))}
+                       </div>
+                     </div>
+                   ) : null}
+
+                   <div className="mt-auto rounded-[28px] bg-gray-900 px-5 py-6 text-white shadow-[0_18px_48px_-28px_rgba(15,23,42,0.8)]">
+                     <div className="text-[10px] uppercase tracking-[0.35ем] text-white/50 mb-2">Для партнёров</div>
+                     <p className="text-sm leading-relaxed text-white/80">
+                       Хотите показать клиенту похожий проект? Запросите наш менеджмент, указав ID #{activeInterior.id}. Мы подготовим подборку материалов и смету.
+                     </p>
+                   </div>
+                 </div>
+               </div>
+            </div>
+          </div>
+        </div>,
+        modalRootRef.current
+      ) : null}
 
       {/* Final CTA Section - Minimalist */}
       <section className="py-12 sm:py-16 md:py-20 lg:py-24 bg-black text-white">

@@ -17,6 +17,7 @@ const nextConfig = {
         ? { protocol: 'https', hostname: supabaseHost, pathname: '/storage/**' }
         : null,
       { protocol: 'https', hostname: 'zjiajicude.beget.app', pathname: '/storage/**' },
+      { protocol: 'https', hostname: 'images.unsplash.com', pathname: '/**' },
     ].filter(Boolean),
     formats: ['image/avif', 'image/webp'],
   },

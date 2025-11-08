@@ -58,7 +58,7 @@ export default function RootLayout({
         <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
         <link rel="apple-touch-icon" sizes="1024x1024" href="/favicon-1024x1024.png" />
       </head>
-      <body className="bg-white overflow-x-hidden">
+      <body className="overflow-x-hidden">
         {/* Прелоадер до гидрации (виден и на жёстком обновлении, и на мобилках) */}
         <div id="arteco-boot-loader" className="fixed inset-0 z-[1000] bg-white grid place-items-center">
           <div className="flex flex-col items-center gap-4">
