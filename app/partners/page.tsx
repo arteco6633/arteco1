@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useRef, type TouchEvent } from 'react'
+import { useEffect, useState, useRef, type TouchEvent, type SyntheticEvent } from 'react'
 import { createPortal } from 'react-dom'
 import { supabase } from '@/lib/supabase'
 import Link from 'next/link'
@@ -45,8 +45,6 @@ export default function PartnersPage() {
   const [interiorsLoading, setInteriorsLoading] = useState(true)
   const [activeInteriorIndex, setActiveInteriorIndex] = useState<number | null>(null)
   const [activeMediaIndex, setActiveMediaIndex] = useState(0)
-  const [isModalVisible, setIsModalVisible] = useState(false)
-  const [isModalAnimatedIn, setIsModalAnimatedIn] = useState(false)
   const [displayedMediaIndex, setDisplayedMediaIndex] = useState(0)
   const [isMediaEntering, setIsMediaEntering] = useState(true)
   const [isMounted, setIsMounted] = useState(false)
@@ -57,6 +55,7 @@ export default function PartnersPage() {
   const touchStartXRef = useRef<number | null>(null)
   const touchCurrentXRef = useRef<number | null>(null)
   const mediaTransitionTimeoutRef = useRef<number | null>(null)
+  const [isVideoPortrait, setIsVideoPortrait] = useState(false)
 
   useEffect(() => {
     setIsMounted(true)
@@ -330,6 +329,10 @@ export default function PartnersPage() {
   }, [activeVideoIndex, videoMedia.length])
 
   useEffect(() => {
+    setIsVideoPortrait(false)
+  }, [activeVideoIndex, videoMedia.length, activeInterior?.id])
+
+  useEffect(() => {
     if (!isGalleryModalOpen) {
       if (typeof window !== 'undefined' && mediaTransitionTimeoutRef.current !== null) {
         window.clearTimeout(mediaTransitionTimeoutRef.current)
@@ -365,19 +368,6 @@ export default function PartnersPage() {
     }
   }, [activeMediaIndex, isGalleryModalOpen])
 
-  useEffect(() => {
-    if (isModalVisible) {
-      const activate = () => setIsModalAnimatedIn(true)
-      if (typeof window !== 'undefined') {
-        window.requestAnimationFrame(activate)
-      } else {
-        activate()
-      }
-    } else {
-      setIsModalAnimatedIn(false)
-    }
-  }, [isModalVisible])
-
   function openInterior(index: number) {
     setActiveInteriorIndex(index)
     setActiveMediaIndex(0)
@@ -387,16 +377,12 @@ export default function PartnersPage() {
     setThumbnailOffset(0)
     touchStartXRef.current = null
     touchCurrentXRef.current = null
-    setIsModalAnimatedIn(false)
-    setIsModalVisible(true)
   }
 
   function closeInterior() {
-    if (!isModalVisible) {
+    if (activeInteriorIndex === null) {
       return
     }
-
-    setIsModalAnimatedIn(false)
 
     if (typeof window !== 'undefined' && mediaTransitionTimeoutRef.current !== null) {
       window.clearTimeout(mediaTransitionTimeoutRef.current)
@@ -437,7 +423,7 @@ export default function PartnersPage() {
   }
 
   useEffect(() => {
-    if (!isModalVisible) return
+    if (!isGalleryModalOpen) return
 
     const originalOverflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
@@ -464,7 +450,7 @@ export default function PartnersPage() {
       document.body.style.overflow = originalOverflow
       window.removeEventListener('keydown', handleKeyDown)
     }
-  }, [isModalVisible, imageMedia.length])
+  }, [isGalleryModalOpen, imageMedia.length])
 
   function handleTouchStart(e: TouchEvent<HTMLDivElement>) {
     if (imageMedia.length <= 1) return
@@ -1070,7 +1056,7 @@ export default function PartnersPage() {
         </div>
       </section>
 
-      {isModalVisible && activeInterior && isMounted
+      {isGalleryModalOpen && activeInterior && isMounted
         ? createPortal(
         <div className="fixed inset-0 z-[80] flex items-center justify-center px-0 py-4 sm:px-4 sm:py-6">
           <button
@@ -1079,7 +1065,7 @@ export default function PartnersPage() {
             className="absolute inset-0 bg-black/60 backdrop-blur-sm"
             onClick={closeInterior}
           />
-          <div className="relative z-10 w-full h-full max-h-none overflow-hidden.rounded-none sm:rounded-[32px] bg-white shadow-[0_40px_140px_-60px_rgба(15,23,42,0.65)]">
+          <div className="relative z-10 w-full h-full max-h-none overflow-hidden rounded-none sm:rounded-[32px] bg-white shadow-[0_40px_140px_-60px_rgba(15,23,42,0.65)]">
             <div className="flex items-center justify-between border-b border-gray-100 px-6 sm:px-8 py-4">
               <div>
                 <div className="text-[11px] uppercase tracking-[0.35em] text-gray-400 mb-1">Проект</div>
@@ -1230,7 +1216,7 @@ export default function PartnersPage() {
                         type="button"
                         key={`${media.type}-${media.url}-${index}`}
                         onClick={() => selectMedia(index)}
-                        className={`relative h-16 w-24 flex-shrink-0 overflow-hidden.rounded-2xl border transition-all duration-200 snap-start ${
+                        className={`relative h-16 w-24 flex-shrink-0 overflow-hidden rounded-2xl border transition-all duration-200 snap-start ${
                           index === activeMediaIndex
                             ? 'border-gray-900 ring-2 ring-gray-900/40 shadow-lg'
                             : 'border-transparent opacity-70 hover:opacity-100 hover:border-gray-300'
@@ -1250,108 +1236,136 @@ export default function PartnersPage() {
                 )}
               </div>
 
-              <div className="flex flex-col gap-6 lg:grid lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)] lg:gap-10 lg:items-stretch">
+              <div
+                className={`flex flex-col gap-6 lg:grid lg:gap-10 lg:items-stretch ${
+                  isVideoPortrait
+                    ? 'lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]'
+                    : 'lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)]'
+                }`}
+              >
                 {videoMedia.length > 0 && (
-                  <div className="space-y-4 flex flex-col">
-                     <div className="text-[10px] uppercase tracking-[0.35em] text-gray-400">Видео проекта</div>
-                    <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm w-full aspect-[9/16] sm:aspect-auto sm:h-[360px] md:h-[400px] lg:h-[460px] xl:h-[500px]">
-                        <video
-                          key={`${videoMedia[activeVideoIndex]?.url}-${activeVideoIndex}`}
-                          src={videoMedia[activeVideoIndex]?.url}
-                          controls
-                          playsInline
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                     {videoMedia.length > 1 && (
-                       <div className="flex flex-wrap gap-2 pt-2">
-                         {videoMedia.map((media, index) => (
-                           <button
-                             key={`${media.url}-${index}`}
-                             onClick={() => setActiveVideoIndex(index)}
-                             className={`rounded-full border px-3 py-1 text-xs uppercase tracking-[0.2em] transition ${
-                               index === activeVideoIndex
-                                 ? 'border-gray-900 bg-gray-900 text-white'
-                                 : 'border-gray-200 text-gray-500 hover:border-gray-300'
-                             }`}
-                           >
-                             Видео {index + 1}
-                           </button>
+                  <div className="flex flex-col space-y-4 lg:justify-between">
+                    <div className="text-[10px] uppercase tracking-[0.35em] text-gray-400">Видео проекта</div>
+                    <div
+                      className={`overflow-hidden rounded-2xl border border-gray-200 bg-black shadow-sm transition-all ${
+                        isVideoPortrait
+                          ? 'w-full max-w-[420px] aspect-[9/16] mx-auto lg:mx-0'
+                          : 'w-full h-[240px] sm:h-[360px] md:h-[400px] lg:h-[460px] xl:h-[500px] bg-white'
+                      }`}
+                    >
+                      <video
+                        key={`${videoMedia[activeVideoIndex]?.url}-${activeVideoIndex}`}
+                        src={videoMedia[activeVideoIndex]?.url}
+                        controls
+                        playsInline
+                        onLoadedMetadata={(event: SyntheticEvent<HTMLVideoElement>) => {
+                          try {
+                            const target = event.currentTarget
+                            if (target?.videoHeight && target?.videoWidth) {
+                              setIsVideoPortrait(target.videoHeight >= target.videoWidth)
+                            }
+                          } catch (error) {
+                            console.warn('Не удалось определить ориентацию видео', error)
+                          }
+                        }}
+                        className={`w-full h-full ${
+                          isVideoPortrait ? 'object-contain' : 'object-cover'
+                        }`}
+                      />
+                    </div>
+                    {videoMedia.length > 1 && (
+                      <div className="flex flex-wrap gap-2 pt-2">
+                        {videoMedia.map((media, index) => (
+                          <button
+                            key={`${media.url}-${index}`}
+                            onClick={() => setActiveVideoIndex(index)}
+                            className={`rounded-full border px-3 py-1 text-xs uppercase tracking-[0.2em] transition ${
+                              index === activeVideoIndex
+                                ? 'border-gray-900 bg-gray-900 text-white'
+                                : 'border-gray-200 text-gray-500 hover:border-gray-300'
+                            }`}
+                          >
+                            Видео {index + 1}
+                          </button>
             ))}
           </div>
-                     )}
+                    )}
         </div>
                    )}
 
-                <div className="space-y-5 flex flex-col h-full">
-                   {activeInterior.subtitle && (
-                     <p className="text-sm text-gray-500 leading-relaxed">
-                       {activeInterior.subtitle}
-                     </p>
-                   )}
+                <div
+                  className={`flex h-full flex-col gap-5 lg:max-w-[520px] lg:pl-2 ${
+                    isVideoPortrait ? 'lg:justify-between xl:max-w-[560px]' : ''
+                  }`}
+                >
+                  {activeInterior.subtitle && (
+                    <p className="text-sm text-gray-500 leading-relaxed">{activeInterior.subtitle}</p>
+                  )}
 
-                   {activeInterior.description && (
-                     <p className="text-sm leading-relaxed text-gray-600 whitespace-pre-line">
-                       {activeInterior.description}
-                     </p>
-                   )}
+                  {activeInterior.description && (
+                    <p className="text-sm leading-relaxed text-gray-600 whitespace-pre-line">
+                      {activeInterior.description}
+                    </p>
+                  )}
 
-                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                     {activeInterior.location && (
-                       <div className="rounded-2xl border border-gray-200 bg-gray-50/70 p-4">
-                         <div className="text-[10px] uppercase tracking-[0.35em] text-gray-400 mb-1">Локация</div>
-                         <div className="text-sm text-gray-700">{activeInterior.location}</div>
-                       </div>
-                     )}
-                     {activeInterior.area && (
-                       <div className="rounded-2xl border border-gray-200 bg-gray-50/70 p-4">
-                         <div className="text-[10px] uppercase tracking-[0.35em] text-gray-400 mb-1">Площадь</div>
-                         <div className="text-sm text-gray-700">{activeInterior.area}</div>
-                       </div>
-                     )}
-                     {activeInterior.style && (
-                       <div className="rounded-2xl border border-gray-200 bg-gray-50/70 p-4">
-                         <div className="text-[10px] uppercase tracking-[0.35em] text-gray-400 mb-1">Стиль</div>
-                         <div className="text-sm text-gray-700">{activeInterior.style}</div>
-                       </div>
-                     )}
-                   </div>
+                  <div
+                    className={`grid grid-cols-1 gap-3 ${!isVideoPortrait ? 'sm:grid-cols-2' : ''} lg:grid-cols-2 lg:self-stretch`}
+                  >
+                    {activeInterior.location && (
+                      <div className="rounded-2xl border border-gray-200 bg-gray-50/70 p-4">
+                        <div className="text-[10px] uppercase tracking-[0.35em] text-gray-400 mb-1">Локация</div>
+                        <div className="text-sm text-gray-700">{activeInterior.location}</div>
+                      </div>
+                    )}
+                    {activeInterior.area && (
+                      <div className="rounded-2xl border border-gray-200 bg-gray-50/70 p-4">
+                        <div className="text-[10px] uppercase tracking-[0.35em] text-gray-400 mb-1">Площадь</div>
+                        <div className="text-sm text-gray-700">{activeInterior.area}</div>
+                      </div>
+                    )}
+                    {activeInterior.style && (
+                      <div className="rounded-2xl border border-gray-200 bg-gray-50/70 p-4">
+                        <div className="text-[10px] uppercase tracking-[0.35em] text-gray-400 mb-1">Стиль</div>
+                        <div className="text-sm text-gray-700">{activeInterior.style}</div>
+                      </div>
+                    )}
+                  </div>
 
-                   {activeInterior.document_files?.length ? (
-                     <div className="rounded-2xl border border-gray-200 bg-white/80 p-4 shadow-sm">
-                       <div className="text-[10px] uppercase tracking-[0.35em] text-gray-400 mb-3">Материалы проекта</div>
-                       <div className="space-y-2">
-                         {activeInterior.document_files.map((doc, index) => (
-                           <a
-                             key={`${doc.url}-${index}`}
-                             href={doc.url}
-                             target="_blank"
-                             rel="noopener noreferrer"
-                             className="flex items-center justify-between rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-700 transition hover:border-gray-300 hover:bg-gray-50"
-                           >
-                             <span className="flex items-center gap-2">
-                               <svg className="h-4 w-4 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                                 <path strokeLinecap="round" strokeLinejoin="round" d="M7 7v10a4 4 0 004 4h6" />
-                                 <path strokeLinecap="round" strokeLinejoin="round" d="M7 7h4a4 4 0 014 4v10" />
-                                 <path strokeLinecap="round" strokeLinejoin="round" d="M11 3.5V7" />
-                               </svg>
-                               <span>{doc.name || `Файл ${index + 1}`}</span>
-                             </span>
-                             <span className="text-xs uppercase tracking-[0.3em] text-gray-400">PDF</span>
-                           </a>
-                         ))}
-                       </div>
-                     </div>
-                   ) : null}
+                  {activeInterior.document_files?.length ? (
+                    <div className="rounded-2xl border border-gray-200 bg-white/80 p-4 shadow-sm">
+                      <div className="text-[10px] uppercase tracking-[0.35em] text-gray-400 mb-3">Материалы проекта</div>
+                      <div className="space-y-2">
+                        {activeInterior.document_files.map((doc, index) => (
+                          <a
+                            key={`${doc.url}-${index}`}
+                            href={doc.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center justify-between rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-700 transition hover:border-gray-300 hover:bg-gray-50"
+                          >
+                            <span className="flex items-center gap-2">
+                              <svg className="h-4 w-4 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M7 7v10a4 4 0 004 4h6" />
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M7 7h4a4 4 0 014 4v10" />
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M11 3.5V7" />
+                              </svg>
+                              <span>{doc.name || `Файл ${index + 1}`}</span>
+                            </span>
+                            <span className="text-xs uppercase tracking-[0.3em] text-gray-400">PDF</span>
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
 
-                   <div className="mt-auto rounded-[28px] bg-gray-900 px-5 py-6 text-white shadow-[0_18px_48px_-28px_rgba(15,23,42,0.8)]">
-                     <div className="text-[10px] uppercase tracking-[0.35ем] text-white/50 mb-2">Для партнёров</div>
-                     <p className="text-sm leading-relaxed text-white/80">
-                       Хотите показать клиенту похожий проект? Запросите наш менеджмент, указав ID #{activeInterior.id}. Мы подготовим подборку материалов и смету.
-                     </p>
-                   </div>
-                 </div>
-               </div>
+                  <div className="mt-auto rounded-[28px] bg-gray-900 px-5 py-6 text-white shadow-[0_18px_48px_-28px_rgba(15,23,42,0.8)]">
+                    <div className="text-[10px] uppercase tracking-[0.35em] text-white/50 mb-2">Для партнёров</div>
+                    <p className="text-sm leading-relaxed text-white/80">
+                      Хотите показать клиенту похожий проект? Запросите наш менеджмент, указав ID #{activeInterior.id}. Мы подготовим подборку материалов и смету.
+                    </p>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>,
