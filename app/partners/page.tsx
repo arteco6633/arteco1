@@ -1266,8 +1266,8 @@ export default function PartnersPage() {
       ) : null}
 
       {/* Final CTA Section - Minimalist */}
-      <section className="py-12 sm:py-16 md:py-20 lg:py-24 bg-black text-white">
-        <div className="max-w-[1680px] 2xl:max-w-none mx-auto px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 2xl:px-20 text-center">
+      <section className="relative left-1/2 right-1/2 w-screen -translate-x-1/2 py-12 sm:py-16 md:py-20 lg:py-24 bg-black text-white">
+        <div className="max-w-[1680px] 2xl:max-w-[1880px] mx-auto px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 2xl:px-20 text-center">
           <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-light mb-6 sm:mb-8 tracking-tight">
             Готовы стать партнёром?
           </h2>
