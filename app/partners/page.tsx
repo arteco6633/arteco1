@@ -45,28 +45,22 @@ export default function PartnersPage() {
   const [interiorsLoading, setInteriorsLoading] = useState(true)
   const [activeInteriorIndex, setActiveInteriorIndex] = useState<number | null>(null)
   const [activeMediaIndex, setActiveMediaIndex] = useState(0)
+  const [isModalVisible, setIsModalVisible] = useState(false)
+  const [isModalAnimatedIn, setIsModalAnimatedIn] = useState(false)
+  const [displayedMediaIndex, setDisplayedMediaIndex] = useState(0)
+  const [isMediaEntering, setIsMediaEntering] = useState(true)
   const [isMounted, setIsMounted] = useState(false)
-  const modalRootRef = useRef<HTMLElement | null>(null)
   const isMountedRef = useRef(true)
   const [activeVideoIndex, setActiveVideoIndex] = useState(0)
   const [thumbnailOffset, setThumbnailOffset] = useState(0)
   const MAX_VISIBLE_THUMBS = 5
   const touchStartXRef = useRef<number | null>(null)
   const touchCurrentXRef = useRef<number | null>(null)
+  const closeTimeoutRef = useRef<number | null>(null)
+  const mediaTransitionTimeoutRef = useRef<number | null>(null)
 
   useEffect(() => {
     setIsMounted(true)
-    if (typeof document !== 'undefined') {
-      const existing = document.getElementById('modal-root')
-      if (existing) {
-        modalRootRef.current = existing as HTMLElement
-      } else {
-        const container = document.createElement('div')
-        container.setAttribute('id', 'modal-root')
-        document.body.appendChild(container)
-        modalRootRef.current = container
-      }
-    }
   }, [])
 
   useEffect(() => {
@@ -75,6 +69,18 @@ export default function PartnersPage() {
     loadInteriors()
   }, [])
 
+  useEffect(() => {
+    return () => {
+      if (typeof window !== 'undefined') {
+        if (closeTimeoutRef.current !== null) {
+          window.clearTimeout(closeTimeoutRef.current)
+        }
+        if (mediaTransitionTimeoutRef.current !== null) {
+          window.clearTimeout(mediaTransitionTimeoutRef.current)
+        }
+      }
+    }
+  }, [])
 
   // Typewriter animation for "team"
   useEffect(() => {
@@ -302,8 +308,8 @@ export default function PartnersPage() {
     : []
   const imageMedia = activeInteriorMedia.filter((media) => media.type === 'image')
   const videoMedia: InteriorMediaItem[] = activeInterior?.video_urls?.map((url) => ({ type: 'video', url })) ?? []
-  const isGalleryModalOpen = activeInteriorIndex !== null
-  const activeMediaItem = imageMedia[activeMediaIndex] ?? null
+  const isGalleryModalOpen = isModalVisible && activeInteriorIndex !== null
+  const activeMediaItem = imageMedia[displayedMediaIndex] ?? null
   const maxThumbnailOffset = Math.max(0, imageMedia.length - MAX_VISIBLE_THUMBS)
   const visibleThumbnails = imageMedia.slice(thumbnailOffset, thumbnailOffset + MAX_VISIBLE_THUMBS)
 
@@ -327,20 +333,114 @@ export default function PartnersPage() {
     }
   }, [activeVideoIndex, videoMedia.length])
 
+  useEffect(() => {
+    if (!isGalleryModalOpen) {
+      if (typeof window !== 'undefined' && mediaTransitionTimeoutRef.current !== null) {
+        window.clearTimeout(mediaTransitionTimeoutRef.current)
+        mediaTransitionTimeoutRef.current = null
+      }
+      setDisplayedMediaIndex(activeMediaIndex)
+      setIsMediaEntering(true)
+      return
+    }
+
+    if (typeof window === 'undefined') {
+      setDisplayedMediaIndex(activeMediaIndex)
+      setIsMediaEntering(true)
+      return
+    }
+
+    setIsMediaEntering(false)
+    const timeoutId = window.setTimeout(() => {
+      setDisplayedMediaIndex(activeMediaIndex)
+      setIsMediaEntering(true)
+      mediaTransitionTimeoutRef.current = null
+    }, 180)
+
+    mediaTransitionTimeoutRef.current = timeoutId
+
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.clearTimeout(timeoutId)
+      }
+      if (mediaTransitionTimeoutRef.current === timeoutId) {
+        mediaTransitionTimeoutRef.current = null
+      }
+    }
+  }, [activeMediaIndex, isGalleryModalOpen])
+
+  useEffect(() => {
+    if (isModalVisible) {
+      const activate = () => setIsModalAnimatedIn(true)
+      if (typeof window !== 'undefined') {
+        window.requestAnimationFrame(activate)
+      } else {
+        activate()
+      }
+    } else {
+      setIsModalAnimatedIn(false)
+    }
+  }, [isModalVisible])
+
   function openInterior(index: number) {
+    if (typeof window !== 'undefined') {
+      if (closeTimeoutRef.current !== null) {
+        window.clearTimeout(closeTimeoutRef.current)
+        closeTimeoutRef.current = null
+      }
+      if (mediaTransitionTimeoutRef.current !== null) {
+        window.clearTimeout(mediaTransitionTimeoutRef.current)
+        mediaTransitionTimeoutRef.current = null
+      }
+    }
+
     setActiveInteriorIndex(index)
     setActiveMediaIndex(0)
-    setActiveVideoIndex(0)
-    setThumbnailOffset(0)
-  }
-
-  function closeInterior() {
-    setActiveInteriorIndex(null)
-    setActiveMediaIndex(0)
+    setDisplayedMediaIndex(0)
+    setIsMediaEntering(true)
     setActiveVideoIndex(0)
     setThumbnailOffset(0)
     touchStartXRef.current = null
     touchCurrentXRef.current = null
+    setIsModalAnimatedIn(false)
+    setIsModalVisible(true)
+  }
+
+  function closeInterior() {
+    if (!isModalVisible) {
+      return
+    }
+
+    setIsModalAnimatedIn(false)
+
+    if (typeof window !== 'undefined' && mediaTransitionTimeoutRef.current !== null) {
+      window.clearTimeout(mediaTransitionTimeoutRef.current)
+      mediaTransitionTimeoutRef.current = null
+    }
+
+    const finalize = () => {
+      setIsModalVisible(false)
+      setActiveInteriorIndex(null)
+      setActiveMediaIndex(0)
+      setDisplayedMediaIndex(0)
+      setIsMediaEntering(true)
+      setActiveVideoIndex(0)
+      setThumbnailOffset(0)
+      touchStartXRef.current = null
+      touchCurrentXRef.current = null
+    }
+
+    if (typeof window !== 'undefined') {
+      if (closeTimeoutRef.current !== null) {
+        window.clearTimeout(closeTimeoutRef.current)
+      }
+      closeTimeoutRef.current = window.setTimeout(() => {
+        finalize()
+        closeTimeoutRef.current = null
+      }, 360)
+    } else {
+      finalize()
+    }
   }
 
   function showNextMedia() {
@@ -367,7 +467,7 @@ export default function PartnersPage() {
   }
 
   useEffect(() => {
-    if (!isGalleryModalOpen) return
+    if (!isModalVisible) return
 
     const originalOverflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
@@ -375,8 +475,8 @@ export default function PartnersPage() {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         event.preventDefault()
-        setActiveInteriorIndex(null)
-        setActiveMediaIndex(0)
+        closeInterior()
+        return
       }
       if (event.key === 'ArrowRight' && imageMedia.length > 1) {
         event.preventDefault()
@@ -394,18 +494,23 @@ export default function PartnersPage() {
       document.body.style.overflow = originalOverflow
       window.removeEventListener('keydown', handleKeyDown)
     }
-  }, [isGalleryModalOpen, imageMedia.length])
+  }, [isModalVisible, imageMedia.length])
 
   function handleTouchStart(e: TouchEvent<HTMLDivElement>) {
+    if (imageMedia.length <= 1) return
+    if (e.touches.length > 1) return
     touchStartXRef.current = e.touches[0].clientX
     touchCurrentXRef.current = null
   }
 
   function handleTouchMove(e: TouchEvent<HTMLDivElement>) {
+    if (imageMedia.length <= 1) return
+    if (e.touches.length > 1) return
     touchCurrentXRef.current = e.touches[0].clientX
   }
 
   function handleTouchEnd() {
+    if (imageMedia.length <= 1) return
     const start = touchStartXRef.current
     const current = touchCurrentXRef.current
     if (start === null || current === null) {
@@ -901,18 +1006,18 @@ export default function PartnersPage() {
 
       {/* Gallery Section */}
       <section className="py-12 sm:py-16 md:py-20 lg:py-24 border-b border-gray-100/50">
-        <div className="max-w-[1680px] 2xl:max-w-none mx-auto px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 2xl:px-20">
-          <div className="text-center mb-12 sm:mb-16 md:mb-20">
+        <div className="max-w-[1680px] 2xl:max-w-none mx-auto px-0 sm:px-6 md:px-8 lg:px-12 xl:px-16 2xl:px-20">
+          <div className="text-center mb-12 sm:mb-16 md:mb-20 px-4 sm:px-0">
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-light text-black mb-4 sm:mb-6 tracking-tight">
               Интерьеры наших клиентов
             </h2>
-            <p className="text-sm sm:text-base text-gray-600 max-w-xl mx-auto font-light px-4">
+            <p className="text-sm sm:text-base text-gray-600 max-w-xl mx-auto.font-light">
               Вдохновитесь реальными примерами кухонь, созданных с любовью
             </p>
           </div>
 
           {interiorsLoading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 px-4 sm:px-0">
               {Array.from({ length: 6 }).map((_, index) => (
                 <div
                   key={index}
@@ -923,13 +1028,13 @@ export default function PartnersPage() {
               ))}
             </div>
           ) : interiors.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 px-4 sm:px-0">
               {interiors.map((interior, index) => (
                 <button
                   type="button"
                   key={interior.id}
                   onClick={() => openInterior(index)}
-                  className="group relative aspect-[4/3] overflow-hidden rounded-[30px] border border-gray-200 bg-gray-50 text-left transition-all duration-500 hover:-translate-y-1 hover:border-gray-300 hover:shadow-[0_32px_90px_-45px_rgba(15,23,42,0.55)] focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-4"
+                  className="group relative aspect-[4/3] overflow-hidden rounded-[30px] border border-gray-200 bg-gray-50 text-left transition-all duration-500 hover:-translate-y-1 hover:border-gray-300.hover:shadow-[0_32px_90px_-45px_rgба(15,23,42,0.55)] focus:outline-none focus-visible:ring-2.focus-visible:ring-black focus-visible:ring-offset-4"
                 >
                   {interior.cover_image ? (
                     <Image
@@ -995,16 +1100,24 @@ export default function PartnersPage() {
         </div>
       </section>
 
-      {isGalleryModalOpen && activeInterior && isMounted && modalRootRef.current
+      {isModalVisible && activeInterior && isMounted
         ? createPortal(
         <div className="fixed inset-0 z-[80] flex items-center justify-center px-0 py-4 sm:px-4 sm:py-6">
           <button
             type="button"
             aria-label="Закрыть просмотр интерьера"
-            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            className={`absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-400 ease-out ${
+              isModalAnimatedIn ? 'opacity-100' : 'opacity-0'
+            }`}
             onClick={closeInterior}
           />
-          <div className="relative z-10 w-full h-full max-h-none overflow-hidden rounded-none sm:rounded-[32px] bg-white shadow-[0_40px_140px_-60px_rgba(15,23,42,0.65)]">
+          <div
+            className={`relative z-10 w-full h-full max-h-none overflow-hidden rounded-none sm:rounded-[32px] bg-white shadow-[0_40px_140px_-60px_rgba(15,23,42,0.65)] transition-all duration-400 ease-[cubic-bezier(0.22,1,0.36,1)] transform ${
+              isModalAnimatedIn
+                ? 'opacity-100 translate-y-0 scale-100'
+                : 'opacity-0 translate-y-6 sm:translate-y-4 scale-[0.97]'
+            }`}
+          >
             <div className="flex items-center justify-between border-b border-gray-100 px-6 sm:px-8 py-4">
               <div>
                 <div className="text-[11px] uppercase tracking-[0.35em] text-gray-400 mb-1">Проект</div>
@@ -1077,31 +1190,46 @@ export default function PartnersPage() {
                       </button>
         </div>
                   )}
-                  <div className="relative flex-1 h-[300px] sm:h-[380px] md:h-[460px] lg:h-[620px] xl:h-[720px] 2xl:h-[780px] overflow-hidden rounded-[28px] bg-gray-100">
-                    {activeMediaItem ? (
-                      activeMediaItem.type === 'video' ? (
-                        <video
-                          key={activeMediaIndex}
-                          src={activeMediaItem.url}
-                          controls
-                          playsInline
-                          className="h-full w-full object-cover"
-                        />
+                  <div
+                    className="relative flex-1 h-[300px] sm:h-[380px] md:h-[460px] lg:h-[620px] xl:h-[720px] 2xl:h-[780px] overflow-hidden rounded-[28px] bg-gray-100"
+                    onTouchStart={handleTouchStart}
+                    onTouchMove={handleTouchMove}
+                    onTouchEnd={handleTouchEnd}
+                  >
+                    <div
+                      key={`${activeInterior?.id ?? 'modal'}-${displayedMediaIndex}`}
+                      className={`absolute inset-0 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+                        isMediaEntering ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-3 scale-[0.98]'
+                      }`}
+                    >
+                      {activeMediaItem ? (
+                        activeMediaItem.type === 'video' ? (
+                          <video
+                            key={`${activeMediaItem.url}-${displayedMediaIndex}`}
+                            src={activeMediaItem.url}
+                            controls
+                            playsInline
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <div className="relative h-full w-full">
+                            <Image
+                              key={`${activeMediaItem.url}-${displayedMediaIndex}`}
+                              src={activeMediaItem.url}
+                              alt={activeInterior.title}
+                              fill
+                              className="object-cover"
+                              sizes="(max-width: 1024px) 100vw, 60vw"
+                              unoptimized={activeMediaItem.url?.includes('unsplash.com') || false}
+                            />
+                          </div>
+                        )
                       ) : (
-                        <Image
-                          src={activeMediaItem.url}
-                          alt={activeInterior.title}
-                          fill
-                          className="object-cover"
-                          sizes="(max-width: 1024px) 100vw, 60vw"
-                          unoptimized={activeMediaItem.url?.includes('unsplash.com') || false}
-                        />
-                      )
-                    ) : (
-                      <div className="flex h-full items-center justify-center text-sm text-gray-400">
-                        Медиа временно недоступно
-        </div>
-                    )}
+                        <div className="flex h-full w-full items-center justify-center text-sm text-gray-400">
+                          Медиа временно недоступно
+                        </div>
+                      )}
+                    </div>
 
                     {imageMedia.length > 1 && (
                       <>
@@ -1262,7 +1390,7 @@ export default function PartnersPage() {
             </div>
           </div>
         </div>,
-        modalRootRef.current
+        document.body
       ) : null}
 
       {/* Final CTA Section - Minimalist */}
