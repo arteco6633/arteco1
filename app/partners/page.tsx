@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, type TouchEvent } from 'react'
 import { createPortal } from 'react-dom'
 import { supabase } from '@/lib/supabase'
 import Link from 'next/link'
@@ -51,6 +51,8 @@ export default function PartnersPage() {
   const [activeVideoIndex, setActiveVideoIndex] = useState(0)
   const [thumbnailOffset, setThumbnailOffset] = useState(0)
   const MAX_VISIBLE_THUMBS = 5
+  const touchStartXRef = useRef<number | null>(null)
+  const touchCurrentXRef = useRef<number | null>(null)
 
   useEffect(() => {
     setIsMounted(true)
@@ -337,6 +339,8 @@ export default function PartnersPage() {
     setActiveMediaIndex(0)
     setActiveVideoIndex(0)
     setThumbnailOffset(0)
+    touchStartXRef.current = null
+    touchCurrentXRef.current = null
   }
 
   function showNextMedia() {
@@ -391,6 +395,35 @@ export default function PartnersPage() {
       window.removeEventListener('keydown', handleKeyDown)
     }
   }, [isGalleryModalOpen, imageMedia.length])
+
+  function handleTouchStart(e: TouchEvent<HTMLDivElement>) {
+    touchStartXRef.current = e.touches[0].clientX
+    touchCurrentXRef.current = null
+  }
+
+  function handleTouchMove(e: TouchEvent<HTMLDivElement>) {
+    touchCurrentXRef.current = e.touches[0].clientX
+  }
+
+  function handleTouchEnd() {
+    const start = touchStartXRef.current
+    const current = touchCurrentXRef.current
+    if (start === null || current === null) {
+      touchStartXRef.current = null
+      touchCurrentXRef.current = null
+      return
+    }
+    const delta = current - start
+    if (Math.abs(delta) > 50) {
+      if (delta > 0) {
+        showPrevMedia()
+      } else {
+        showNextMedia()
+      }
+    }
+    touchStartXRef.current = null
+    touchCurrentXRef.current = null
+  }
 
   return (
     <div className="min-h-screen w-full modern-2025-bg overflow-x-hidden m-0 p-0">
@@ -1044,7 +1077,7 @@ export default function PartnersPage() {
                       </button>
         </div>
                   )}
-                  <div className="relative flex-1 h-[300px] sm:h-[380px] md:h-[460px] lg:h-[520px] xl:h-[600px] overflow-hidden rounded-[28px] bg-gray-100">
+                  <div className="relative flex-1 h-[300px] sm:h-[380px] md:h-[460px] lg:h-[620px] xl:h-[720px] 2xl:h-[780px] overflow-hidden rounded-[28px] bg-gray-100">
                     {activeMediaItem ? (
                       activeMediaItem.type === 'video' ? (
                         <video
@@ -1109,18 +1142,18 @@ export default function PartnersPage() {
                             ? 'border-gray-900 ring-2 ring-gray-900/40 shadow-lg'
                             : 'border-transparent opacity-70 hover:opacity-100 hover:border-gray-300'
                         }`}
-                      >
-                        <Image
+              >
+                <Image
                           src={media.preview || media.url}
                           alt={`Превью ${index + 1}`}
-                          fill
+                  fill
                           className="object-cover"
                           sizes="(max-width: 640px) 33vw, 96px"
                           unoptimized={(media.preview || media.url)?.includes('unsplash.com') || false}
-                        />
+                />
                       </button>
                     ))}
-                  </div>
+              </div>
                 )}
               </div>
 
