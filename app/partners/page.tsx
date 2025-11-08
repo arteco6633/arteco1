@@ -1021,7 +1021,7 @@ export default function PartnersPage() {
                             <div className="w-full h-full bg-gray-200 flex items-center justify-center">
                               <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                          </svg>
+                              </svg>
                             </div>
                         )}
                       </div>
@@ -1221,161 +1221,164 @@ export default function PartnersPage() {
             onClick={closeInterior}
           />
           <div className="relative z-10 w-full h-full max-h-none overflow-hidden rounded-none sm:rounded-[32px] bg-white shadow-[0_40px_140px_-60px_rgba(15,23,42,0.65)]">
-            <div className="flex items-center justify-between border-b border-gray-100 px-6 sm:px-8 py-4">
-              <div>
-                <div className="text-[11px] uppercase tracking-[0.35em] text-gray-400 mb-1">Проект</div>
-                <h3 className="text-xl sm:text-2xl font-light text-gray-900 leading-tight">{activeInterior.title}</h3>
-              </div>
-              <button
-                type="button"
-                onClick={closeInterior}
-                className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-700 shadow-sm transition-colors hover:bg-gray-50"
-                aria-label="Закрыть"
-              >
-                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            <div className="border-b border-gray-100">
+              <div className="mx-auto flex w-full max-w-[1340px] items-center justify-between px-4 py-4 sm:px-6 lg:px-8 xl:px-12 2xl:max-w-[1560px]">
+                <div>
+                  <div className="text-[11px] uppercase tracking-[0.35em] text-gray-400 mb-1">Проект</div>
+                  <h3 className="text-xl sm:text-2xl font-light text-gray-900 leading-tight">{activeInterior.title}</h3>
+                </div>
+                <button
+                  type="button"
+                  onClick={closeInterior}
+                  className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-700 shadow-sm transition-colors hover:bg-gray-50"
+                  aria-label="Закрыть"
+                >
+                  <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
               </svg>
-              </button>
+                </button>
           </div>
-
-            <div
-              className="h-[calc(100vh-120px)] overflow-y-auto px-4 pt-4 pb-16 sm:px-8 sm:pt-8 sm:pb-16 space-y-6"
-              style={{ paddingBottom: 'calc(4rem + env(safe-area-inset-bottom, 0px))' }}
-            >
-              <div>
-                <div className="lg:flex lg:gap-4">
-                  {imageMedia.length > 1 && (
-                    <div className="hidden lg:flex lg:flex-col lg:gap-3 lg:pr-4">
-                      <button
-                        type="button"
-                        disabled={thumbnailOffset === 0}
-                        onClick={() => shiftThumbnails('up')}
-                        className={`h-8 w-36 rounded-full border text-xs uppercase tracking-[0.2em] transition ${
-                          thumbnailOffset === 0
-                            ? 'cursor-not-allowed border-gray-200 text-gray-300'
-                            : 'border-gray-300 text-gray-500 hover:border-gray-400'
-                        }`}
-                      >
-                        ↑
-                      </button>
-                      {visibleThumbnails.map((media, idx) => {
-                        const realIndex = idx + thumbnailOffset
-                        return (
-                          <button
-                            type="button"
-                            key={`${media.type}-${media.url}-${realIndex}`}
-                            onClick={() => selectMedia(realIndex)}
-                            className={`relative h-20 w-36 overflow-hidden rounded-2xl border transition-all.duration-200 ${
-                              realIndex === activeMediaIndex
-                                ? 'border-gray-900 ring-2 ring-gray-900/40 shadow-lg'
-                                : 'border-transparent opacity-70 hover:opacity-100 hover:border-gray-300'
-                            }`}
-                          >
-                            <Image
-                              src={media.preview || media.url}
-                              alt={`Превью ${realIndex + 1}`}
-                              fill
-                              className="object-cover"
-                              sizes="144px"
-                              unoptimized={(media.preview || media.url)?.includes('unsplash.com') || false}
-                            />
-                          </button>
-                        )
-                      })}
-                      <button
-                        type="button"
-                        disabled={thumbnailOffset >= maxThumbnailOffset}
-                        onClick={() => shiftThumbnails('down')}
-                        className={`h-8 w-36 rounded-full border text-xs uppercase tracking-[0.2em] transition ${
-                          thumbnailOffset >= maxThumbnailOffset
-                            ? 'cursor-not-allowed border-gray-200 text-gray-300'
-                            : 'border-gray-300 text-gray-500 hover:border-gray-400'
-                        }`}
-                      >
-                        ↓
-                      </button>
         </div>
-                  )}
-                  <div
-                    className="relative flex-1 h-[300px] sm:h-[380px] md:h-[460px] lg:h-[620px] xl:h-[720px] 2xl:h-[780px] overflow-hidden rounded-[28px] bg-gray-100"
-                    onTouchStart={handleTouchStart}
-                    onTouchMove={handleTouchMove}
-                    onTouchEnd={handleTouchEnd}
-                  >
+
+            <div className="h-[calc(100vh-120px)] overflow-y-auto">
+              <div
+                className="mx-auto w-full max-w-[1340px] space-y-8 px-4 pt-4 pb-20 sm:px-6 sm:pt-8 sm:pb-20 lg:px-8 xl:px-12 2xl:max-w-[1560px]"
+                style={{ paddingBottom: 'calc(4rem + env(safe-area-inset-bottom, 0px))' }}
+              >
+                <div>
+                  <div className="lg:flex lg:items-start lg:gap-6 xl:gap-8 2xl:gap-12">
+                     {imageMedia.length > 1 && (
+                      <div className="hidden lg:flex lg:w-[150px] lg:flex-col lg:gap-3 lg:pr-0 xl:w-[180px] xl:pr-2 2xl:w-[200px] 2xl:pr-4">
+                        <button
+                          type="button"
+                          disabled={thumbnailOffset === 0}
+                          onClick={() => shiftThumbnails('up')}
+                          className={`h-8 w-36 rounded-full border text-xs uppercase tracking-[0.2em] transition ${
+                            thumbnailOffset === 0
+                              ? 'cursor-not-allowed border-gray-200 text-gray-300'
+                              : 'border-gray-300 text-gray-500 hover:border-gray-400'
+                          }`}
+                        >
+                          ↑
+                        </button>
+                        {visibleThumbnails.map((media, idx) => {
+                          const realIndex = idx + thumbnailOffset
+                          return (
+                            <button
+                              type="button"
+                              key={`${media.type}-${media.url}-${realIndex}`}
+                              onClick={() => selectMedia(realIndex)}
+                              className={`relative h-20 w-36 overflow-hidden rounded-2xl border transition-all.duration-200 ${
+                                realIndex === activeMediaIndex
+                                  ? 'border-gray-900 ring-2 ring-gray-900/40 shadow-lg'
+                                  : 'border-transparent opacity-70 hover:opacity-100 hover:border-gray-300'
+                              }`}
+                            >
+                              <Image
+                                src={media.preview || media.url}
+                                alt={`Превью ${realIndex + 1}`}
+                                fill
+                                className="object-cover"
+                                sizes="144px"
+                                unoptimized={(media.preview || media.url)?.includes('unsplash.com') || false}
+                              />
+                            </button>
+                          )
+                        })}
+                        <button
+                          type="button"
+                          disabled={thumbnailOffset >= maxThumbnailOffset}
+                          onClick={() => shiftThumbnails('down')}
+                          className={`h-8 w-36 rounded-full border text-xs uppercase tracking-[0.2em] transition ${
+                            thumbnailOffset >= maxThumbnailOffset
+                              ? 'cursor-not-allowed border-gray-200 text-gray-300'
+                              : 'border-gray-300 text-gray-500 hover:border-gray-400'
+                          }`}
+                        >
+                          ↓
+                        </button>
+          </div>
+                    )}
                     <div
-                      key={`${activeInterior?.id ?? 'modal'}-${displayedMediaIndex}`}
-                      className={`absolute inset-0 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
-                        isMediaEntering ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-3 scale-[0.98]'
-                      }`}
+                      className="relative flex-1 min-w-0 h-[300px] sm:h-[380px] md:h-[460px] lg:h-[640px] xl:h-[760px] 2xl:h-[840px] overflow-hidden rounded-[28px] bg-gray-100"
+                      onTouchStart={handleTouchStart}
+                      onTouchMove={handleTouchMove}
+                      onTouchEnd={handleTouchEnd}
                     >
-                      {activeMediaItem ? (
-                        activeMediaItem.type === 'video' ? (
-                          <video
-                            key={`${activeMediaItem.url}-${displayedMediaIndex}`}
-                            src={activeMediaItem.url}
-                            controls
-                            playsInline
-                            className="h-full w-full object-cover"
-                          />
-                        ) : (
-                          <div className="relative h-full w-full">
-                            <Image
+                      <div
+                        key={`${activeInterior?.id ?? 'modal'}-${displayedMediaIndex}`}
+                        className={`absolute inset-0 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+                          isMediaEntering ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-3 scale-[0.98]'
+                        }`}
+                      >
+                        {activeMediaItem ? (
+                          activeMediaItem.type === 'video' ? (
+                            <video
                               key={`${activeMediaItem.url}-${displayedMediaIndex}`}
                               src={activeMediaItem.url}
-                              alt={activeInterior.title}
-                              fill
-                              className="object-cover"
-                              sizes="(max-width: 1024px) 100vw, 60vw"
-                              unoptimized={activeMediaItem.url?.includes('unsplash.com') || false}
+                              controls
+                              playsInline
+                              className="h-full w-full object-cover"
                             />
+                          ) : (
+                            <div className="relative h-full w-full">
+                <Image
+                                key={`${activeMediaItem.url}-${displayedMediaIndex}`}
+                                src={activeMediaItem.url}
+                                alt={activeInterior.title}
+                  fill
+                                className="object-cover"
+                                sizes="(max-width: 1024px) 100vw, 60vw"
+                                unoptimized={activeMediaItem.url?.includes('unsplash.com') || false}
+                />
+              </div>
+                          )
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center text-sm text-gray-400">
+                            Медиа временно недоступно
                           </div>
-                        )
-                      ) : (
-                        <div className="flex h-full w-full items-center justify-center text-sm text-gray-400">
-                          Медиа временно недоступно
-                        </div>
+                        )}
+                      </div>
+
+                      {imageMedia.length > 1 && (
+                        <>
+                          <button
+                            type="button"
+                            onClick={showPrevMedia}
+                            aria-label="Предыдущее медиа"
+                            className="absolute left-4 top-1/2 -translate-y-1/2 flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-gray-700 shadow transition hover:bg-white"
+                          >
+                            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+                            </svg>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={showNextMedia}
+                            aria-label="Следующее медиа"
+                            className="absolute right-4 top-1/2 -translate-y-1/2 flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-gray-700 shadow transition hover:bg-white"
+                          >
+                            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                            </svg>
+                          </button>
+                        </>
                       )}
                     </div>
-
-                    {imageMedia.length > 1 && (
-                      <>
-                        <button
-                          type="button"
-                          onClick={showPrevMedia}
-                          aria-label="Предыдущее медиа"
-                          className="absolute left-4 top-1/2 -translate-y-1/2 flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-gray-700 shadow transition hover:bg-white"
-                        >
-                          <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
-                          </svg>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={showNextMedia}
-                          aria-label="Следующее медиа"
-                          className="absolute right-4 top-1/2 -translate-y-1/2 flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-gray-700 shadow transition hover:bg-white"
-                        >
-                          <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-                          </svg>
-                        </button>
-                      </>
-                    )}
                   </div>
-          </div>
 
-                {imageMedia.length > 1 && (
-                  <div className="mt-3 flex gap-3 overflow-x-auto pb-2 lg:hidden snap-x snap-mandatory">
-                    {imageMedia.map((media, index) => (
-                      <button
-                        type="button"
-                        key={`${media.type}-${media.url}-${index}`}
-                        onClick={() => selectMedia(index)}
-                        className={`relative h-16 w-24 flex-shrink-0 overflow-hidden rounded-2xl border transition-all duration-200 snap-start ${
-                          index === activeMediaIndex
-                            ? 'border-gray-900 ring-2 ring-gray-900/40 shadow-lg'
-                            : 'border-transparent opacity-70 hover:opacity-100 hover:border-gray-300'
-                        }`}
+                  {imageMedia.length > 1 && (
+                    <div className="mt-3 flex gap-3 overflow-x-auto pb-2 lg:hidden snap-x snap-mandatory">
+                      {imageMedia.map((media, index) => (
+                        <button
+                          type="button"
+                          key={`${media.type}-${media.url}-${index}`}
+                          onClick={() => selectMedia(index)}
+                          className={`relative h-16 w-24 flex-shrink-0 overflow-hidden rounded-2xl border transition-all duration-200 snap-start ${
+                            index === activeMediaIndex
+                              ? 'border-gray-900 ring-2 ring-gray-900/40 shadow-lg'
+                              : 'border-transparent opacity-70 hover:opacity-100 hover:border-gray-300'
+                          }`}
               >
                 <Image
                           src={media.preview || media.url}
@@ -1386,349 +1389,351 @@ export default function PartnersPage() {
                           unoptimized={(media.preview || media.url)?.includes('unsplash.com') || false}
                 />
                       </button>
-                    ))}
-              </div>
-                )}
-              </div>
-
-              <div
-                className={`flex flex-col gap-6 lg:grid lg:gap-10 lg:items-stretch ${
-                  isVideoPortrait
-                    ? 'lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]'
-                    : 'lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)]'
-                }`}
-              >
-                {videoMedia.length > 0 && (
-                  <div className="flex flex-col space-y-4 lg:justify-between">
-                    <div className="flex items-center justify-between gap-4">
-                      <div className="text-[10px] uppercase tracking-[0.35em] text-gray-400">Видео проекта</div>
-                      {videoMedia.length > 0 && (
-                        <button
-                          type="button"
-                          onClick={() => openVideoModal(activeVideoIndex)}
-                          className="hidden lg:inline-flex items-center gap-2 rounded-full border border-gray-200 px-4 py-2 text-[10px] uppercase tracking-[0.3em] text-gray-700 transition hover:border-gray-300 hover:bg-gray-50"
-                        >
-                          Открыть Reels
-                        </button>
-                      )}
-                    </div>
-                    <div
-                      className={`relative overflow-hidden rounded-2xl border border-gray-200 bg-black shadow-sm transition-all ${
-                        isVideoPortrait
-                          ? 'w-full max-w-[420px] aspect-[9/16] mx-auto lg:mx-0'
-                          : 'w-full h-[240px] sm:h-[360px] md:h-[400px] lg:h-[460px] xl:h-[500px] bg-white'
-                      }`}
-                    >
-                      <video
-                        key={`${videoMedia[activeVideoIndex]?.url}-${activeVideoIndex}`}
-                        src={videoMedia[activeVideoIndex]?.url}
-                        controls
-                        playsInline
-                        onLoadedMetadata={(event: SyntheticEvent<HTMLVideoElement>) => {
-                          try {
-                            const target = event.currentTarget
-                            if (target?.videoHeight && target?.videoWidth) {
-                              setIsVideoPortrait(target.videoHeight >= target.videoWidth)
-                            }
-                          } catch (error) {
-                            console.warn('Не удалось определить ориентацию видео', error)
-                          }
-                        }}
-                        className={`w-full h-full ${
-                          isVideoPortrait ? 'object-contain' : 'object-cover'
-                        }`}
-                      />
-                      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent opacity-0 transition-opacity duration-200 lg:hidden hover:opacity-100 focus-within:opacity-100" />
-                      <div className="pointer-events-none absolute inset-x-0 bottom-4 flex justify-center lg:hidden">
-                        <button
-                          type="button"
-                          onClick={() => openVideoModal(activeVideoIndex)}
-                          className="pointer-events-auto inline-flex items-center gap-2 rounded-full bg-white/95 px-4 py-2 text-xs font-medium uppercase tracking-[0.25em] text-gray-900 shadow-lg transition hover:bg-white"
-                        >
-                          Смотреть как Reels
-                        </button>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={toggleVideoMute}
-                        className="absolute right-3 top-3 hidden h-10 w-10 items-center justify-center rounded-full border border-white/40 bg-black/30 text-white shadow-sm transition hover:bg-black/60 lg:flex"
-                        aria-label={isVideoMuted ? 'Включить звук' : 'Выключить звук'}
-                      >
-                        {isVideoMuted ? (
-                          <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M9 9l6 6M15 9l-6 6" />
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M3 9h3l4-4h2v14h-2l-4-4H3z" />
-                          </svg>
-                        ) : (
-                          <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M3 9h3l4-4h2v14h-2l-4-4H3z" />
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M16 9.5a3.5 3.5 0 010 5" />
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M18.5 7a6 6 0 010 10" />
-                          </svg>
-                        )}
-                      </button>
-                    </div>
-                    {videoMedia.length > 1 && (
-                      <div className="flex flex-wrap gap-2 pt-2">
-                        {videoMedia.map((media, index) => (
-                          <button
-                            key={`${media.url}-${index}`}
-                            onClick={() => setActiveVideoIndex(index)}
-                            className={`rounded-full border px-3 py-1 text-xs uppercase tracking-[0.2em] transition ${
-                              index === activeVideoIndex
-                                ? 'border-gray-900 bg-gray-900 text-white'
-                                : 'border-gray-200 text-gray-500 hover:border-gray-300'
-                            }`}
-                          >
-                            Видео {index + 1}
-                          </button>
             ))}
           </div>
                     )}
-                    <button
-                      type="button"
-                      onClick={() => openVideoModal(activeVideoIndex)}
-                      className="inline-flex items-center justify-center gap-2 rounded-full border border-gray-200 px-4 py-2 text-xs uppercase tracking-[0.25em] text-gray-700 transition hover:border-gray-300 hover:bg-gray-50 lg:hidden"
-                    >
-                      Открыть полноэкранно
-                    </button>
         </div>
-                   )}
-
-                <div
-                  className={`flex h-full flex-col gap-5 lg:max-w-[520px] lg:pl-2 ${
-                    isVideoPortrait ? 'lg:justify-between xl:max-w-[560px]' : ''
-                  }`}
-                >
-                  {activeInterior.subtitle && (
-                    <p className="text-sm text-gray-500 leading-relaxed">{activeInterior.subtitle}</p>
-                  )}
-
-                  {activeInterior.description && (
-                    <p className="text-sm leading-relaxed text-gray-600 whitespace-pre-line">
-                      {activeInterior.description}
-                    </p>
-                  )}
 
                   <div
-                    className={`grid grid-cols-1 gap-3 ${!isVideoPortrait ? 'sm:grid-cols-2' : ''} lg:grid-cols-2 lg:self-stretch`}
+                    className={`flex flex-col gap-8 lg:grid lg:items-start lg:gap-12 xl:gap-14 2xl:gap-16 ${
+                      isVideoPortrait
+                        ? 'lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] 2xl:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)]'
+                        : 'lg:grid-cols-[minmax(0,1.45fr)_minmax(0,1fr)] xl:grid-cols-[minmax(0,1.55fr)_minmax(0,1fr)] 2xl:grid-cols-[minmax(0,1.65fr)_minmax(0,1fr)]'
+                    }`}
                   >
-                    {activeInterior.location && (
-                      <div className="rounded-2xl border border-gray-200 bg-gray-50/70 p-4">
-                        <div className="text-[10px] uppercase tracking-[0.35em] text-gray-400 mb-1">Локация</div>
-                        <div className="text-sm text-gray-700">{activeInterior.location}</div>
-                      </div>
-                    )}
-                    {activeInterior.area && (
-                      <div className="rounded-2xl border border-gray-200 bg-gray-50/70 p-4">
-                        <div className="text-[10px] uppercase tracking-[0.35em] text-gray-400 mb-1">Площадь</div>
-                        <div className="text-sm text-gray-700">{activeInterior.area}</div>
-                      </div>
-                    )}
-                    {activeInterior.style && (
-                      <div className="rounded-2xl border border-gray-200 bg-gray-50/70 p-4">
-                        <div className="text-[10px] uppercase tracking-[0.35em] text-gray-400 mb-1">Стиль</div>
-                        <div className="text-sm text-gray-700">{activeInterior.style}</div>
-                      </div>
-                    )}
-                  </div>
-
-                  {activeInterior.document_files?.length ? (
-                    <div className="rounded-2xl border border-gray-200 bg-white/80 p-4 shadow-sm">
-                      <div className="text-[10px] uppercase tracking-[0.35em] text-gray-400 mb-3">Материалы проекта</div>
-                      <div className="space-y-2">
-                        {activeInterior.document_files.map((doc, index) => (
-                          <a
-                            key={`${doc.url}-${index}`}
-                            href={doc.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center justify-between rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-700 transition hover:border-gray-300 hover:bg-gray-50"
+                    {videoMedia.length > 0 && (
+                      <div className="flex flex-col gap-5 lg:gap-6 xl:gap-8">
+                        <div className="flex flex-wrap items-center justify-between gap-3 lg:gap-4">
+                          <div className="text-[10px] uppercase tracking-[0.32em] text-gray-500">Видео проекта</div>
+                          <button
+                            type="button"
+                            onClick={() => openVideoModal(activeVideoIndex)}
+                            className="hidden lg:inline-flex items-center gap-2 rounded-full border border-gray-200 px-4 py-2 text-[10px] uppercase tracking-[0.28em] text-gray-700 transition hover:border-gray-300 hover:bg-gray-50"
                           >
-                            <span className="flex items-center gap-2">
-                              <svg className="h-4 w-4 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M7 7v10a4 4 0 004 4h6" />
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M7 7h4a4 4 0 014 4v10" />
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M11 3.5V7" />
-                              </svg>
-                              <span>{doc.name || `Файл ${index + 1}`}</span>
-                            </span>
-                            <span className="text-xs uppercase tracking-[0.3em] text-gray-400">PDF</span>
-                          </a>
-                        ))}
-                      </div>
-                    </div>
-                  ) : null}
+                            Открыть Reels
+                          </button>
+                        </div>
+                        <div
+                          className={`relative overflow-hidden rounded-[28px] border border-gray-200 bg-black shadow-[0_28px_90px_-60px_rgba(15,23,42,0.55)] transition-all ${
+                            isVideoPortrait
+                              ? 'w-full max-w-[420px] aspect-[9/16] mx-auto lg:mx-0 xl:max-w-[480px] 2xl:max-w-[520px]'
+                              : 'w-full h-[240px] sm:h-[360px] md:h-[420px] lg:h-[500px] xl:h-[540px] 2xl:h-[580px] bg-white'
+                          }`}
+                        >
+                           <video
+                             key={`${videoMedia[activeVideoIndex]?.url}-${activeVideoIndex}`}
+                             src={videoMedia[activeVideoIndex]?.url}
+                             controls
+                             playsInline
+                             onLoadedMetadata={(event: SyntheticEvent<HTMLVideoElement>) => {
+                               try {
+                                 const target = event.currentTarget
+                                 if (target?.videoHeight && target?.videoWidth) {
+                                   setIsVideoPortrait(target.videoHeight >= target.videoWidth)
+                                 }
+                               } catch (error) {
+                                 console.warn('Не удалось определить ориентацию видео', error)
+                               }
+                             }}
+                             className={`w-full h-full ${
+                               isVideoPortrait ? 'object-contain' : 'object-cover'
+                             }`}
+                           />
+                           <div className="pointer-events-none absolute inset-x-0 bottom-4 flex justify-center lg:hidden">
+                             <button
+                               type="button"
+                               onClick={() => openVideoModal(activeVideoIndex)}
+                               className="pointer-events-auto inline-flex items-center gap-2 rounded-full bg-white/95 px-4 py-2 text-xs font-medium uppercase tracking-[0.25em] text-gray-900 shadow-lg transition hover:bg-white"
+                             >
+                               Смотреть как Reels
+                             </button>
+                           </div>
+                           <button
+                             type="button"
+                             onClick={toggleVideoMute}
+                             className="absolute right-3 top-3 hidden h-10 w-10 items-center justify-center rounded-full border border-white/40 bg-black/30 text-white shadow-sm transition hover:bg-black/60 lg:flex"
+                             aria-label={isVideoMuted ? 'Включить звук' : 'Выключить звук'}
+                           >
+                             {isVideoMuted ? (
+                               <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 9l6 6M15 9l-6 6" />
+                                 <path strokeLinecap="round" strokeLinejoin="round" d="M3 9h3l4-4h2v14h-2l-4-4H3z" />
+                               </svg>
+                             ) : (
+                               <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                                 <path strokeLinecap="round" strokeLinejoin="round" d="M3 9h3l4-4h2v14h-2l-4-4H3z" />
+                                 <path strokeLinecap="round" strokeLinejoin="round" d="M16 9.5a3.5 3.5 0 010 5" />
+                                 <path strokeLinecap="round" strokeLinejoin="round" d="M18.5 7a6 6 0 010 10" />
+                               </svg>
+                             )}
+                           </button>
+                         </div>
+                         <div className="flex flex-wrap items-center gap-2 lg:gap-3">
+                           {videoMedia.length > 1 && (
+                             <div className="flex flex-wrap gap-2">
+                               {videoMedia.map((media, index) => (
+                                 <button
+                                   key={`${media.url}-${index}`}
+                                   onClick={() => setActiveVideoIndex(index)}
+                                   className={`rounded-full border px-3 py-1 text-xs uppercase tracking-[0.2em] transition ${
+                                     index === activeVideoIndex
+                                       ? 'border-gray-900 bg-gray-900 text-white'
+                                       : 'border-gray-200 text-gray-500 hover:border-gray-300'
+                                   }`}
+                                 >
+                                   Видео {index + 1}
+                                 </button>
+                               ))}
+                             </div>
+                           )}
+                           <button
+                             type="button"
+                             onClick={() => openVideoModal(activeVideoIndex)}
+                             className="inline-flex items-center justify-center gap-2 rounded-full border border-gray-200 px-4 py-2 text-xs uppercase tracking-[0.24em] text-gray-700 transition hover:border-gray-300 hover:bg-gray-50 lg:hidden"
+                           >
+                             Открыть полноэкранно
+                           </button>
+                         </div>
+                       </div>
+                     )}
+ 
+                     <div
+                       className={`flex h-full flex-col gap-6 lg:gap-7 xl:gap-9 lg:pl-6 xl:pl-8 ${
+                         isVideoPortrait
+                           ? 'lg:max-w-[620px] xl:max-w-[680px]'
+                           : 'lg:max-w-[640px] xl:max-w-[720px]'
+                       }`}
+                     >
+                       <div className="space-y-4">
+                         {activeInterior.subtitle && (
+                           <p className="text-sm text-gray-500 leading-relaxed">{activeInterior.subtitle}</p>
+                         )}
+                         {activeInterior.description && (
+                           <p className="text-sm leading-relaxed text-gray-600 whitespace-pre-line">
+                             {activeInterior.description}
+                           </p>
+                         )}
+                       </div>
+ 
+                       <div
+                         className={`grid grid-cols-1 gap-3 ${!isVideoPortrait ? 'sm:grid-cols-2' : ''} lg:grid-cols-2 xl:grid-cols-3 lg:self-stretch`}
+                       >
+                         {activeInterior.location && (
+                           <div className="rounded-2xl border border-gray-200 bg-gray-50/70 p-4 shadow-sm">
+                             <div className="text-[10px] uppercase tracking-[0.35em] text-gray-400 mb-1">Локация</div>
+                             <div className="text-sm text-gray-700">{activeInterior.location}</div>
+                           </div>
+                         )}
+                         {activeInterior.area && (
+                           <div className="rounded-2xl border border-gray-200 bg-gray-50/70 p-4 shadow-sm">
+                             <div className="text-[10px] uppercase tracking-[0.35em] text-gray-400 mb-1">Площадь</div>
+                             <div className="text-sm text-gray-700">{activeInterior.area}</div>
+                           </div>
+                         )}
+                         {activeInterior.style && (
+                           <div className="rounded-2xl border border-gray-200 bg-gray-50/70 p-4 shadow-sm">
+                             <div className="text-[10px] uppercase tracking-[0.35em] text-gray-400 mb-1">Стиль</div>
+                             <div className="text-sm text-gray-700">{activeInterior.style}</div>
+                           </div>
+                         )}
+                       </div>
+ 
+                       {activeInterior.document_files?.length ? (
+                         <div className="rounded-2xl border border-gray-200 bg-white/85 p-4 shadow-sm">
+                           <div className="text-[10px] uppercase tracking-[0.32em] text-gray-500 mb-3">Материалы проекта</div>
+                           <div className="space-y-2">
+                             {activeInterior.document_files.map((doc, index) => (
+                               <a
+                                 key={`${doc.url}-${index}`}
+                                 href={doc.url}
+                                 target="_blank"
+                                 rel="noopener noreferrer"
+                                 className="flex items-center justify-between rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-700 transition hover:border-gray-300 hover:bg-gray-50"
+                               >
+                                 <span className="flex items-center gap-2">
+                                   <svg className="h-4 w-4 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                                     <path strokeLinecap="round" strokeLinejoin="round" d="M7 7v10a4 4 0 004 4h6" />
+                                     <path strokeLinecap="round" strokeLinejoin="round" d="M7 7h4a4 4 0 014 4v10" />
+                                     <path strokeLinecap="round" strokeLinejoin="round" d="M11 3.5V7" />
+                                   </svg>
+                                   <span>{doc.name || `Файл ${index + 1}`}</span>
+                                 </span>
+                                 <span className="text-xs uppercase tracking-[0.3em] text-gray-400">PDF</span>
+                               </a>
+                             ))}
+                           </div>
+                         </div>
+                       ) : null}
+ 
+                       <div className="rounded-[28px] bg-gray-900 px-6 py-6 text-white shadow-[0_18px_48px_-28px_rgba(15,23,42,0.8)]">
+                         <div className="text-[10px] uppercase tracking-[0.35em] text-white/50 mb-2">Для партнёров</div>
+                         <p className="text-sm leading-relaxed text-white/80">
+                           Хотите показать клиенту похожий проект? Запросите наш менеджмент, указав ID #{activeInterior.id}. Мы подготовим подборку материалов и смету.
+                         </p>
+                       </div>
+                     </div>
+                   </div>
+                 </div>
+              </div>
+            </div>
+          </div>,
+          document.body
+        )
+        : null}
+      {isVideoModalOpen && isMounted && activeInterior && videoMedia.length > 0 &&
+        createPortal(
+          <div
+            className="fixed inset-0 z-[120] flex items-center justify-center bg-black/90 px-4 py-6 sm:px-6"
+            role="dialog"
+            aria-modal="true"
+          >
+            <div className="absolute inset-0" onClick={closeVideoModal} />
+            <div
+              className="relative z-10 flex h-full w-full max-w-[520px] flex-col items-center gap-6 text-white lg:max-w-[720px]"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <div className="flex w-full items-center justify-between">
+                <div>
+                  <div className="text-[10px] uppercase tracking-[0.4em] text-white/60">Видео проекта</div>
+                  <div className="mt-1 text-base font-medium leading-tight text-white/90 line-clamp-2">
+                    {activeInterior.title}
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={closeVideoModal}
+                  className="flex h-11 w-11 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white transition hover:bg-white/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
+                  aria-label="Закрыть видеоленту"
+                >
+                  <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
 
-                  <div className="mt-auto rounded-[28px] bg-gray-900 px-5 py-6 text-white shadow-[0_18px_48px_-28px_rgba(15,23,42,0.8)]">
-                    <div className="text-[10px] uppercase tracking-[0.35em] text-white/50 mb-2">Для партнёров</div>
-                    <p className="text-sm leading-relaxed text-white/80">
-                      Хотите показать клиенту похожий проект? Запросите наш менеджмент, указав ID #{activeInterior.id}. Мы подготовим подборку материалов и смету.
-                    </p>
+              {videoMedia.length > 1 && (
+                <div className="flex w-full items-center gap-2">
+                  {videoMedia.map((_, index) => (
+                    <span
+                      key={`video-indicator-${index}`}
+                      className={`h-1 flex-1 rounded-full transition ${
+                        index === activeVideoIndex ? 'bg-white' : 'bg-white/30'
+                      }`}
+                    />
+                  ))}
+                </div>
+              )}
+
+              <div className="relative flex w-full flex-1 items-center justify-center">
+                <div
+                  className={`relative w-full overflow-hidden rounded-[32px] border border-white/15 bg-black shadow-[0_42px_120px_-62px_rgba(15,23,42,0.9)] ${
+                    isVideoPortrait
+                      ? 'aspect-[9/16] max-h-[calc(100vh-260px)] max-w-[440px]'
+                      : 'h-[min(70vh,540px)] max-w-[720px]'
+                  }`}
+                  onTouchStart={handleVideoModalTouchStart}
+                  onTouchMove={handleVideoModalTouchMove}
+                  onTouchEnd={handleVideoModalTouchEnd}
+                  onTouchCancel={handleVideoModalTouchEnd}
+                  style={{
+                    transform: `translateY(${videoModalSwipeOffset}px)`,
+                    transition: isVideoModalDragging ? 'none' : 'transform 220ms cubic-bezier(0.16, 1, 0.3, 1)',
+                    touchAction: videoMedia.length > 1 ? 'none' : 'auto',
+                    overscrollBehavior: 'contain'
+                  }}
+                >
+                  <video
+                    key={`${videoMedia[activeVideoIndex]?.url}-${activeVideoIndex}-${isVideoMuted ? 'muted' : 'sound'}`}
+                    src={videoMedia[activeVideoIndex]?.url}
+                    autoPlay
+                    loop
+                    playsInline
+                    muted={isVideoMuted}
+                    controls={false}
+                    className={`h-full w-full ${isVideoPortrait ? 'object-contain' : 'object-cover'}`}
+                    onLoadedMetadata={(event: SyntheticEvent<HTMLVideoElement>) => {
+                      try {
+                        const target = event.currentTarget
+                        if (target?.videoHeight && target?.videoWidth) {
+                          setIsVideoPortrait(target.videoHeight >= target.videoWidth)
+                        }
+                      } catch (error) {
+                        console.warn('Не удалось определить ориентацию видео', error)
+                      }
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={(event) => {
+                      event.stopPropagation()
+                      toggleVideoMute()
+                    }}
+                    className="absolute right-4 top-4 inline-flex h-12 w-12 items-center justify-center rounded-full bg-black/60 text-white backdrop-blur transition hover:bg-black/80 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
+                    aria-label={isVideoMuted ? 'Включить звук' : 'Выключить звук'}
+                  >
+                    {isVideoMuted ? (
+                      <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 9l6 6M15 9l-6 6" />
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M3 9h3l4-4h2v14h-2l-4-4H3z" />
+                      </svg>
+                    ) : (
+                      <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M3 9h3l4-4h2v14h-2l-4-4H3z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M16 9.5a3.5 3.5 0 010 5" />
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M18.5 7a6 6 0 010 10" />
+                      </svg>
+                    )}
+                  </button>
+                  <div className="pointer-events-none absolute bottom-5 left-0 right-0 flex justify-center text-[11px] uppercase tracking-[0.4em] text-white">
+                    Видео {activeVideoIndex + 1}/{videoMedia.length}
                   </div>
                 </div>
               </div>
-            </div>
-          </div>
-        </div>,
-        document.body
-      ) : null}
 
-      {isVideoModalOpen && isMounted && activeInterior && videoMedia.length > 0
-        ? createPortal(
-            <div
-              className="fixed inset-0 z-[120] flex items-center justify-center bg-black/90 px-4 py-6 sm:px-6"
-              role="dialog"
-              aria-modal="true"
-            >
-              <div className="absolute inset-0" onClick={closeVideoModal} />
-              <div
-                className="relative z-10 flex h-full w-full max-w-[520px] flex-col items-center gap-6 text-white lg:max-w-[720px]"
-                onClick={(event) => event.stopPropagation()}
-              >
-                <div className="flex w-full items-center justify-between">
-                  <div>
-                    <div className="text-[10px] uppercase tracking-[0.4em] text-white/60">Видео проекта</div>
-                    <div className="mt-1 text-base font-medium leading-tight text-white/90 line-clamp-2">
-                      {activeInterior.title}
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={closeVideoModal}
-                    className="flex h-11 w-11 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white transition hover:bg-white/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
-                    aria-label="Закрыть видеоленту"
-                  >
-                    <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
-                </div>
-
+              <div className="flex w-full flex-col gap-4 text-white">
                 {videoMedia.length > 1 && (
-                  <div className="flex w-full items-center gap-2">
-                    {videoMedia.map((_, index) => (
-                      <span
-                        key={`video-indicator-${index}`}
-                        className={`h-1 flex-1 rounded-full transition ${
-                          index === activeVideoIndex ? 'bg-white' : 'bg-white/30'
-                        }`}
-                      />
-                    ))}
+                  <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.35em] text-white/60">
+                    <span>Свайпайте вверх/вниз</span>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={(event) => {
+                          event.stopPropagation()
+                          showPrevVideo()
+                        }}
+                        className="inline-flex h-10 items-center justify-center rounded-full border border-white/20 px-4 text-[10px] font-medium tracking-[0.3em] transition hover:bg-white/10"
+                      >
+                        Назад
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(event) => {
+                          event.stopPropagation()
+                          showNextVideo()
+                        }}
+                        className="inline-flex h-10 items-center justify-center rounded-full border border-white/20 px-4 text-[10px] font-medium tracking-[0.3em] transition hover:bg-white/10"
+                      >
+                        Далее
+                      </button>
+                    </div>
                   </div>
                 )}
 
-                <div className="relative flex w-full flex-1 items-center justify-center">
-                  <div
-                    className={`relative w-full overflow-hidden rounded-[32px] border border-white/15 bg-black shadow-[0_42px_120px_-62px_rgba(15,23,42,0.9)] ${
-                      isVideoPortrait
-                        ? 'aspect-[9/16] max-h-[calc(100vh-260px)] max-w-[440px]'
-                        : 'h-[min(70vh,540px)] max-w-[720px]'
-                    }`}
-                    onTouchStart={handleVideoModalTouchStart}
-                    onTouchMove={handleVideoModalTouchMove}
-                    onTouchEnd={handleVideoModalTouchEnd}
-                    onTouchCancel={handleVideoModalTouchEnd}
-                    style={{
-                      transform: `translateY(${videoModalSwipeOffset}px)`,
-                      transition: isVideoModalDragging ? 'none' : 'transform 220ms cubic-bezier(0.16, 1, 0.3, 1)',
-                      touchAction: videoMedia.length > 1 ? 'none' : 'auto',
-                      overscrollBehavior: 'contain'
-                    }}
-                  >
-                    <video
-                      key={`${videoMedia[activeVideoIndex]?.url}-${activeVideoIndex}-${isVideoMuted ? 'muted' : 'sound'}`}
-                      src={videoMedia[activeVideoIndex]?.url}
-                      autoPlay
-                      loop
-                      playsInline
-                      muted={isVideoMuted}
-                      controls={false}
-                      className={`h-full w-full ${isVideoPortrait ? 'object-contain' : 'object-cover'}`}
-                      onLoadedMetadata={(event: SyntheticEvent<HTMLVideoElement>) => {
-                        try {
-                          const target = event.currentTarget
-                          if (target?.videoHeight && target?.videoWidth) {
-                            setIsVideoPortrait(target.videoHeight >= target.videoWidth)
-                          }
-                        } catch (error) {
-                          console.warn('Не удалось определить ориентацию видео', error)
-                        }
-                      }}
-                    />
-                    <button
-                      type="button"
-                      onClick={(event) => {
-                        event.stopPropagation()
-                        toggleVideoMute()
-                      }}
-                      className="absolute right-4 top-4 inline-flex h-12 w-12 items-center justify-center rounded-full bg-black/60 text-white backdrop-blur transition hover:bg-black/80 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
-                      aria-label={isVideoMuted ? 'Включить звук' : 'Выключить звук'}
-                    >
-                      {isVideoMuted ? (
-                        <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M9 9l6 6M15 9l-6 6" />
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M3 9h3l4-4h2v14h-2l-4-4H3z" />
-                        </svg>
-                      ) : (
-                        <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M3 9h3l4-4h2v14h-2l-4-4H3z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M16 9.5a3.5 3.5 0 010 5" />
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M18.5 7a6 6 0 010 10" />
-                        </svg>
-                      )}
-                    </button>
-                    <div className="pointer-events-none absolute bottom-5 left-0 right-0 flex justify-center text-[11px] uppercase tracking-[0.4em] text-white">
-                      Видео {activeVideoIndex + 1}/{videoMedia.length}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex w-full flex-col gap-4 text-white">
-                  {videoMedia.length > 1 && (
-                    <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.35em] text-white/60">
-                      <span>Свайпайте вверх/вниз</span>
-                      <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={(event) => {
-                            event.stopPropagation()
-                            showPrevVideo()
-                          }}
-                          className="inline-flex h-10 items-center justify-center rounded-full border border-white/20 px-4 text-[10px] font-medium tracking-[0.3em] transition hover:bg-white/10"
-                        >
-                          Назад
-                        </button>
-                        <button
-                          type="button"
-                          onClick={(event) => {
-                            event.stopPropagation()
-                            showNextVideo()
-                          }}
-                          className="inline-flex h-10 items-center justify-center rounded-full border border-white/20 px-4 text-[10px] font-medium tracking-[0.3em] transition hover:bg-white/10"
-                        >
-                          Далее
-                        </button>
-                      </div>
-                    </div>
+                <div className="rounded-3xl border border-white/10 bg-white/5 p-4 backdrop-blur">
+                  {activeInterior.subtitle && (
+                    <p className="text-sm leading-relaxed text-white/80">{activeInterior.subtitle}</p>
                   )}
-
-                  <div className="rounded-3xl border border-white/10 bg-white/5 p-4 backdrop-blur">
-                    {activeInterior.subtitle && (
-                      <p className="text-sm leading-relaxed text-white/80">{activeInterior.subtitle}</p>
-                    )}
-                    {activeInterior.description && (
-                      <p className="mt-2 text-sm leading-relaxed text-white/60 line-clamp-4">
-                        {activeInterior.description}
-                      </p>
-                    )}
-                  </div>
+                  {activeInterior.description && (
+                    <p className="mt-2 text-sm leading-relaxed text-white/60 line-clamp-4">
+                      {activeInterior.description}
+                    </p>
+                  )}
                 </div>
               </div>
-            </div>,
-            document.body
-          )
-        : null}
+            </div>
+          </div>,
+          document.body
+        )}
 
       {/* Final CTA Section - Minimalist */}
       <section className="relative left-1/2 right-1/2 w-screen -translate-x-1/2 py-12 sm:py-16 md:py-20 lg:py-24 bg-black text-white">
