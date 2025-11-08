@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useRef, type TouchEvent, type SyntheticEvent } from 'react'
+import { useEffect, useState, useRef, useCallback, type TouchEvent, type SyntheticEvent } from 'react'
 import { createPortal } from 'react-dom'
 import { supabase } from '@/lib/supabase'
 import Link from 'next/link'
@@ -54,10 +54,14 @@ export default function PartnersPage() {
   const MAX_VISIBLE_THUMBS = 5
   const touchStartXRef = useRef<number | null>(null)
   const touchCurrentXRef = useRef<number | null>(null)
-  const videoTouchStartYRef = useRef<number | null>(null)
-  const videoTouchCurrentYRef = useRef<number | null>(null)
   const mediaTransitionTimeoutRef = useRef<number | null>(null)
   const [isVideoPortrait, setIsVideoPortrait] = useState(false)
+  const [isVideoModalOpen, setIsVideoModalOpen] = useState(false)
+  const [videoModalSwipeOffset, setVideoModalSwipeOffset] = useState(0)
+  const [isVideoModalDragging, setIsVideoModalDragging] = useState(false)
+  const [isVideoMuted, setIsVideoMuted] = useState(true)
+  const videoModalTouchStartRef = useRef<number | null>(null)
+  const videoModalTouchCurrentRef = useRef<number | null>(null)
 
   useEffect(() => {
     setIsMounted(true)
@@ -335,6 +339,10 @@ export default function PartnersPage() {
   }, [activeVideoIndex, videoMedia.length, activeInterior?.id])
 
   useEffect(() => {
+    setVideoModalSwipeOffset(0)
+  }, [activeVideoIndex])
+
+  useEffect(() => {
     if (!isGalleryModalOpen) {
       if (typeof window !== 'undefined' && mediaTransitionTimeoutRef.current !== null) {
         window.clearTimeout(mediaTransitionTimeoutRef.current)
@@ -379,8 +387,8 @@ export default function PartnersPage() {
     setThumbnailOffset(0)
     touchStartXRef.current = null
     touchCurrentXRef.current = null
-    videoTouchStartYRef.current = null
-    videoTouchCurrentYRef.current = null
+    setIsVideoModalOpen(false)
+    setVideoModalSwipeOffset(0)
   }
 
   function closeInterior() {
@@ -401,8 +409,9 @@ export default function PartnersPage() {
     setThumbnailOffset(0)
     touchStartXRef.current = null
     touchCurrentXRef.current = null
-    videoTouchStartYRef.current = null
-    videoTouchCurrentYRef.current = null
+    setIsVideoModalOpen(false)
+    setVideoModalSwipeOffset(0)
+    setIsVideoModalDragging(false)
   }
 
   function showNextMedia() {
@@ -463,15 +472,12 @@ export default function PartnersPage() {
     if (e.touches.length > 1) return
     touchStartXRef.current = e.touches[0].clientX
     touchCurrentXRef.current = null
-    videoTouchStartYRef.current = e.touches[0].clientY
-    videoTouchCurrentYRef.current = null
   }
 
   function handleTouchMove(e: TouchEvent<HTMLDivElement>) {
     if (imageMedia.length <= 1) return
     if (e.touches.length > 1) return
     touchCurrentXRef.current = e.touches[0].clientX
-    videoTouchCurrentYRef.current = e.touches[0].clientY
   }
 
   function handleTouchEnd() {
@@ -493,42 +499,132 @@ export default function PartnersPage() {
     }
     touchStartXRef.current = null
     touchCurrentXRef.current = null
-    videoTouchStartYRef.current = null
-    videoTouchCurrentYRef.current = null
   }
 
-  function handleVideoTouchStart(e: TouchEvent<HTMLDivElement>) {
+  const showNextVideo = useCallback(() => {
+    if (videoMedia.length === 0) return
+    setActiveVideoIndex((prev) => (prev + 1) % videoMedia.length)
+  }, [videoMedia.length])
+
+  const showPrevVideo = useCallback(() => {
+    if (videoMedia.length === 0) return
+    setActiveVideoIndex((prev) => (prev - 1 + videoMedia.length) % videoMedia.length)
+  }, [videoMedia.length])
+
+  const openVideoModal = useCallback(
+    (initialIndex?: number) => {
+      if (videoMedia.length === 0) return
+      if (typeof initialIndex === 'number' && !Number.isNaN(initialIndex)) {
+        const safeIndex = Math.min(Math.max(Math.floor(initialIndex), 0), videoMedia.length - 1)
+        setActiveVideoIndex(safeIndex)
+      }
+      setIsVideoMuted(true)
+      setIsVideoModalOpen(true)
+      setVideoModalSwipeOffset(0)
+      setIsVideoModalDragging(false)
+    },
+    [videoMedia.length]
+  )
+
+  const closeVideoModal = useCallback(() => {
+    setIsVideoModalOpen(false)
+    setVideoModalSwipeOffset(0)
+    setIsVideoModalDragging(false)
+    videoModalTouchStartRef.current = null
+    videoModalTouchCurrentRef.current = null
+  }, [])
+
+  const toggleVideoMute = useCallback(() => {
+    setIsVideoMuted((prev) => !prev)
+  }, [])
+
+  const handleVideoModalTouchStart = useCallback((e: TouchEvent<HTMLDivElement>) => {
     if (videoMedia.length <= 1) return
-    if (typeof window !== 'undefined' && window.innerWidth > 1024) return
     if (e.touches.length > 1) return
-    videoTouchStartYRef.current = e.touches[0].clientY
-    videoTouchCurrentYRef.current = null
-  }
+    const firstTouch = e.touches[0]
+    videoModalTouchStartRef.current = firstTouch.clientY
+    videoModalTouchCurrentRef.current = firstTouch.clientY
+    setIsVideoModalDragging(true)
+    setVideoModalSwipeOffset(0)
+    if (e.cancelable) {
+      e.preventDefault()
+    }
+    e.stopPropagation()
+  }, [videoMedia.length])
 
-  function handleVideoTouchMove(e: TouchEvent<HTMLDivElement>) {
+  const handleVideoModalTouchMove = useCallback((e: TouchEvent<HTMLDivElement>) => {
     if (videoMedia.length <= 1) return
-    if (typeof window !== 'undefined' && window.innerWidth > 1024) return
     if (e.touches.length > 1) return
-    videoTouchCurrentYRef.current = e.touches[0].clientY
-  }
+    const currentY = e.touches[0].clientY
+    videoModalTouchCurrentRef.current = currentY
+    const start = videoModalTouchStartRef.current
+    if (start === null) return
+    const delta = currentY - start
+    setVideoModalSwipeOffset(delta)
+    if (e.cancelable) {
+      e.preventDefault()
+    }
+    e.stopPropagation()
+  }, [videoMedia.length])
 
-  function handleVideoTouchEnd() {
-    if (videoMedia.length <= 1) return
-    const start = videoTouchStartYRef.current
-    const current = videoTouchCurrentYRef.current
-    videoTouchStartYRef.current = null
-    videoTouchCurrentYRef.current = null
-    if (start === null || current === null) return
+  const handleVideoModalTouchEnd = useCallback(() => {
+    const start = videoModalTouchStartRef.current
+    const current = videoModalTouchCurrentRef.current
+    videoModalTouchStartRef.current = null
+    videoModalTouchCurrentRef.current = null
+
+    if (start === null || current === null) {
+      setVideoModalSwipeOffset(0)
+      setIsVideoModalDragging(false)
+      return
+    }
 
     const delta = current - start
-    if (Math.abs(delta) < 60) return
 
-    if (delta < 0) {
-      setActiveVideoIndex((prev) => (prev + 1) % videoMedia.length)
-    } else {
-      setActiveVideoIndex((prev) => (prev - 1 + videoMedia.length) % videoMedia.length)
+    if (Math.abs(delta) > 80 && videoMedia.length > 1) {
+      if (delta < 0) {
+        showNextVideo()
+      } else {
+        showPrevVideo()
+      }
     }
-  }
+
+    setVideoModalSwipeOffset(0)
+    setIsVideoModalDragging(false)
+  }, [showNextVideo, showPrevVideo, videoMedia.length])
+
+  useEffect(() => {
+    if (!isVideoModalOpen) {
+      setVideoModalSwipeOffset(0)
+      setIsVideoModalDragging(false)
+      return
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault()
+        closeVideoModal()
+        return
+      }
+      if (videoMedia.length <= 1) {
+        return
+      }
+      if (event.key === 'ArrowUp') {
+        event.preventDefault()
+        showPrevVideo()
+      }
+      if (event.key === 'ArrowDown') {
+        event.preventDefault()
+        showNextVideo()
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [closeVideoModal, isVideoModalOpen, showNextVideo, showPrevVideo, videoMedia.length])
 
   return (
     <div className="min-h-screen w-full modern-2025-bg overflow-x-hidden m-0 p-0">
@@ -1289,12 +1385,20 @@ export default function PartnersPage() {
               >
                 {videoMedia.length > 0 && (
                   <div className="flex flex-col space-y-4 lg:justify-between">
-                    <div className="text-[10px] uppercase tracking-[0.35em] text-gray-400">Видео проекта</div>
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="text-[10px] uppercase tracking-[0.35em] text-gray-400">Видео проекта</div>
+                      {videoMedia.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => openVideoModal(activeVideoIndex)}
+                          className="hidden lg:inline-flex items-center gap-2 rounded-full border border-gray-200 px-4 py-2 text-[10px] uppercase tracking-[0.3em] text-gray-700 transition hover:border-gray-300 hover:bg-gray-50"
+                        >
+                          Открыть Reels
+                        </button>
+                      )}
+                    </div>
                     <div
-                      onTouchStart={handleVideoTouchStart}
-                      onTouchMove={handleVideoTouchMove}
-                      onTouchEnd={handleVideoTouchEnd}
-                      className={`overflow-hidden rounded-2xl border border-gray-200 bg-black shadow-sm transition-all ${
+                      className={`relative overflow-hidden rounded-2xl border border-gray-200 bg-black shadow-sm transition-all ${
                         isVideoPortrait
                           ? 'w-full max-w-[420px] aspect-[9/16] mx-auto lg:mx-0'
                           : 'w-full h-[240px] sm:h-[360px] md:h-[400px] lg:h-[460px] xl:h-[500px] bg-white'
@@ -1319,6 +1423,35 @@ export default function PartnersPage() {
                           isVideoPortrait ? 'object-contain' : 'object-cover'
                         }`}
                       />
+                      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent opacity-0 transition-opacity duration-200 lg:hidden hover:opacity-100 focus-within:opacity-100" />
+                      <div className="pointer-events-none absolute inset-x-0 bottom-4 flex justify-center lg:hidden">
+                        <button
+                          type="button"
+                          onClick={() => openVideoModal(activeVideoIndex)}
+                          className="pointer-events-auto inline-flex items-center gap-2 rounded-full bg-white/95 px-4 py-2 text-xs font-medium uppercase tracking-[0.25em] text-gray-900 shadow-lg transition hover:bg-white"
+                        >
+                          Смотреть как Reels
+                        </button>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={toggleVideoMute}
+                        className="absolute right-3 top-3 hidden h-10 w-10 items-center justify-center rounded-full border border-white/40 bg-black/30 text-white shadow-sm transition hover:bg-black/60 lg:flex"
+                        aria-label={isVideoMuted ? 'Включить звук' : 'Выключить звук'}
+                      >
+                        {isVideoMuted ? (
+                          <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M9 9l6 6M15 9l-6 6" />
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M3 9h3l4-4h2v14h-2l-4-4H3z" />
+                          </svg>
+                        ) : (
+                          <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M3 9h3l4-4h2v14h-2l-4-4H3z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M16 9.5a3.5 3.5 0 010 5" />
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M18.5 7a6 6 0 010 10" />
+                          </svg>
+                        )}
+                      </button>
                     </div>
                     {videoMedia.length > 1 && (
                       <div className="flex flex-wrap gap-2 pt-2">
@@ -1337,6 +1470,13 @@ export default function PartnersPage() {
             ))}
           </div>
                     )}
+                    <button
+                      type="button"
+                      onClick={() => openVideoModal(activeVideoIndex)}
+                      className="inline-flex items-center justify-center gap-2 rounded-full border border-gray-200 px-4 py-2 text-xs uppercase tracking-[0.25em] text-gray-700 transition hover:border-gray-300 hover:bg-gray-50 lg:hidden"
+                    >
+                      Открыть полноэкранно
+                    </button>
         </div>
                    )}
 
@@ -1418,6 +1558,161 @@ export default function PartnersPage() {
         </div>,
         document.body
       ) : null}
+
+      {isVideoModalOpen && isMounted && activeInterior && videoMedia.length > 0
+        ? createPortal(
+            <div
+              className="fixed inset-0 z-[120] flex items-center justify-center bg-black/90 px-4 py-6 sm:px-6"
+              role="dialog"
+              aria-modal="true"
+            >
+              <div className="absolute inset-0" onClick={closeVideoModal} />
+              <div
+                className="relative z-10 flex h-full w-full max-w-[520px] flex-col items-center gap-6 text-white lg:max-w-[720px]"
+                onClick={(event) => event.stopPropagation()}
+              >
+                <div className="flex w-full items-center justify-between">
+                  <div>
+                    <div className="text-[10px] uppercase tracking-[0.4em] text-white/60">Видео проекта</div>
+                    <div className="mt-1 text-base font-medium leading-tight text-white/90 line-clamp-2">
+                      {activeInterior.title}
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={closeVideoModal}
+                    className="flex h-11 w-11 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white transition hover:bg-white/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
+                    aria-label="Закрыть видеоленту"
+                  >
+                    <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+
+                {videoMedia.length > 1 && (
+                  <div className="flex w-full items-center gap-2">
+                    {videoMedia.map((_, index) => (
+                      <span
+                        key={`video-indicator-${index}`}
+                        className={`h-1 flex-1 rounded-full transition ${
+                          index === activeVideoIndex ? 'bg-white' : 'bg-white/30'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                )}
+
+                <div className="relative flex w-full flex-1 items-center justify-center">
+                  <div
+                    className={`relative w-full overflow-hidden rounded-[32px] border border-white/15 bg-black shadow-[0_42px_120px_-62px_rgba(15,23,42,0.9)] ${
+                      isVideoPortrait
+                        ? 'aspect-[9/16] max-h-[calc(100vh-260px)] max-w-[440px]'
+                        : 'h-[min(70vh,540px)] max-w-[720px]'
+                    }`}
+                    onTouchStart={handleVideoModalTouchStart}
+                    onTouchMove={handleVideoModalTouchMove}
+                    onTouchEnd={handleVideoModalTouchEnd}
+                    onTouchCancel={handleVideoModalTouchEnd}
+                    style={{
+                      transform: `translateY(${videoModalSwipeOffset}px)`,
+                      transition: isVideoModalDragging ? 'none' : 'transform 220ms cubic-bezier(0.16, 1, 0.3, 1)',
+                      touchAction: videoMedia.length > 1 ? 'none' : 'auto'
+                    }}
+                  >
+                    <video
+                      key={`${videoMedia[activeVideoIndex]?.url}-${activeVideoIndex}-${isVideoMuted ? 'muted' : 'sound'}`}
+                      src={videoMedia[activeVideoIndex]?.url}
+                      autoPlay
+                      loop
+                      playsInline
+                      muted={isVideoMuted}
+                      controls={false}
+                      className={`h-full w-full ${isVideoPortrait ? 'object-contain' : 'object-cover'}`}
+                      onLoadedMetadata={(event: SyntheticEvent<HTMLVideoElement>) => {
+                        try {
+                          const target = event.currentTarget
+                          if (target?.videoHeight && target?.videoWidth) {
+                            setIsVideoPortrait(target.videoHeight >= target.videoWidth)
+                          }
+                        } catch (error) {
+                          console.warn('Не удалось определить ориентацию видео', error)
+                        }
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={(event) => {
+                        event.stopPropagation()
+                        toggleVideoMute()
+                      }}
+                      className="absolute right-4 top-4 inline-flex h-12 w-12 items-center justify-center rounded-full bg-black/60 text-white backdrop-blur transition hover:bg-black/80 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
+                      aria-label={isVideoMuted ? 'Включить звук' : 'Выключить звук'}
+                    >
+                      {isVideoMuted ? (
+                        <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M9 9l6 6M15 9l-6 6" />
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M3 9h3l4-4h2v14h-2l-4-4H3z" />
+                        </svg>
+                      ) : (
+                        <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M3 9h3l4-4h2v14h-2l-4-4H3z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M16 9.5a3.5 3.5 0 010 5" />
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M18.5 7a6 6 0 010 10" />
+                        </svg>
+                      )}
+                    </button>
+                    <div className="pointer-events-none absolute bottom-5 left-0 right-0 flex justify-center text-[11px] uppercase tracking-[0.4em] text-white">
+                      Видео {activeVideoIndex + 1}/{videoMedia.length}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex w-full flex-col gap-4 text-white">
+                  {videoMedia.length > 1 && (
+                    <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.35em] text-white/60">
+                      <span>Свайпайте вверх/вниз</span>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={(event) => {
+                            event.stopPropagation()
+                            showPrevVideo()
+                          }}
+                          className="inline-flex h-10 items-center justify-center rounded-full border border-white/20 px-4 text-[10px] font-medium tracking-[0.3em] transition hover:bg-white/10"
+                        >
+                          Назад
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(event) => {
+                            event.stopPropagation()
+                            showNextVideo()
+                          }}
+                          className="inline-flex h-10 items-center justify-center rounded-full border border-white/20 px-4 text-[10px] font-medium tracking-[0.3em] transition hover:bg-white/10"
+                        >
+                          Далее
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="rounded-3xl border border-white/10 bg-white/5 p-4 backdrop-blur">
+                    {activeInterior.subtitle && (
+                      <p className="text-sm leading-relaxed text-white/80">{activeInterior.subtitle}</p>
+                    )}
+                    {activeInterior.description && (
+                      <p className="mt-2 text-sm leading-relaxed text-white/60 line-clamp-4">
+                        {activeInterior.description}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>,
+            document.body
+          )
+        : null}
 
       {/* Final CTA Section - Minimalist */}
       <section className="relative left-1/2 right-1/2 w-screen -translate-x-1/2 py-12 sm:py-16 md:py-20 lg:py-24 bg-black text-white">
