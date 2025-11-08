@@ -54,6 +54,8 @@ export default function PartnersPage() {
   const MAX_VISIBLE_THUMBS = 5
   const touchStartXRef = useRef<number | null>(null)
   const touchCurrentXRef = useRef<number | null>(null)
+  const videoTouchStartYRef = useRef<number | null>(null)
+  const videoTouchCurrentYRef = useRef<number | null>(null)
   const mediaTransitionTimeoutRef = useRef<number | null>(null)
   const [isVideoPortrait, setIsVideoPortrait] = useState(false)
 
@@ -377,6 +379,8 @@ export default function PartnersPage() {
     setThumbnailOffset(0)
     touchStartXRef.current = null
     touchCurrentXRef.current = null
+    videoTouchStartYRef.current = null
+    videoTouchCurrentYRef.current = null
   }
 
   function closeInterior() {
@@ -397,6 +401,8 @@ export default function PartnersPage() {
     setThumbnailOffset(0)
     touchStartXRef.current = null
     touchCurrentXRef.current = null
+    videoTouchStartYRef.current = null
+    videoTouchCurrentYRef.current = null
   }
 
   function showNextMedia() {
@@ -457,12 +463,15 @@ export default function PartnersPage() {
     if (e.touches.length > 1) return
     touchStartXRef.current = e.touches[0].clientX
     touchCurrentXRef.current = null
+    videoTouchStartYRef.current = e.touches[0].clientY
+    videoTouchCurrentYRef.current = null
   }
 
   function handleTouchMove(e: TouchEvent<HTMLDivElement>) {
     if (imageMedia.length <= 1) return
     if (e.touches.length > 1) return
     touchCurrentXRef.current = e.touches[0].clientX
+    videoTouchCurrentYRef.current = e.touches[0].clientY
   }
 
   function handleTouchEnd() {
@@ -484,6 +493,41 @@ export default function PartnersPage() {
     }
     touchStartXRef.current = null
     touchCurrentXRef.current = null
+    videoTouchStartYRef.current = null
+    videoTouchCurrentYRef.current = null
+  }
+
+  function handleVideoTouchStart(e: TouchEvent<HTMLDivElement>) {
+    if (videoMedia.length <= 1) return
+    if (typeof window !== 'undefined' && window.innerWidth > 1024) return
+    if (e.touches.length > 1) return
+    videoTouchStartYRef.current = e.touches[0].clientY
+    videoTouchCurrentYRef.current = null
+  }
+
+  function handleVideoTouchMove(e: TouchEvent<HTMLDivElement>) {
+    if (videoMedia.length <= 1) return
+    if (typeof window !== 'undefined' && window.innerWidth > 1024) return
+    if (e.touches.length > 1) return
+    videoTouchCurrentYRef.current = e.touches[0].clientY
+  }
+
+  function handleVideoTouchEnd() {
+    if (videoMedia.length <= 1) return
+    const start = videoTouchStartYRef.current
+    const current = videoTouchCurrentYRef.current
+    videoTouchStartYRef.current = null
+    videoTouchCurrentYRef.current = null
+    if (start === null || current === null) return
+
+    const delta = current - start
+    if (Math.abs(delta) < 60) return
+
+    if (delta < 0) {
+      setActiveVideoIndex((prev) => (prev + 1) % videoMedia.length)
+    } else {
+      setActiveVideoIndex((prev) => (prev - 1 + videoMedia.length) % videoMedia.length)
+    }
   }
 
   return (
@@ -1247,6 +1291,9 @@ export default function PartnersPage() {
                   <div className="flex flex-col space-y-4 lg:justify-between">
                     <div className="text-[10px] uppercase tracking-[0.35em] text-gray-400">Видео проекта</div>
                     <div
+                      onTouchStart={handleVideoTouchStart}
+                      onTouchMove={handleVideoTouchMove}
+                      onTouchEnd={handleVideoTouchEnd}
                       className={`overflow-hidden rounded-2xl border border-gray-200 bg-black shadow-sm transition-all ${
                         isVideoPortrait
                           ? 'w-full max-w-[420px] aspect-[9/16] mx-auto lg:mx-0'
