@@ -500,7 +500,7 @@ export default function ProductPage() {
                     }}
                   >
                     {(product.images && product.images.length > 0 ? product.images : [product.image_url || '/placeholder.jpg']).map((imgUrl, idx) => (
-                      <div key={idx} className="relative w-full h-full flex-shrink-0">
+                      <div key={idx} className="relative w-full h-full flex-shrink-0 flex items-center justify-center bg-white">
                         {!loadedImages[idx] && (
                           <div className="absolute inset-0 bg-gray-100 animate-pulse" />
                         )}
@@ -511,7 +511,7 @@ export default function ProductPage() {
                           sizes="(min-width: 1280px) 700px, (min-width: 768px) 50vw, 100vw"
                           quality={95}
                           priority={idx === 0}
-                          className={`object-cover transition-opacity duration-300 ${loadedImages[idx] ? 'opacity-100' : 'opacity-0'}`}
+                          className={`object-contain transition-opacity duration-300 ${loadedImages[idx] ? 'opacity-100' : 'opacity-0'}`}
                           onLoad={() => {
                             if (idx === 0 && leftMainImageRef.current) {
                               setSyncedRightHeight(leftMainImageRef.current.offsetHeight || 0)

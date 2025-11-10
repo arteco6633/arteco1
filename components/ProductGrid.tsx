@@ -51,17 +51,16 @@ function Card({ product, onAdd }: { product: Product; onAdd?: (product: Product)
       className="bg-white rounded-xl shadow-md transition-all duration-300 group md:hover:-translate-y-1.5 md:hover:shadow-xl md:hover:ring-1 md:hover:ring-black/10 block cursor-pointer"
     >
       {/* Обёртка для изображения с клипом только картинки, не тени */}
-      <div className="relative rounded-t-xl overflow-hidden h-60 sm:h-72 bg-gray-50">
+      <div className="relative rounded-t-xl overflow-hidden h-60 sm:h-72 bg-gray-50 flex items-center justify-center">
         {(() => {
           const src = (product.images && product.images.length > 0) ? product.images[0] : (product.image_url || '/placeholder.jpg')
-          const hasMultiple = Array.isArray(product.images) && product.images.length > 1
           return (
             <Image
               src={src}
               alt={product.name}
               fill
               sizes="(min-width: 1280px) 25vw, (min-width: 768px) 33vw, 100vw"
-              className={`${hasMultiple ? 'object-cover' : 'object-contain'} transition-transform duration-300 ease-out md:group-hover:scale-[1.03]`}
+              className="object-contain transition-transform duration-300 ease-out md:group-hover:scale-[1.01]"
               priority={false}
             />
           )
