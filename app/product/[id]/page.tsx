@@ -1132,9 +1132,24 @@ export default function ProductPage() {
             <div className="w-full space-y-6">
               {(product.schemes && product.schemes.length > 0) ? (
                 product.schemes.map((url, idx) => (
-                  <a key={idx} href={url} target="_blank" rel="noreferrer" className="block w-full rounded-lg overflow-hidden border hover:shadow-lg bg-white transition-shadow">
-                    <div className="relative w-full" style={{ maxHeight: '700px' }}>
-                      <Image src={url} alt={`Схема ${idx+1}`} width={1200} height={700} quality={100} className="w-full object-contain bg-white" />
+                  <a
+                    key={idx}
+                    href={url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="block w-full"
+                  >
+                    <div className="mx-auto w-full.max-w-[900px] lg:max-w-[760px] xl:max-w-[820px]">
+                      <div className="relative aspect-[4/3] overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-[0_24px_60px_-50px_rgba(15,23,42,0.45)] transition-shadow hover:shadow-[0_32px_80px_-40px_rgba(15,23,42,0.45)]">
+                        <Image
+                          src={url}
+                          alt={`Схема ${idx + 1}`}
+                          fill
+                          sizes="(max-width: 1024px) 90vw, 820px"
+                          className="object-contain bg-white"
+                          quality={95}
+                        />
+                      </div>
                     </div>
                   </a>
                 ))
