@@ -135,6 +135,7 @@ export default function ProductPage() {
   const [isCalcOpen, setIsCalcOpen] = useState(false)
   const [quizStep, setQuizStep] = useState<1 | 2 | 3>(1)
   const [quizData, setQuizData] = useState<{ shape?: 'straight' | 'g' | 'island'; leftWidth?: string; rightWidth?: string; wallWidth?: string; ceiling?: string }>({})
+  const primaryFallbackImage = product?.images?.[activeImageIdx] || product?.images?.[0] || product?.image_url || ''
 
   useEffect(() => {
     if (id) {
@@ -198,7 +199,15 @@ export default function ProductPage() {
       setRelated(fallback || [])
     }
     loadRelated()
-  }, [product?.id, product?.category_id, (product as any)?.related_products])
+  }, [product])
+
+  useEffect(() => {
+    if (!product) return
+    const hasVideo = Array.isArray(product.videos) && product.videos.length > 0
+    if (!hasVideo && activeTab === 'videos') {
+      setActiveTab('schemes')
+    }
+  }, [product, activeTab])
 
   async function loadProduct() {
     try {
@@ -1163,7 +1172,7 @@ export default function ProductPage() {
             <div className="w-full grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-6">
               <div className="w-full md:col-span-5 flex items-start justify-center">
                 {(product.videos && product.videos.length > 0) ? (
-                  <div className="w-full rounded-lg overflow-hidden">
+                  <div className="w-full rounded-[28px] overflow-hidden border border-gray-200 shadow-[0_28px_90px_-60px_rgba(15,23,42,0.55)]">
                     <video
                       src={product.videos[0]}
                       className="w-full h-auto md:h-[70vh] object-cover bg-transparent"
@@ -1176,7 +1185,22 @@ export default function ProductPage() {
                     />
                   </div>
                 ) : (
-                  <div className="text-gray-500">Видео отсутствуют</div>
+                  <div className="w-full max-w-[520px] rounded-[28px] border border-gray-200 bg-white shadow-[0_28px_90px_-60px_rgba(15,23,42,0.4)] overflow-hidden">
+                    {primaryFallbackImage ? (
+                      <div className="relative w-full aspect-[4/3] md:aspect-[5/4]">
+                        <Image
+                          src={primaryFallbackImage}
+                          alt={product?.name ? `Изображение ${product.name}` : 'Изображение товара'}
+                          fill
+                          sizes="(max-width: 768px) 100vw, 480px"
+                          className="object-cover"
+                          priority
+                        />
+                      </div>
+                    ) : (
+                      <div className="flex h-64 items-center justify-center text-sm text-gray-500">Медиа для товара временно отсутствуют</div>
+                    )}
+                  </div>
                 )}
             </div>
 
