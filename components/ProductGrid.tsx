@@ -60,7 +60,9 @@ function Card({ product, onAdd, priority = false }: { product: Product; onAdd?: 
               alt={product.name}
               fill
               sizes="(min-width: 1280px) 25vw, (min-width: 768px) 33vw, 100vw"
-              className="object-contain object-center transition-transform duration-300 ease-out md:group-hover:scale-[1.01]"
+              className={`transition-transform duration-300 ease-out md:group-hover:scale-[1.01] ${
+                src?.endsWith('.png') ? 'object-contain object-center bg-white' : 'object-cover'
+              }`}
               priority={priority}
             />
           )

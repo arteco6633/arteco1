@@ -324,7 +324,7 @@ export default function CategoryPage() {
               >
                 <div className="relative z-10 p-0 md:px-3 md:pt-3 md:pb-3">
                   <div
-                    className="relative overflow-hidden rounded-xl aspect-[4/5] md:aspect-[4/3] bg-white"
+                    className="relative overflow-hidden rounded-xl aspect-[4/5] md:aspect-[4/3]"
                     style={{ 
                       // Используем pan-y для разрешения только вертикальной прокрутки
                       // pinch-zoom для масштабирования
@@ -384,7 +384,9 @@ export default function CategoryPage() {
                           key={idx}
                           src={imgUrl}
                           alt={`${product.name} - фото ${idx + 1}`}
-                          className="w-full h-full flex-shrink-0 object-contain object-center md:group-hover:scale-[1.02] transition-transform duration-300 bg-white"
+                          className={`w-full h-full flex-shrink-0 md:group-hover:scale-[1.02] transition-transform duration-300 ${
+                            imgUrl?.endsWith('.png') ? 'object-contain bg-white object-center' : 'object-cover'
+                          }`}
                           loading={idx === 0 ? "eager" : "lazy"}
                         />
                       ))}
