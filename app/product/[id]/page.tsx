@@ -511,7 +511,7 @@ export default function ProductPage() {
                           sizes="(min-width: 1280px) 700px, (min-width: 768px) 50vw, 100vw"
                           quality={95}
                           priority={idx === 0}
-                          className={`object-contain transition-opacity duration-300 ${loadedImages[idx] ? 'opacity-100' : 'opacity-0'}`}
+                          className={`object-contain object-center transition-opacity duration-300 ${loadedImages[idx] ? 'opacity-100' : 'opacity-0'}`}
                           onLoad={() => {
                             if (idx === 0 && leftMainImageRef.current) {
                               setSyncedRightHeight(leftMainImageRef.current.offsetHeight || 0)
