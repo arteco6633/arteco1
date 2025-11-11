@@ -26,7 +26,7 @@ type Props = {
   onAdd?: (product: Product) => void
 }
 
-function Card({ product, onAdd }: { product: Product; onAdd?: (product: Product) => void }) {
+function Card({ product, onAdd, priority = false }: { product: Product; onAdd?: (product: Product) => void; priority?: boolean }) {
   const { toggle, isInWishlist } = useWishlist()
   const inWishlist = isInWishlist(product.id)
 
@@ -61,7 +61,7 @@ function Card({ product, onAdd }: { product: Product; onAdd?: (product: Product)
               fill
               sizes="(min-width: 1280px) 25vw, (min-width: 768px) 33vw, 100vw"
               className="object-contain transition-transform duration-300 ease-out md:group-hover:scale-[1.01]"
-              priority={false}
+              priority={priority}
             />
           )
         })()}
@@ -158,8 +158,8 @@ export default function ProductGrid({ products, splitTwoFirst = false, onlyFirst
     const firstTwoOnly = products.slice(0, 2)
     return (
       <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 gap-4 sm:gap-7 overflow-visible max-w-full">
-        {firstTwoOnly.map((p) => (
-          <Card key={p.id} product={p} onAdd={onAdd} />
+        {firstTwoOnly.map((p, index) => (
+          <Card key={p.id} product={p} onAdd={onAdd} priority={index < 2} />
         ))}
       </div>
     )
