@@ -136,6 +136,7 @@ export default function ProductPage() {
   const [quizStep, setQuizStep] = useState<1 | 2 | 3>(1)
   const [quizData, setQuizData] = useState<{ shape?: 'straight' | 'g' | 'island'; leftWidth?: string; rightWidth?: string; wallWidth?: string; ceiling?: string }>({})
   const primaryFallbackImage = product?.images?.[activeImageIdx] || product?.images?.[0] || product?.image_url || ''
+  const [activeSchemeIdx, setActiveSchemeIdx] = useState(0)
 
   useEffect(() => {
     if (id) {
@@ -208,6 +209,61 @@ export default function ProductPage() {
       setActiveTab('schemes')
     }
   }, [product, activeTab])
+
+  useEffect(() => {
+    setActiveSchemeIdx(0)
+  }, [product?.id])
+
+  const customSpecs = Array.isArray((product?.specs as any)?.custom)
+    ? ((product?.specs as any)?.custom as Array<{ label?: string; value?: string }>)
+    : []
+
+  const specsPanel = (
+    <div className="md:col-span-7 md:sticky md:top-24 md:max-h-[70vh] md:overflow-auto pr-1">
+      <h3 className="text-lg font-semibold mb-4">Характеристики</h3>
+      <div className="grid grid-cols-1 gap-3 text-sm text-gray-700">
+        {product?.specs?.body_material && (
+          <div className="p-3 bg-gray-50 rounded-lg"><span className="font-semibold block mb-1">Материал корпуса</span><span>{product?.specs?.body_material}</span></div>
+        )}
+        {product?.specs?.facade_material && (
+          <div className="p-3 bg-gray-50 rounded-lg"><span className="font-semibold block mb-1">Материал фасадов</span><span>{product?.specs?.facade_material}</span></div>
+        )}
+        {product?.specs?.additional && (
+          <div className="p-3 bg-gray-50 rounded-lg"><span className="font-semibold block mb-1">Дополнительно</span><span>{product?.specs?.additional}</span></div>
+        )}
+        {product?.specs?.handles && (
+          <div className="p-3 bg-gray-50 rounded-lg"><span className="font-semibold block mb-1">Ручки</span><span>{product?.specs?.handles}</span></div>
+        )}
+        {product?.specs?.handle_material && (
+          <div className="p-3 bg-gray-50 rounded-lg"><span className="font-semibold block mb-1">Материал ручек</span><span>{product?.specs?.handle_material}</span></div>
+        )}
+        {product?.specs?.back_wall_material && (
+          <div className="p-3 bg-gray-50 rounded-lg"><span className="font-semibold block mb-1">Материал задней стенки</span><span>{product?.specs?.back_wall_material}</span></div>
+        )}
+        {product?.specs?.delivery_option && (
+          <div className="p-3 bg-gray-50 rounded-lg"><span className="font-semibold block mb-1">Вариант доставки</span><span>{product?.specs?.delivery_option}</span></div>
+        )}
+        {product?.specs?.feet && (
+          <div className="p-3 bg-gray-50 rounded-lg"><span className="font-semibold block mb-1">Подпятники</span><span>{product?.specs?.feet}</span></div>
+        )}
+        {product?.specs?.country && (
+          <div className="p-3 bg-gray-50 rounded-lg"><span className="font-semibold block mb-1">Страна производства</span><span>{product?.specs?.country}</span></div>
+        )}
+        {(!product?.specs || (Object.keys(product?.specs || {}).length === 0 && customSpecs.length === 0)) && (
+          <div className="text-gray-500">Характеристики отсутствуют</div>
+        )}
+
+        {customSpecs.length > 0 && customSpecs.map((row, idx) => (
+          (row?.label || row?.value) && (
+            <div key={idx} className="p-3 bg-gray-50 rounded-lg">
+              {row.label && <span className="font-semibold block mb-1">{row.label}</span>}
+              {row.value && <span>{row.value}</span>}
+            </div>
+          )
+        ))}
+      </div>
+    </div>
+  )
 
   async function loadProduct() {
     try {
@@ -1129,57 +1185,80 @@ export default function ProductPage() {
           </div>
 
           {activeTab === 'schemes' && (
-            <div className="w-full space-y-6">
-              {(product.schemes && product.schemes.length > 0) ? (
-                product.schemes.map((url, idx) => (
-                  <a
-                    key={idx}
-                    href={url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="block w-full"
-                  >
-                    <div className="mx-auto w-full.max-w-[900px] lg:max-w-[760px] xl:max-w-[820px]">
-                      <div className="relative aspect-[4/3] overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-[0_24px_60px_-50px_rgba(15,23,42,0.45)] transition-shadow hover:shadow-[0_32px_80px_-40px_rgba(15,23,42,0.45)]">
+            <div className="w-full grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-6">
+              <div className="md:col-span-5 flex flex-col items-center gap-4">
+                {Array.isArray(product?.schemes) && product.schemes.length > 0 ? (
+                  <>
+                    <div className="w-full rounded-[28px] border border-gray-200 bg-white shadow-[0_28px_90px_-60px_rgba(15,23,42,0.45)] overflow-hidden">
+                      <div className="relative aspect-[4/3] bg-white">
                         <Image
-                          src={url}
-                          alt={`Схема ${idx + 1}`}
+                          src={product.schemes[Math.min(activeSchemeIdx, product.schemes.length - 1)]}
+                          alt={`Схема ${Math.min(activeSchemeIdx, product.schemes.length - 1) + 1}`}
                           fill
-                          sizes="(max-width: 1024px) 90vw, 820px"
+                          sizes="(max-width: 768px) 100vw, 520px"
                           className="object-contain bg-white"
                           quality={95}
                         />
+                        <a
+                          href={product.schemes[Math.min(activeSchemeIdx, product.schemes.length - 1)]}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="absolute top-3 right-3 inline-flex items-center gap-2 rounded-full bg-white/90 px-3 py-1 text-xs font-medium text-gray-700 shadow hover:bg-white transition"
+                        >
+                          Открыть
+                        </a>
                       </div>
                     </div>
-                  </a>
-                ))
-              ) : (
-                <div className="text-gray-500">Схемы отсутствуют</div>
-              )}
-
-              {/* Спецификация */}
-              {product.downloadable_files && product.downloadable_files.length > 0 && (
-                <div className="mt-8 pt-8 border-t">
-                  <h3 className="text-lg font-semibold mb-4">Спецификация</h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                    {product.downloadable_files.map((file, idx) => (
-                      <a
-                        key={idx}
-                        href={file.url}
-                        download={file.name}
-                        className="flex items-center gap-3 p-4 bg-white border rounded-lg hover:bg-gray-50 hover:shadow-md transition-all"
-                      >
-                        <span className="text-3xl">📄</span>
-                        <div className="flex-1 min-w-0">
-                          <div className="text-sm font-medium text-gray-900 truncate">{file.name}</div>
-                          <div className="text-xs text-gray-500 mt-1">Скачать файл</div>
+                    {product.schemes.length > 1 && (
+                      <div className="flex w-full gap-2 overflow-x-auto pb-1">
+                        {product.schemes.map((schemeUrl, idx) => (
+                          <button
+                            key={`${schemeUrl}-${idx}`}
+                            type="button"
+                            onClick={() => setActiveSchemeIdx(idx)}
+                            className={`relative h-20 w-28 flex-shrink-0 overflow-hidden rounded-xl border transition ${
+                              idx === activeSchemeIdx ? 'border-gray-900 shadow-md' : 'border-gray-200 hover:border-gray-300'
+                            }`}
+                          >
+                            <Image
+                              src={schemeUrl}
+                              alt={`Схема ${idx + 1}`}
+                              fill
+                              sizes="112px"
+                              className="object-contain bg-white"
+                            />
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    {product.downloadable_files && product.downloadable_files.length > 0 && (
+                      <div className="w-full mt-4 border-t pt-4">
+                        <h3 className="text-base font-semibold mb-3">Спецификация</h3>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          {product.downloadable_files.map((file, idx) => (
+                            <a
+                              key={idx}
+                              href={file.url}
+                              download={file.name}
+                              className="flex items-center gap-3 p-3 bg-white border rounded-lg hover:bg-gray-50 hover:shadow-md transition-all"
+                            >
+                              <span className="text-2xl">📄</span>
+                              <div className="flex-1 min-w-0">
+                                <div className="text-sm font-medium text-gray-900 truncate">{file.name}</div>
+                                <div className="text-xs text-gray-500 mt-1">Скачать файл</div>
+                              </div>
+                              <span className="text-gray-400">↓</span>
+                            </a>
+                          ))}
                         </div>
-                        <span className="text-gray-400">↓</span>
-                      </a>
-                    ))}
-                  </div>
-                </div>
-              )}
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div className="text-gray-500">Схемы отсутствуют</div>
+                )}
+              </div>
+              {specsPanel}
             </div>
           )}
 
@@ -1219,56 +1298,9 @@ export default function ProductPage() {
                 )}
             </div>
 
-              <div className="md:col-span-7 md:sticky md:top-24 md:max-h-[70vh] md:overflow-auto pr-1">
-                <h3 className="text-lg font-semibold mb-4">Характеристики</h3>
-                <div className="grid grid-cols-1 gap-3 text-sm text-gray-700">
-                  {product.specs?.body_material && (
-                    <div className="p-3 bg-gray-50 rounded-lg"><span className="font-semibold block mb-1">Материал корпуса</span><span>{product.specs.body_material}</span></div>
-                  )}
-                  {product.specs?.facade_material && (
-                    <div className="p-3 bg-gray-50 rounded-lg"><span className="font-semibold block mb-1">Материал фасадов</span><span>{product.specs.facade_material}</span></div>
-                  )}
-                  {product.specs?.additional && (
-                    <div className="p-3 bg-gray-50 rounded-lg"><span className="font-semibold block mb-1">Дополнительно</span><span>{product.specs.additional}</span></div>
-                  )}
-                  {product.specs?.handles && (
-                    <div className="p-3 bg-gray-50 rounded-lg"><span className="font-semibold block mb-1">Ручки</span><span>{product.specs.handles}</span></div>
-                  )}
-                  {product.specs?.handle_material && (
-                    <div className="p-3 bg-gray-50 rounded-lg"><span className="font-semibold block mb-1">Материал ручек</span><span>{product.specs.handle_material}</span></div>
-                  )}
-                  {product.specs?.back_wall_material && (
-                    <div className="p-3 bg-gray-50 rounded-lg"><span className="font-semibold block mb-1">Материал задней стенки</span><span>{product.specs.back_wall_material}</span></div>
-                  )}
-                  {product.specs?.delivery_option && (
-                    <div className="p-3 bg-gray-50 rounded-lg"><span className="font-semibold block mb-1">Вариант доставки</span><span>{product.specs.delivery_option}</span></div>
-                  )}
-                  {product.specs?.feet && (
-                    <div className="p-3 bg-gray-50 rounded-lg"><span className="font-semibold block mb-1">Подпятники</span><span>{product.specs.feet}</span></div>
-                  )}
-                  {product.specs?.country && (
-                    <div className="p-3 bg-gray-50 rounded-lg"><span className="font-semibold block mb-1">Страна производства</span><span>{product.specs.country}</span></div>
-                  )}
-                  {(!product.specs || (Object.keys(product.specs).length === 0 && !Array.isArray((product.specs as any).custom))) && (
-                    <div className="text-gray-500">Характеристики отсутствуют</div>
-                  )}
-
-                  {Array.isArray((product.specs as any)?.custom) && (product.specs as any).custom.length > 0 && (
-                    <>
-                      {(product.specs as any).custom.map((row: any, idx: number) => (
-                        (row?.label || row?.value) && (
-                          <div key={idx} className="p-3 bg-gray-50 rounded-lg">
-                            {row.label && <span className="font-semibold block mb-1">{row.label}</span>}
-                            {row.value && <span>{row.value}</span>}
-                          </div>
-                        )
-                      ))}
-                    </>
-                  )}
-            </div>
-          </div>
-        </div>
-          )}
+              {specsPanel}
+           </div>
+         )}
         </section>
 
         <KitchenQuiz isOpen={isCalcOpen} onClose={() => setIsCalcOpen(false)} imageUrl={product?.images?.[0] || (product as any)?.image_url || ''} />
