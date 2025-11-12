@@ -19,6 +19,7 @@ interface Product {
   is_featured: boolean
   is_new: boolean
   is_custom_size?: boolean
+  is_fast_delivery?: boolean
 }
 
 interface Category {
@@ -39,6 +40,7 @@ export default function CategoryPage() {
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [onlyCustom, setOnlyCustom] = useState<boolean>(false)
+  const [onlyFastDelivery, setOnlyFastDelivery] = useState<boolean>(false)
   // Выбранные варианты цветов/изображений по товару (индекс)
   const [selectedVariantIndexById, setSelectedVariantIndexById] = useState<Record<number, number>>({})
   // Состояния для свайпа на мобильных
@@ -184,12 +186,14 @@ export default function CategoryPage() {
 
   useEffect(() => {
     if (!slug) return
-    const flag = searchParams?.get('anysize') === '1'
-    setOnlyCustom(flag)
-    loadCategoryData(flag)
+    const customFlag = searchParams?.get('anysize') === '1'
+    const fastDeliveryFlag = searchParams?.get('fast') === '1'
+    setOnlyCustom(customFlag)
+    setOnlyFastDelivery(fastDeliveryFlag)
+    loadCategoryData(customFlag, fastDeliveryFlag)
   }, [slug, searchParams])
 
-  async function loadCategoryData(flag?: boolean) {
+  async function loadCategoryData(customFlag?: boolean, fastDeliveryFlag?: boolean) {
     try {
       // Загружаем категорию
       const { data: categoryData } = await supabase
@@ -211,8 +215,11 @@ export default function CategoryPage() {
         .select('*')
         .eq('category_id', categoryData.id)
         .order('id', { ascending: false })
-      if (flag) {
+      if (customFlag) {
         query = query.eq('is_custom_size', true)
+      }
+      if (fastDeliveryFlag) {
+        query = query.eq('is_fast_delivery', true)
       }
       const { data: productsData } = await query
 
@@ -228,6 +235,13 @@ export default function CategoryPage() {
     setOnlyCustom(next)
     const sp = new URLSearchParams(Array.from(searchParams?.entries() || []))
     if (next) sp.set('anysize', '1'); else sp.delete('anysize')
+    router.replace(`/catalog/${slug}?${sp.toString()}`)
+  }
+
+  function applyFastDelivery(next: boolean) {
+    setOnlyFastDelivery(next)
+    const sp = new URLSearchParams(Array.from(searchParams?.entries() || []))
+    if (next) sp.set('fast', '1'); else sp.delete('fast')
     router.replace(`/catalog/${slug}?${sp.toString()}`)
   }
 
@@ -275,19 +289,35 @@ export default function CategoryPage() {
         </nav>
 
         {/* Фильтры */}
-        <div className="mb-4 md:mb-6 flex items-center gap-3">
-          <button
-            type="button"
-            role="switch"
-            aria-checked={onlyCustom}
-            onClick={() => applyAnySize(!onlyCustom)}
-            className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors duration-200 ${onlyCustom ? 'bg-black' : 'bg-gray-200'}`}
-          >
-            <span
-              className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform duration-200 ${onlyCustom ? 'translate-x-6' : 'translate-x-1'}`}
-            />
-          </button>
-          <span className="text-sm md:text-base select-none">Под любые размеры</span>
+        <div className="mb-4 md:mb-6 flex flex-wrap items-center gap-4 md:gap-6">
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              role="switch"
+              aria-checked={onlyCustom}
+              onClick={() => applyAnySize(!onlyCustom)}
+              className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors duration-200 ${onlyCustom ? 'bg-black' : 'bg-gray-200'}`}
+            >
+              <span
+                className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform duration-200 ${onlyCustom ? 'translate-x-6' : 'translate-x-1'}`}
+              />
+            </button>
+            <span className="text-sm md:text-base select-none">Под любые размеры</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              role="switch"
+              aria-checked={onlyFastDelivery}
+              onClick={() => applyFastDelivery(!onlyFastDelivery)}
+              className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors duration-200 ${onlyFastDelivery ? 'bg-black' : 'bg-gray-200'}`}
+            >
+              <span
+                className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform duration-200 ${onlyFastDelivery ? 'translate-x-6' : 'translate-x-1'}`}
+              />
+            </button>
+            <span className="text-sm md:text-base select-none">Доставим быстро</span>
+          </div>
         </div>
 
         {/* Сетка товаров */}
