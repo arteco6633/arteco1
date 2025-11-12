@@ -99,6 +99,7 @@ export default function Navbar() {
           .from('products')
           .select('id, name, price, image_url')
           .ilike('name', `%${q}%`)
+          .eq('is_hidden', false) // Исключаем скрытые товары из поиска
           .limit(8)
         setSearchResults(data || [])
       } finally {

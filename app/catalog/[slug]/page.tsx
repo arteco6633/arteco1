@@ -209,11 +209,12 @@ export default function CategoryPage() {
 
       setCategory(categoryData)
 
-      // Загружаем товары этой категории
+      // Загружаем товары этой категории (исключаем скрытые)
       let query = supabase
         .from('products')
         .select('*')
         .eq('category_id', categoryData.id)
+        .eq('is_hidden', false) // Исключаем скрытые товары из каталога
         .order('id', { ascending: false })
       if (customFlag) {
         query = query.eq('is_custom_size', true)

@@ -191,13 +191,15 @@ export default function ProductPage() {
         .from('products')
         .select('*')
         .eq('category_id', product.category_id)
+        .eq('is_hidden', false) // Исключаем скрытые товары из рекомендаций
         .neq('id', product.id)
         .limit(8)
       if (data && data.length > 0) { setRelated(data); return }
-      // 3) Фоллбек: любые товары
+      // 3) Фоллбек: любые товары (исключаем скрытые)
       const { data: fallback } = await supabase
         .from('products')
         .select('*')
+        .eq('is_hidden', false) // Исключаем скрытые товары из рекомендаций
         .neq('id', product.id)
         .limit(8)
       setRelated(fallback || [])
@@ -773,13 +775,21 @@ export default function ProductPage() {
                       <div key={idx} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
                         {block.image_url && (
                           <div className="mb-3">
-                            <Image
-                              src={block.image_url}
-                              alt={block.title}
-                              width={200}
-                              height={200}
-                              className="w-full h-32 object-cover rounded-lg"
-                            />
+                            {block.image_url.toLowerCase().endsWith('.gif') ? (
+                              <img
+                                src={block.image_url}
+                                alt={block.title}
+                                className="w-full h-32 object-cover rounded-lg"
+                              />
+                            ) : (
+                              <Image
+                                src={block.image_url}
+                                alt={block.title}
+                                width={200}
+                                height={200}
+                                className="w-full h-32 object-cover rounded-lg"
+                              />
+                            )}
                           </div>
                         )}
                         <h4 className="font-semibold text-base mb-2">{block.title}</h4>

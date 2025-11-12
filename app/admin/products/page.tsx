@@ -36,6 +36,7 @@ interface Product {
   is_new: boolean
   is_custom_size?: boolean
   is_fast_delivery?: boolean
+  is_hidden?: boolean
   related_products?: number[] | null
   color_products?: Record<string, number> | null
   rich_content?: Array<{ title: string; description: string; image_url: string }> | null
@@ -112,6 +113,7 @@ export default function AdminProductsPage() {
     is_new: false,
     is_custom_size: false,
     is_fast_delivery: false,
+    is_hidden: false,
     related_products: [] as number[],
     color_products: {} as Record<string, number>,
     rich_content: [] as Array<{ title: string; description: string; image_url: string }>,
@@ -254,6 +256,7 @@ export default function AdminProductsPage() {
       is_new: false,
       is_custom_size: false,
       is_fast_delivery: false,
+      is_hidden: false,
       related_products: [],
       color_products: {},
       rich_content: [],
@@ -305,6 +308,7 @@ export default function AdminProductsPage() {
       is_new: product.is_new,
       is_custom_size: !!(product as any).is_custom_size,
       is_fast_delivery: !!(product as any).is_fast_delivery,
+      is_hidden: !!(product as any).is_hidden,
       related_products: (product as any).related_products || [],
       color_products: ((product as any).color_products && typeof (product as any).color_products === 'object') 
         ? (product as any).color_products 
@@ -546,6 +550,7 @@ export default function AdminProductsPage() {
         is_new: formData.is_new,
         is_custom_size: formData.is_custom_size,
         is_fast_delivery: formData.is_fast_delivery,
+        is_hidden: formData.is_hidden,
         related_products: formData.related_products,
         color_products: formData.color_products || {},
         rich_content: formData.rich_content || [],
@@ -1215,7 +1220,7 @@ export default function AdminProductsPage() {
                               <label className="block text-sm text-gray-600 mb-1">Фото</label>
                               <input
                                 type="file"
-                                accept="image/*"
+                                accept="image/*,.gif"
                                 className="w-full px-3 py-2 border rounded-lg text-sm mb-2"
                                 onChange={async (e) => {
                                   const file = e.target.files?.[0]
@@ -1763,6 +1768,15 @@ export default function AdminProductsPage() {
                       onChange={(e) => setFormData({ ...formData, is_fast_delivery: e.target.checked })}
                     />
                     <span className="font-semibold">Доставим быстро</span>
+                  </label>
+                  <label className="flex items-center p-4 border rounded-lg hover:bg-gray-50 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      className="mr-3 w-5 h-5"
+                      checked={formData.is_hidden}
+                      onChange={(e) => setFormData({ ...formData, is_hidden: e.target.checked })}
+                    />
+                    <span className="font-semibold">Скрыть товар</span>
                   </label>
                 </div>
 

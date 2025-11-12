@@ -99,18 +99,20 @@ export default function HomePage() {
         .eq('is_active', 'true')
         .order('position', { ascending: true })
 
-      // Загружаем featured товары
+      // Загружаем featured товары (исключаем скрытые)
       const { data: featuredData } = await supabase
         .from('products')
         .select('*')
         .eq('is_featured', 'true')
+        .eq('is_hidden', false)
         .limit(8)
 
-      // Загружаем новые товары: фиксируем лимит карточек
+      // Загружаем новые товары: фиксируем лимит карточек (исключаем скрытые)
       const { data: newData } = await supabase
         .from('products')
         .select('*')
         .eq('is_new', 'true')
+        .eq('is_hidden', false)
         .order('id', { ascending: false })
         .limit(NEW_PRODUCTS_LIMIT)
 
