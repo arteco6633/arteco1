@@ -1255,7 +1255,9 @@ export default function AdminProductsPage() {
                               />
                               {existingBlock?.image_url && (
                                 <div className="mt-2">
-                                  <img src={existingBlock.image_url} alt={block.title} className="w-32 h-32 object-cover rounded border" />
+                                  <div className="w-full max-w-xs aspect-[4/3] overflow-hidden rounded border bg-white flex items-center justify-center">
+                                    <img src={existingBlock.image_url} alt={block.title} className="w-full h-full object-contain" />
+                                  </div>
                                   <button
                                     type="button"
                                     className="mt-1 text-xs text-red-600 hover:text-red-800"
@@ -1346,7 +1348,9 @@ export default function AdminProductsPage() {
                                 />
                                 {block.image_url && (
                                   <div className="mt-2">
-                                    <img src={block.image_url} alt={block.title || 'Изображение'} className="w-32 h-32 object-cover rounded border" />
+                                    <div className="w-full max-w-xs aspect-[4/3] overflow-hidden rounded border bg-white flex items-center justify-center">
+                                      <img src={block.image_url} alt={block.title || 'Изображение'} className="w-full h-full object-contain" />
+                                    </div>
                                     <button
                                       type="button"
                                       className="mt-1 text-xs text-red-600 hover:text-red-800"

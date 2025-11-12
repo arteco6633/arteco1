@@ -770,31 +770,32 @@ export default function ProductPage() {
               {/* Дополнительный контент под цветами */}
               {product.rich_content && product.rich_content.length > 0 && (
                 <div className="mb-6">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
                     {product.rich_content.map((block, idx) => (
-                      <div key={idx} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                      <div key={idx} className="bg-gray-50 rounded-lg p-4 md:p-5 border border-gray-200 flex flex-col">
                         {block.image_url && (
-                          <div className="mb-3">
+                          <div className="mb-3 md:mb-4 w-full aspect-[4/3] overflow-hidden rounded-lg bg-white flex items-center justify-center">
                             {block.image_url.toLowerCase().endsWith('.gif') ? (
                               <img
                                 src={block.image_url}
                                 alt={block.title}
-                                className="w-full h-32 object-cover rounded-lg"
+                                className="w-full h-full object-contain"
                               />
                             ) : (
                               <Image
                                 src={block.image_url}
                                 alt={block.title}
-                                width={200}
-                                height={200}
-                                className="w-full h-32 object-cover rounded-lg"
+                                width={400}
+                                height={300}
+                                className="w-full h-full object-contain"
+                                sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, 33vw"
                               />
                             )}
                           </div>
                         )}
-                        <h4 className="font-semibold text-base mb-2">{block.title}</h4>
+                        <h4 className="font-semibold text-base md:text-lg mb-2">{block.title}</h4>
                         {block.description && (
-                          <p className="text-sm text-gray-600 leading-relaxed">{block.description}</p>
+                          <p className="text-sm md:text-base text-gray-600 leading-relaxed flex-1">{block.description}</p>
                         )}
                       </div>
                     ))}
