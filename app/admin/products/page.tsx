@@ -39,7 +39,7 @@ interface Product {
   is_hidden?: boolean
   related_products?: number[] | null
   color_products?: Record<string, number> | null
-  rich_content?: Array<{ title: string; description: string; image_url: string }> | null
+  rich_content?: Array<{ title: string; description: string; image_url?: string; video_url?: string }> | null
 }
 
 export default function AdminProductsPage() {
@@ -116,7 +116,7 @@ export default function AdminProductsPage() {
     is_hidden: false,
     related_products: [] as number[],
     color_products: {} as Record<string, number>,
-    rich_content: [] as Array<{ title: string; description: string; image_url: string }>,
+    rich_content: [] as Array<{ title: string; description: string; image_url?: string; video_url?: string }>,
   })
 
   useEffect(() => {
@@ -1190,7 +1190,7 @@ export default function AdminProductsPage() {
                       type="button"
                       className="px-3 py-1 border rounded hover:bg-gray-50 text-sm"
                       onClick={() => {
-                        const newRichContent = [...(formData.rich_content || []), { title: '', description: '', image_url: '' }]
+                        const newRichContent = [...(formData.rich_content || []), { title: '', description: '', image_url: '', video_url: '' }]
                         setFormData({ ...formData, rich_content: newRichContent })
                       }}
                     >
@@ -1230,29 +1230,53 @@ export default function AdminProductsPage() {
                               />
                             </div>
                             <div>
-                              <label className="block text-sm text-gray-600 mb-1">Фото</label>
-                              <input
-                                type="file"
-                                accept="image/*,.gif"
-                                className="w-full px-3 py-2 border rounded-lg text-sm mb-2"
-                                onChange={async (e) => {
-                                  const file = e.target.files?.[0]
-                                  if (!file) return
-                                  try {
-                                    const url = await uploadToFolder(file, 'rich-content')
-                                    const newRichContent = [...(formData.rich_content || [])]
-                                    if (blockIndex >= 0) {
-                                      newRichContent[blockIndex] = { ...newRichContent[blockIndex], image_url: url }
+                              <label className="block text-sm text-gray-600 mb-1">Фото/Видео</label>
+                              <div className="mb-2 space-y-2">
+                                <input
+                                  type="file"
+                                  accept="image/*,.gif"
+                                  className="w-full px-3 py-2 border rounded-lg text-sm"
+                                  onChange={async (e) => {
+                                    const file = e.target.files?.[0]
+                                    if (!file) return
+                                    try {
+                                      const url = await uploadToFolder(file, 'rich-content')
+                                      const newRichContent = [...(formData.rich_content || [])]
+                                      if (blockIndex >= 0) {
+                                        newRichContent[blockIndex] = { ...newRichContent[blockIndex], image_url: url, video_url: '' }
                                     } else {
-                                      newRichContent.push({ title: block.title, description: '', image_url: url })
+                                      newRichContent.push({ title: block.title, description: existingBlock?.description || '', image_url: url, video_url: '' })
                                     }
-                                    setFormData({ ...formData, rich_content: newRichContent })
-                                  } catch (err) {
-                                    console.error(err)
-                                    alert('Не удалось загрузить изображение')
-                                  }
-                                }}
-                              />
+                                      setFormData({ ...formData, rich_content: newRichContent })
+                                    } catch (err) {
+                                      console.error(err)
+                                      alert('Не удалось загрузить изображение')
+                                    }
+                                  }}
+                                />
+                                <input
+                                  type="file"
+                                  accept="video/*"
+                                  className="w-full px-3 py-2 border rounded-lg text-sm"
+                                  onChange={async (e) => {
+                                    const file = e.target.files?.[0]
+                                    if (!file) return
+                                    try {
+                                      const url = await uploadToFolder(file, 'rich-content')
+                                      const newRichContent = [...(formData.rich_content || [])]
+                                      if (blockIndex >= 0) {
+                                        newRichContent[blockIndex] = { ...newRichContent[blockIndex], video_url: url, image_url: '' }
+                                      } else {
+                                        newRichContent.push({ title: block.title, description: existingBlock?.description || '', video_url: url, image_url: '' })
+                                      }
+                                      setFormData({ ...formData, rich_content: newRichContent })
+                                    } catch (err) {
+                                      console.error(err)
+                                      alert('Не удалось загрузить видео')
+                                    }
+                                  }}
+                                />
+                              </div>
                               {existingBlock?.image_url && (
                                 <div className="mt-2">
                                   <div className="w-full max-w-xs aspect-[4/3] overflow-hidden rounded border bg-white flex items-center justify-center">
@@ -1270,6 +1294,26 @@ export default function AdminProductsPage() {
                                     }}
                                   >
                                     Удалить фото
+                                  </button>
+                                </div>
+                              )}
+                              {existingBlock?.video_url && (
+                                <div className="mt-2">
+                                  <div className="w-full max-w-xs aspect-[4/3] overflow-hidden rounded border bg-black flex items-center justify-center">
+                                    <video src={existingBlock.video_url} className="w-full h-full object-contain" controls />
+                                  </div>
+                                  <button
+                                    type="button"
+                                    className="mt-1 text-xs text-red-600 hover:text-red-800"
+                                    onClick={() => {
+                                      const newRichContent = [...(formData.rich_content || [])]
+                                      if (blockIndex >= 0) {
+                                        newRichContent[blockIndex] = { ...newRichContent[blockIndex], video_url: '' }
+                                        setFormData({ ...formData, rich_content: newRichContent })
+                                      }
+                                    }}
+                                  >
+                                    Удалить видео
                                   </button>
                                 </div>
                               )}
@@ -1327,25 +1371,45 @@ export default function AdminProductsPage() {
                                 />
                               </div>
                               <div>
-                                <label className="block text-sm text-gray-600 mb-1">Фото/GIF</label>
-                                <input
-                                  type="file"
-                                  accept="image/*,.gif"
-                                  className="w-full px-3 py-2 border rounded-lg text-sm mb-2"
-                                  onChange={async (e) => {
-                                    const file = e.target.files?.[0]
-                                    if (!file) return
-                                    try {
-                                      const url = await uploadToFolder(file, 'rich-content')
-                                      const newRichContent = [...(formData.rich_content || [])]
-                                      newRichContent[actualIndex] = { ...newRichContent[actualIndex], image_url: url }
-                                      setFormData({ ...formData, rich_content: newRichContent })
-                                    } catch (err) {
-                                      console.error(err)
-                                      alert('Не удалось загрузить изображение')
-                                    }
-                                  }}
-                                />
+                                <label className="block text-sm text-gray-600 mb-1">Фото/Видео</label>
+                                <div className="mb-2 space-y-2">
+                                  <input
+                                    type="file"
+                                    accept="image/*,.gif"
+                                    className="w-full px-3 py-2 border rounded-lg text-sm"
+                                    onChange={async (e) => {
+                                      const file = e.target.files?.[0]
+                                      if (!file) return
+                                      try {
+                                        const url = await uploadToFolder(file, 'rich-content')
+                                        const newRichContent = [...(formData.rich_content || [])]
+                                        newRichContent[actualIndex] = { ...newRichContent[actualIndex], image_url: url, video_url: '' }
+                                        setFormData({ ...formData, rich_content: newRichContent })
+                                      } catch (err) {
+                                        console.error(err)
+                                        alert('Не удалось загрузить изображение')
+                                      }
+                                    }}
+                                  />
+                                  <input
+                                    type="file"
+                                    accept="video/*"
+                                    className="w-full px-3 py-2 border rounded-lg text-sm"
+                                    onChange={async (e) => {
+                                      const file = e.target.files?.[0]
+                                      if (!file) return
+                                      try {
+                                        const url = await uploadToFolder(file, 'rich-content')
+                                        const newRichContent = [...(formData.rich_content || [])]
+                                        newRichContent[actualIndex] = { ...newRichContent[actualIndex], video_url: url, image_url: '' }
+                                        setFormData({ ...formData, rich_content: newRichContent })
+                                      } catch (err) {
+                                        console.error(err)
+                                        alert('Не удалось загрузить видео')
+                                      }
+                                    }}
+                                  />
+                                </div>
                                 {block.image_url && (
                                   <div className="mt-2">
                                     <div className="w-full max-w-xs aspect-[4/3] overflow-hidden rounded border bg-white flex items-center justify-center">
@@ -1361,6 +1425,24 @@ export default function AdminProductsPage() {
                                       }}
                                     >
                                       Удалить фото
+                                    </button>
+                                  </div>
+                                )}
+                                {block.video_url && (
+                                  <div className="mt-2">
+                                    <div className="w-full max-w-xs aspect-[4/3] overflow-hidden rounded border bg-black flex items-center justify-center">
+                                      <video src={block.video_url} className="w-full h-full object-contain" controls />
+                                    </div>
+                                    <button
+                                      type="button"
+                                      className="mt-1 text-xs text-red-600 hover:text-red-800"
+                                      onClick={() => {
+                                        const newRichContent = [...(formData.rich_content || [])]
+                                        newRichContent[actualIndex] = { ...newRichContent[actualIndex], video_url: '' }
+                                        setFormData({ ...formData, rich_content: newRichContent })
+                                      }}
+                                    >
+                                      Удалить видео
                                     </button>
                                   </div>
                                 )}

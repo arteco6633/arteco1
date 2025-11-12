@@ -45,7 +45,7 @@ interface Product {
   is_custom_size?: boolean
   related_products?: number[] | null
   color_products?: Record<string, number> | null
-  rich_content?: Array<{ title: string; description: string; image_url: string }> | null
+  rich_content?: Array<{ title: string; description: string; image_url?: string; video_url?: string }> | null
 }
 
 interface Category {
@@ -773,7 +773,17 @@ export default function ProductPage() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
                     {product.rich_content.map((block, idx) => (
                       <div key={idx} className="bg-gray-50 rounded-lg p-4 md:p-5 border border-gray-200 flex flex-col">
-                        {block.image_url && (
+                        {block.video_url && (
+                          <div className="mb-3 md:mb-4 w-full aspect-[4/3] overflow-hidden rounded-lg bg-black">
+                            <video
+                              src={block.video_url}
+                              className="w-full h-full object-cover"
+                              controls
+                              playsInline
+                            />
+                          </div>
+                        )}
+                        {!block.video_url && block.image_url && (
                           <div className="mb-3 md:mb-4 w-full aspect-[4/3] overflow-hidden rounded-lg">
                             {block.image_url.toLowerCase().endsWith('.gif') ? (
                               <img
