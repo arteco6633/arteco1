@@ -778,7 +778,9 @@ export default function ProductPage() {
                             <video
                               src={block.video_url}
                               className="w-full h-full object-cover"
-                              controls
+                              autoPlay
+                              muted
+                              loop
                               playsInline
                             />
                           </div>
