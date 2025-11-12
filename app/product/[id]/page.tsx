@@ -649,7 +649,7 @@ export default function ProductPage() {
           {/* Информация о товаре */}
           <div className="relative flex flex-col md:overflow-hidden" style={isDesktop && syncedRightHeight ? { height: `${syncedRightHeight}px` } : {}}>
             {/* Фиксированный хедер с названием и ценой (только на десктопе) */}
-            <div className="hidden md:block sticky top-0 z-10 bg-white pb-4 border-b border-gray-200 mb-4">
+            <div className="hidden md:block sticky top-0 z-10 bg-white pb-4 mb-4">
             {category && (
               <Link
                 href={`/catalog/${category.slug}`}
@@ -774,12 +774,12 @@ export default function ProductPage() {
                     {product.rich_content.map((block, idx) => (
                       <div key={idx} className="bg-gray-50 rounded-lg p-4 md:p-5 border border-gray-200 flex flex-col">
                         {block.image_url && (
-                          <div className="mb-3 md:mb-4 w-full aspect-[4/3] overflow-hidden rounded-lg bg-white flex items-center justify-center">
+                          <div className="mb-3 md:mb-4 w-full aspect-[4/3] overflow-hidden rounded-lg">
                             {block.image_url.toLowerCase().endsWith('.gif') ? (
                               <img
                                 src={block.image_url}
                                 alt={block.title}
-                                className="w-full h-full object-contain"
+                                className="w-full h-full object-cover"
                               />
                             ) : (
                               <Image
@@ -787,7 +787,7 @@ export default function ProductPage() {
                                 alt={block.title}
                                 width={400}
                                 height={300}
-                                className="w-full h-full object-contain"
+                                className="w-full h-full object-cover"
                                 sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, 33vw"
                               />
                             )}
@@ -1084,7 +1084,7 @@ export default function ProductPage() {
               </div>
 
             {/* Sticky блок с названием и ценой на мобильных (над кнопками) */}
-            <div className="md:hidden sticky bottom-[140px] z-10 bg-white pt-4 pb-2 border-t border-gray-200 -mx-4 px-4">
+            <div className="md:hidden sticky bottom-[140px] z-10 bg-white pt-4 pb-2 -mx-4 px-4">
               <h1 className="text-2xl font-bold mb-1 leading-tight">{product.name}</h1>
               <div className="text-3xl font-bold text-black">
                 {(product as any).original_price && (
@@ -1099,7 +1099,7 @@ export default function ProductPage() {
             {/* Низ блока: количество и кнопка, закреплены вне скролла */}
             <div className="mt-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3 sm:gap-4">
               {/* Вишлист на мобильных рядом с "В корзину", на десктопе отдельно */}
-              <div className="flex md:hidden sticky bottom-0 z-20 bg-white pt-4 pb-4 border-t border-gray-200 -mx-4 px-4 items-center gap-2 justify-end w-full">
+              <div className="flex md:hidden sticky bottom-0 z-20 bg-white pt-4 pb-4 items-center gap-2 w-full">
                 <button
                   type="button"
                   aria-label={product && isInWishlist(product.id) ? 'Удалить из избранного' : 'Добавить в избранное'}
@@ -1144,7 +1144,7 @@ export default function ProductPage() {
                 </button>
                 <button
                   onClick={addToCart}
-                  className="px-8 py-3 bg-black text-white rounded-[50px] hover:bg-black/80 transition-colors font-semibold text-base flex-1"
+                  className="px-6 sm:px-9 py-3 sm:py-3.5 bg-black text-white rounded-[50px] hover:bg-black/80 transition-colors font-semibold text-base flex-1 whitespace-nowrap"
                 >
                   В корзину
                 </button>
@@ -1199,18 +1199,32 @@ export default function ProductPage() {
               {/* Кнопка "В корзину" на десктопе */}
               <button
                 onClick={addToCart}
-                className="hidden md:inline-block px-9 py-3.5 bg-black text-white rounded-[50px] hover:bg-black/80 transition-colors font-semibold text-base"
+                className="hidden md:inline-block px-9 py-3.5 bg-black text-white rounded-[50px] hover:bg-black/80 transition-colors font-semibold text-base whitespace-nowrap"
               >
                 В корзину
               </button>
               
-              <button
-                type="button"
-                onClick={() => { setIsCalcOpen(true); setQuizStep(1) }}
-                className="px-6 sm:px-9 py-3 sm:py-3.5 border border-black text-black rounded-[50px] hover:bg-black/5 transition-colors font-semibold text-base whitespace-nowrap flex-1 sm:flex-none"
-              >
-                Рассчитать под мои размеры
-              </button>
+              {(() => {
+                if (!category) return null
+                const slug = (category.slug?.toLowerCase() || '')
+                const name = (category.name?.toLowerCase() || '')
+                const isKitchenOrWardrobe =
+                  slug.includes('kitchen') || slug.includes('kuhn') || name.includes('кух') ||
+                  slug.includes('shkaf') || slug.includes('wardrobe') || slug.includes('closet') ||
+                  name.includes('шкаф') || name.includes('стеллаж')
+                
+                if (!isKitchenOrWardrobe) return null
+                
+                return (
+                  <button
+                    type="button"
+                    onClick={() => { setIsCalcOpen(true); setQuizStep(1) }}
+                    className="px-6 sm:px-9 py-3 sm:py-3.5 border border-black text-black rounded-[50px] hover:bg-black/5 transition-colors font-semibold text-base whitespace-nowrap flex-1 sm:flex-none"
+                  >
+                    Рассчитать под мои размеры
+                  </button>
+                )
+              })()}
             </div>
             </div>
             {/* Конец прокручиваемой области */}
