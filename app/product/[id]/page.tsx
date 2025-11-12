@@ -45,6 +45,7 @@ interface Product {
   is_custom_size?: boolean
   related_products?: number[] | null
   color_products?: Record<string, number> | null
+  rich_content?: Array<{ title: string; description: string; image_url: string }> | null
 }
 
 interface Category {
@@ -760,6 +761,33 @@ export default function ProductPage() {
                         />
                       )
                     })}
+                  </div>
+                </div>
+              )}
+
+              {/* Дополнительный контент под цветами */}
+              {product.rich_content && product.rich_content.length > 0 && (
+                <div className="mb-6">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {product.rich_content.map((block, idx) => (
+                      <div key={idx} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                        {block.image_url && (
+                          <div className="mb-3">
+                            <Image
+                              src={block.image_url}
+                              alt={block.title}
+                              width={200}
+                              height={200}
+                              className="w-full h-32 object-cover rounded-lg"
+                            />
+                          </div>
+                        )}
+                        <h4 className="font-semibold text-base mb-2">{block.title}</h4>
+                        {block.description && (
+                          <p className="text-sm text-gray-600 leading-relaxed">{block.description}</p>
+                        )}
+                      </div>
+                    ))}
                   </div>
                 </div>
               )}

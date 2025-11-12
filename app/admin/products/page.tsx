@@ -38,6 +38,7 @@ interface Product {
   is_fast_delivery?: boolean
   related_products?: number[] | null
   color_products?: Record<string, number> | null
+  rich_content?: Array<{ title: string; description: string; image_url: string }> | null
 }
 
 export default function AdminProductsPage() {
@@ -113,6 +114,7 @@ export default function AdminProductsPage() {
     is_fast_delivery: false,
     related_products: [] as number[],
     color_products: {} as Record<string, number>,
+    rich_content: [] as Array<{ title: string; description: string; image_url: string }>,
   })
 
   useEffect(() => {
@@ -254,6 +256,7 @@ export default function AdminProductsPage() {
       is_fast_delivery: false,
       related_products: [],
       color_products: {},
+      rich_content: [],
     })
     setShowModal(true)
   }
@@ -306,6 +309,9 @@ export default function AdminProductsPage() {
       color_products: ((product as any).color_products && typeof (product as any).color_products === 'object') 
         ? (product as any).color_products 
         : {},
+      rich_content: Array.isArray((product as any).rich_content) 
+        ? (product as any).rich_content 
+        : [],
     })
     setShowModal(true)
   }
@@ -542,6 +548,7 @@ export default function AdminProductsPage() {
         is_fast_delivery: formData.is_fast_delivery,
         related_products: formData.related_products,
         color_products: formData.color_products || {},
+        rich_content: formData.rich_content || [],
       }
 
       if (editingProduct) {
@@ -1168,6 +1175,90 @@ export default function AdminProductsPage() {
                       })}
                     </div>
                   )}
+                </div>
+
+                {/* Дополнительный контент под цветами */}
+                <div className="mb-6">
+                  <label className="block mb-2 font-semibold">Дополнительный контент под цветами</label>
+                  <div className="space-y-4">
+                    {[
+                      { key: 'fits_any_interior', title: 'Впишется в любой интерьер' },
+                      { key: 'careful_packaging', title: 'Упакуем аккуратно' },
+                      { key: 'easy_assembly', title: 'Легкая сборка' }
+                    ].map((block, idx) => {
+                      const existingBlock = formData.rich_content?.find(b => b.title === block.title) || null
+                      const blockIndex = existingBlock ? formData.rich_content?.indexOf(existingBlock) : -1
+                      
+                      return (
+                        <div key={block.key} className="border rounded-lg p-4 bg-gray-50">
+                          <h4 className="font-semibold mb-3">{block.title}</h4>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                              <label className="block text-sm text-gray-600 mb-1">Описание</label>
+                              <textarea
+                                className="w-full px-3 py-2 border rounded-lg text-sm"
+                                rows={3}
+                                placeholder="Введите описание..."
+                                value={existingBlock?.description || ''}
+                                onChange={(e) => {
+                                  const newRichContent = [...(formData.rich_content || [])]
+                                  if (blockIndex >= 0) {
+                                    newRichContent[blockIndex] = { ...newRichContent[blockIndex], description: e.target.value }
+                                  } else {
+                                    newRichContent.push({ title: block.title, description: e.target.value, image_url: '' })
+                                  }
+                                  setFormData({ ...formData, rich_content: newRichContent })
+                                }}
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm text-gray-600 mb-1">Фото</label>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                className="w-full px-3 py-2 border rounded-lg text-sm mb-2"
+                                onChange={async (e) => {
+                                  const file = e.target.files?.[0]
+                                  if (!file) return
+                                  try {
+                                    const url = await uploadToFolder(file, 'rich-content')
+                                    const newRichContent = [...(formData.rich_content || [])]
+                                    if (blockIndex >= 0) {
+                                      newRichContent[blockIndex] = { ...newRichContent[blockIndex], image_url: url }
+                                    } else {
+                                      newRichContent.push({ title: block.title, description: '', image_url: url })
+                                    }
+                                    setFormData({ ...formData, rich_content: newRichContent })
+                                  } catch (err) {
+                                    console.error(err)
+                                    alert('Не удалось загрузить изображение')
+                                  }
+                                }}
+                              />
+                              {existingBlock?.image_url && (
+                                <div className="mt-2">
+                                  <img src={existingBlock.image_url} alt={block.title} className="w-32 h-32 object-cover rounded border" />
+                                  <button
+                                    type="button"
+                                    className="mt-1 text-xs text-red-600 hover:text-red-800"
+                                    onClick={() => {
+                                      const newRichContent = [...(formData.rich_content || [])]
+                                      if (blockIndex >= 0) {
+                                        newRichContent[blockIndex] = { ...newRichContent[blockIndex], image_url: '' }
+                                        setFormData({ ...formData, rich_content: newRichContent })
+                                      }
+                                    }}
+                                  >
+                                    Удалить фото
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
                 </div>
 
                 {/* Варианты наполнений */}
