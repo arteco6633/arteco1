@@ -4,7 +4,7 @@ import { useEffect, useState, useRef, useMemo } from 'react'
 import Image from 'next/image'
 import { useCart } from '@/components/CartContext'
 import { useWishlist } from '@/components/WishlistContext'
-import { useParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import ProductGrid from '@/components/ProductGrid'
 import KitchenQuiz from '@/components/KitchenQuiz'
@@ -44,6 +44,7 @@ interface Product {
   is_new: boolean
   is_custom_size?: boolean
   related_products?: number[] | null
+  color_products?: Record<string, number> | null
 }
 
 interface Category {
@@ -54,6 +55,7 @@ interface Category {
 
 export default function ProductPage() {
   const params = useParams()
+  const router = useRouter()
   const id = params?.id as string
   const { add } = useCart()
   const { toggle, isInWishlist } = useWishlist()
@@ -708,21 +710,29 @@ export default function ProductPage() {
                       const colorValue = colorObj.value || (typeof c === 'string' ? c : '')
                       const isImageUrl = typeof colorValue === 'string' && (colorValue.startsWith('http') || colorValue.startsWith('/'))
                       const isSelected = selectedColorIdx === idx
+                      // Проверяем, есть ли связанный товар для этого цвета
+                      const linkedProductId = product.color_products?.[idx.toString()]
+                      
                       return isImageUrl ? (
                         <button
                           key={idx}
                           type="button"
                           onClick={() => {
+                            // Если есть связанный товар, переходим на него
+                            if (linkedProductId) {
+                              router.push(`/product/${linkedProductId}`)
+                              return
+                            }
+                            // Иначе переключаем изображение
                             setSelectedColorIdx(idx)
-                            // Если цвет связан с изображением через imageIndex
                             if (colorObj.imageIndex !== null && colorObj.imageIndex !== undefined && product.images && product.images[colorObj.imageIndex]) {
                               setActiveImageIdx(colorObj.imageIndex)
                             } else if (product.images && product.images.length > idx) {
-                              // Фоллбек: если нет связи, переключаемся по индексу
                               setActiveImageIdx(Math.min(idx, product.images.length - 1))
                             }
                           }}
-                          className={`w-12 h-12 rounded-full border-2 ${isSelected ? 'border-black ring-2 ring-black/30' : 'border-black/10'} object-cover cursor-pointer hover:ring-2 hover:ring-black/20 transition-all`}
+                          className={`w-12 h-12 rounded-full border-2 ${isSelected ? 'border-black ring-2 ring-black/30' : 'border-black/10'} object-cover cursor-pointer hover:ring-2 hover:ring-black/20 transition-all ${linkedProductId ? 'ring-1 ring-blue-400' : ''}`}
+                          title={linkedProductId ? 'Нажмите, чтобы открыть товар с этим цветом' : `Цвет ${idx + 1}`}
                         >
                           <img src={colorValue} alt={`Цвет ${idx + 1}`} className="w-full h-full rounded-full object-cover" />
                         </button>
@@ -731,18 +741,22 @@ export default function ProductPage() {
                           key={idx}
                           type="button"
                           onClick={() => {
+                            // Если есть связанный товар, переходим на него
+                            if (linkedProductId) {
+                              router.push(`/product/${linkedProductId}`)
+                              return
+                            }
+                            // Иначе переключаем изображение
                             setSelectedColorIdx(idx)
-                            // Если цвет связан с изображением через imageIndex
                             if (colorObj.imageIndex !== null && colorObj.imageIndex !== undefined && product.images && product.images[colorObj.imageIndex]) {
                               setActiveImageIdx(colorObj.imageIndex)
                             } else if (product.images && product.images.length > idx) {
-                              // Фоллбек: если нет связи, переключаемся по индексу
                               setActiveImageIdx(Math.min(idx, product.images.length - 1))
                             }
                           }}
-                          className={`w-12 h-12 rounded-full border-2 ${isSelected ? 'border-black ring-2 ring-black/30' : 'border-black/10'} shadow-sm cursor-pointer hover:ring-2 hover:ring-black/20 transition-all`}
+                          className={`w-12 h-12 rounded-full border-2 ${isSelected ? 'border-black ring-2 ring-black/30' : 'border-black/10'} shadow-sm cursor-pointer hover:ring-2 hover:ring-black/20 transition-all ${linkedProductId ? 'ring-1 ring-blue-400' : ''}`}
                           style={{ background: colorValue || '#ccc' }}
-                          title={colorValue || 'Цвет'}
+                          title={linkedProductId ? 'Нажмите, чтобы открыть товар с этим цветом' : (colorValue || 'Цвет')}
                         />
                       )
                     })}

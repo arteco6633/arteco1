@@ -37,6 +37,7 @@ interface Product {
   is_custom_size?: boolean
   is_fast_delivery?: boolean
   related_products?: number[] | null
+  color_products?: Record<string, number> | null
 }
 
 export default function AdminProductsPage() {
@@ -111,6 +112,7 @@ export default function AdminProductsPage() {
     is_custom_size: false,
     is_fast_delivery: false,
     related_products: [] as number[],
+    color_products: {} as Record<string, number>,
   })
 
   useEffect(() => {
@@ -251,6 +253,7 @@ export default function AdminProductsPage() {
       is_custom_size: false,
       is_fast_delivery: false,
       related_products: [],
+      color_products: {},
     })
     setShowModal(true)
   }
@@ -300,6 +303,9 @@ export default function AdminProductsPage() {
       is_custom_size: !!(product as any).is_custom_size,
       is_fast_delivery: !!(product as any).is_fast_delivery,
       related_products: (product as any).related_products || [],
+      color_products: ((product as any).color_products && typeof (product as any).color_products === 'object') 
+        ? (product as any).color_products 
+        : {},
     })
     setShowModal(true)
   }
@@ -535,6 +541,7 @@ export default function AdminProductsPage() {
         is_custom_size: formData.is_custom_size,
         is_fast_delivery: formData.is_fast_delivery,
         related_products: formData.related_products,
+        color_products: formData.color_products || {},
       }
 
       if (editingProduct) {
@@ -1122,6 +1129,37 @@ export default function AdminProductsPage() {
                               {imageIndex !== null && formData.images[imageIndex] && (
                                 <div className="mt-2">
                                   <img src={formData.images[imageIndex]} alt={`Привязанное изображение`} className="w-20 h-20 object-contain rounded border bg-gray-100" />
+                                </div>
+                              )}
+                            </div>
+                            {/* Связывание товара по цвету */}
+                            <div className="mt-3">
+                              <label className="block text-xs text-gray-600 mb-1">Связать с товаром (при клике на цвет откроется этот товар):</label>
+                              <select
+                                className="w-full px-2 py-1 border rounded text-sm"
+                                value={formData.color_products?.[idx.toString()] || ''}
+                                onChange={(e) => {
+                                  const newColorProducts = { ...formData.color_products }
+                                  if (e.target.value) {
+                                    newColorProducts[idx.toString()] = parseInt(e.target.value)
+                                  } else {
+                                    delete newColorProducts[idx.toString()]
+                                  }
+                                  setFormData({ ...formData, color_products: newColorProducts })
+                                }}
+                              >
+                                <option value="">Не связывать</option>
+                                {products
+                                  .filter(p => p.id !== editingProduct?.id)
+                                  .map(p => (
+                                    <option key={p.id} value={p.id}>
+                                      {p.name} (ID: {p.id})
+                                    </option>
+                                  ))}
+                              </select>
+                              {formData.color_products?.[idx.toString()] && (
+                                <div className="mt-2 text-xs text-gray-500">
+                                  Связан с товаром ID: {formData.color_products[idx.toString()]}
                                 </div>
                               )}
                             </div>
