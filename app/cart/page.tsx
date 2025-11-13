@@ -6,10 +6,12 @@ import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import ProductGrid from '@/components/ProductGrid'
+import { useSession } from 'next-auth/react'
 
 export default function CartPage() {
   const { items, total, updateQty, remove, clear, add } = useCart()
   const router = useRouter()
+  const { data: session } = useSession()
   const [suggested, setSuggested] = useState<Array<{id:number; name:string; price:number; image_url:string}>>([])
   const [suggestedOpen, setSuggestedOpen] = useState(false)
   const [acceptAll, setAcceptAll] = useState(false)
@@ -115,6 +117,38 @@ export default function CartPage() {
     loadSuggestions()
   }, [items])
 
+  // Загружаем профиль пользователя при загрузке страницы
+  useEffect(() => {
+    async function loadUserProfile() {
+      if (!session) return
+      
+      const userPhone = (session as any)?.phone
+      if (!userPhone) return
+
+      try {
+        const { data, error } = await supabase
+          .from('users_local')
+          .select('name, phone')
+          .eq('phone', userPhone)
+          .single()
+
+        if (!error && data) {
+          setUserProfile({ name: data.name, phone: data.phone })
+          // Автозаполняем поля, если они пустые
+          setContact(prev => ({
+            name: prev.name || data.name || '',
+            phone: prev.phone || data.phone || '',
+            email: prev.email || ''
+          }))
+        }
+      } catch (err) {
+        console.error('Ошибка загрузки профиля:', err)
+      }
+    }
+
+    loadUserProfile()
+  }, [session])
+
   // Подгружаем изображения модулей для тех, у кого они отсутствуют в корзине
   useEffect(() => {
     (async () => {
@@ -157,7 +191,11 @@ export default function CartPage() {
     // Адрес не обязателен: если пусто и выбран курьер, отправим без адреса — уточним по звонку
     try {
       setPlacing(true)
+      // Получаем user_id из сессии, если пользователь авторизован
+      const userId = session?.user?.id || null
+      
       const payload = {
+        user_id: userId,
         contact,
         items: items.map(it => ({ id: it.id, name: it.name, qty: it.qty, price: it.price, color: it.color || null, options: it.options || null })),
         total,

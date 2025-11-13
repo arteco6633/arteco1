@@ -273,7 +273,7 @@ export default function Navbar() {
             {profileMenuOpen && session && (
               <div className="absolute right-0 top-12 w-48 bg-white border rounded-lg shadow-lg overflow-hidden z-50">
                 <div className="px-4 py-3 text-sm border-b">{(session as any).phone || 'Профиль'}</div>
-                <a href="/orders" className="block px-4 py-2 text-sm hover:bg-gray-50">Мои заказы</a>
+                <Link href="/account/orders" className="block px-4 py-2 text-sm hover:bg-gray-50">Мои заказы</Link>
                 <button
                   className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50"
                   onClick={() => { setProfileMenuOpen(false); signOut({ redirect: false }) }}
