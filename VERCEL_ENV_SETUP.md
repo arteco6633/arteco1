@@ -1,0 +1,112 @@
+# 🔧 Настройка переменных окружения в Vercel
+
+## Переменные, которые нужно добавить в Vercel
+
+После деплоя проекта на Vercel, добавьте следующие переменные окружения в настройках проекта:
+
+### 1. Supabase переменные (уже должны быть)
+
+```
+NEXT_PUBLIC_SUPABASE_URL=https://zijajicude.beget.app
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlzcyI6InN1cGFiYXNlIiwiaWF0IjoxNzYxNTIzMjAwLCJleHAiOjE5MTkyODk2MDB9.l9rF02tJ4OKoCSqVsKeHnBR47mYkFG5BxF_Imkz9tcs
+SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoic2VydmljZV9yb2xlIiwiaXNzIjoic3VwYWJhc2UiLCJpYXQiOjE3NjE1MjMyMDAsImV4cCI6MTkxOTI4OTYwMH0.czdG5JO8AbL1FIYcFOlWEeaRcWENltD2gNSX9YLY8Pk
+```
+
+### 2. SMTP переменные для Mail.ru (НОВЫЕ - нужно добавить)
+
+```
+SMTP_HOST=smtp.mail.ru
+SMTP_PORT=465
+SMTP_USER=arteco.one@mail.ru
+SMTP_PASSWORD=ad8j5EUXA8KlNrRvZcar
+SMTP_FROM=noreply@arteco.ru
+```
+
+## 📋 Пошаговая инструкция добавления в Vercel
+
+### Способ 1: Через веб-интерфейс Vercel
+
+1. **Откройте проект в Vercel:**
+   - Перейдите на https://vercel.com
+   - Войдите в свой аккаунт
+   - Выберите проект `arteco` (или название вашего проекта)
+
+2. **Откройте настройки:**
+   - Перейдите в раздел **Settings** (Настройки)
+   - Выберите **Environment Variables** (Переменные окружения)
+
+3. **Добавьте переменные:**
+   - Нажмите **Add New** (Добавить новую)
+   - Для каждой переменной:
+     - **Key** (Ключ): название переменной (например, `SMTP_HOST`)
+     - **Value** (Значение): значение переменной (например, `smtp.mail.ru`)
+     - **Environment** (Окружение): выберите все нужные окружения:
+       - ✅ Production (для продакшена)
+       - ✅ Preview (для preview окружений)
+       - ✅ Development (для dev окружений)
+
+4. **Сохраните и перезапустите:**
+   - После добавления всех переменных нажмите **Save**
+   - Перезапустите деплой (Redeploy) для применения изменений
+
+### Способ 2: Через Vercel CLI
+
+```bash
+# Установите Vercel CLI (если еще не установлен)
+npm i -g vercel
+
+# Войдите в аккаунт
+vercel login
+
+# Добавьте переменные окружения
+vercel env add SMTP_HOST production
+vercel env add SMTP_PORT production
+vercel env add SMTP_USER production
+vercel env add SMTP_PASSWORD production
+vercel env add SMTP_FROM production
+
+# Для каждого окружения (production, preview, development)
+# Повторите команды для preview и development, если нужно
+```
+
+## ✅ Полный список переменных для Vercel
+
+Скопируйте и добавьте все эти переменные:
+
+```
+# Supabase
+NEXT_PUBLIC_SUPABASE_URL=https://zijajicude.beget.app
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlzcyI6InN1cGFiYXNlIiwiaWF0IjoxNzYxNTIzMjAwLCJleHAiOjE5MTkyODk2MDB9.l9rF02tJ4OKoCSqVsKeHnBR47mYkFG5BxF_Imkz9tcs
+SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoic2VydmljZV9yb2xlIiwiaXNzIjoic3VwYWJhc2UiLCJpYXQiOjE3NjE1MjMyMDAsImV4cCI6MTkxOTI4OTYwMH0.czdG5JO8AbL1FIYcFOlWEeaRcWENltD2gNSX9YLY8Pk
+
+# SMTP для Mail.ru
+SMTP_HOST=smtp.mail.ru
+SMTP_PORT=465
+SMTP_USER=arteco.one@mail.ru
+SMTP_PASSWORD=ad8j5EUXA8KlNrRvZcar
+SMTP_FROM=noreply@arteco.ru
+```
+
+## 🔒 Безопасность
+
+⚠️ **Важно:**
+- **НЕ** добавляйте файл `.env.local` в Git
+- Переменные в Vercel хранятся в зашифрованном виде
+- `SMTP_PASSWORD` - это секретная информация, храните её безопасно
+- После добавления переменных обязательно сделайте **Redeploy** проекта
+
+## 🧪 Проверка после деплоя
+
+После добавления переменных и перезапуска:
+
+1. Оформите тестовый заказ на продакшене
+2. Проверьте, что email уведомление пришло
+3. Измените статус заказа в CRM
+4. Проверьте, что уведомление об изменении статуса пришло
+
+## 📝 Примечания
+
+- Переменные окружения применяются только после **Redeploy** (перезапуска деплоя)
+- Если переменные не работают, проверьте, что они добавлены для правильного окружения (Production/Preview/Development)
+- В логах Vercel можно увидеть ошибки, если переменные не настроены правильно
+

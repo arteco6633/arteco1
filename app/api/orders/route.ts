@@ -2,6 +2,7 @@ export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { sendEmail, getOrderConfirmationEmail } from '@/lib/email'
 
 export async function POST(request: Request) {
   try {
@@ -28,6 +29,23 @@ export async function POST(request: Request) {
     const { data, error } = await supabase.rpc('create_order', { payload })
     if (error) return NextResponse.json({ success: false, error: error.message }, { status: 500 })
     const orderId = Array.isArray(data) ? (data[0] as any)?.id : (data as any)?.id
+
+    // Отправляем email с благодарностью за заказ
+    const customerEmail = body.contact?.email
+    if (customerEmail) {
+      try {
+        const customerName = body.contact?.name || 'Клиент'
+        const emailHtml = getOrderConfirmationEmail(orderId, customerName, body.total)
+        await sendEmail({
+          to: customerEmail,
+          subject: `Спасибо за ваш заказ #${orderId} - ART=CO`,
+          html: emailHtml,
+        })
+      } catch (emailError) {
+        // Не прерываем выполнение, если email не отправился
+        console.error('Failed to send order confirmation email:', emailError)
+      }
+    }
 
     return NextResponse.json({ success: true, id: orderId })
   } catch (e: any) {
