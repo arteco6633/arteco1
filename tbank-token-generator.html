@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+
+<html lang="ru">
+
+<head>
+
+  <meta charset="UTF-8">
+
+  <title>Генератор токена MAPI</title>
+
+  <style>
+
+    body {
+
+      font-family: Arial, sans-serif;
+
+      max-width: 1000px;
+
+      margin: 40px auto;
+
+      line-height: 1.5;
+
+    }
+
+    h1 {
+
+      text-align: center;
+
+      margin-bottom: 1em;
+
+    }
+
+    label {
+
+      display: block;
+
+      margin: 1em 0 0.5em;
+
+      font-weight: bold;
+
+    }
+
+    textarea, input {
+
+      width: 100%;
+
+      box-sizing: border-box;
+
+      padding: 0.5em;
+
+      font-size: 1em;
+
+      border: 1px solid #ccc;
+
+      border-radius: 4px;
+
+    }
+
+    textarea {
+
+      min-height: 200px;
+
+      resize: vertical;
+
+    }
+
+    button {
+
+      margin-top: 1em;
+
+      padding: 0.75em 1.5em;
+
+      font-size: 1em;
+
+      border: none;
+
+      border-radius: 4px;
+
+      background-color: #FFDD31;
+
+      color: #000;
+
+      cursor: pointer;
+
+    }
+
+    button:hover {
+
+      background-color: #FFCD33;
+
+    }
+
+    pre {
+
+      background: #f8f8f8;
+
+      padding: 1em;
+
+      border-radius: 4px;
+
+      word-break: break-all;
+
+    }
+
+  </style>
+
+</head>
+
+<body>
+
+  <h1>Генератор токена MAPI</h1>
+
+  <label for="jsonInput">JSON-тело запроса:</label>
+
+  <textarea id="jsonInput" placeholder='{
+
+  "TerminalKey": "TBankTest",
+
+  "Amount": 19200,
+
+  "OrderId": "21090",
+
+  "Description": "Подарочная карта на 1000 рублей",
+
+  "DATA": {...},
+
+  "Receipt": {...}
+
+}'></textarea>
+
+  <label for="passwordInput">Пароль терминала:</label>
+
+  <input id="passwordInput" type="text" placeholder="Введите пароль" />
+
+  <button id="generateBtn">Сгенерировать токен</button>
+
+  <label for="concatOutput">Строка конкатенации:</label>
+
+  <pre id="concatOutput">—</pre>
+
+  <label for="tokenOutput">Токен:</label>
+
+  <pre id="tokenOutput">—</pre>
+
+  <script>
+
+    async function generateToken() {
+
+      const out = document.getElementById('tokenOutput');
+
+      const concatOut = document.getElementById('concatOutput');
+
+      let obj;
+
+      try {
+
+        obj = JSON.parse(document.getElementById('jsonInput').value);
+
+      } catch (e) {
+
+        out.textContent = 'Ошибка: некорректный JSON';
+
+        return;
+
+      }
+
+      const password = document.getElementById('passwordInput').value;
+
+      if (!password) {
+
+        out.textContent = 'Ошибка: пароль не задан';
+
+        return;
+
+      }
+
+      // 1. Собираем только корневые параметры (исключая объекты/массивы и сам Token)
+
+      const entries = [];
+
+      for (const key in obj) {
+
+        if (!obj.hasOwnProperty(key)) continue;
+
+        const val = obj[key];
+
+        if (key === 'Token') continue;
+
+        // Пропускаем вложенные объекты и массивы
+
+        if (typeof val === 'object') continue;
+
+        entries.push([key, String(val)]);
+
+      }
+
+      // 2. Добавляем пару Password
+
+      entries.push(['Password', password]);
+
+      // 3. Сортируем по ключу
+
+      entries.sort((a, b) => a[0].localeCompare(b[0]));
+
+      // 4. Конкатенируем только значения
+
+      const concat = entries.map(pair => pair[1]).join('');
+
+      // Выводим строку конкатенации
+
+      concatOut.textContent = concat;
+
+      // 5. Вычисляем SHA-256
+
+      const buf = await crypto.subtle.digest(
+
+        'SHA-256',
+
+        new TextEncoder().encode(concat)
+
+      );
+
+      // Переводим в hex
+
+      const hashArray = Array.from(new Uint8Array(buf));
+
+      const hashHex = hashArray
+
+        .map(b => b.toString(16).padStart(2, '0'))
+
+        .join('');
+
+      // 6. Выводим токен
+
+      out.textContent = hashHex;
+
+    }
+
+    document
+
+      .getElementById('generateBtn')
+
+      .addEventListener('click', generateToken);
+
+  </script>
+
+</body>
+
+</html>
+

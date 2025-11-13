@@ -1,0 +1,347 @@
+export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
+
+import { NextResponse } from 'next/server'
+import crypto from 'crypto'
+
+/**
+ * Создание платежа через T-Bank API
+ * Документация: https://developer.tbank.ru/eacq/intro
+ */
+export async function POST(req: Request) {
+  try {
+    const body = await req.json()
+    console.log('=== T-Bank Create Payment - Incoming Request ===')
+    console.log('Body:', JSON.stringify(body, null, 2))
+    
+    // Читаем значения из env
+    // ВАЖНО: НЕ делаем trim() для пароля - он должен быть как есть из env
+    let terminalId = process.env.TBANK_TERMINAL_ID
+    let password = process.env.TBANK_PASSWORD
+    
+    // Очищаем только от переносов строк и табуляций (но НЕ от пробелов!)
+    if (terminalId) {
+      terminalId = terminalId.replace(/[\r\n\t]/g, '')
+    }
+    if (password) {
+      // Убираем только переносы строк и табуляции, но НЕ пробелы и НЕ trim!
+      password = password.replace(/[\r\n\t]/g, '')
+    }
+    
+    // Детальная проверка значений из env
+    console.log('=== Environment Variables Check ===')
+    console.log('TBANK_TERMINAL_ID:', {
+      value: terminalId,
+      length: terminalId?.length,
+      bytes: terminalId ? Buffer.from(terminalId, 'utf8').length : 0,
+      hasSpaces: terminalId?.includes(' '),
+      hasNewlines: terminalId?.includes('\n'),
+      hasTabs: terminalId?.includes('\t'),
+      charCodes: terminalId ? Array.from(terminalId).map(c => c.charCodeAt(0)) : [],
+    })
+    console.log('TBANK_PASSWORD:', {
+      value: password ? '*'.repeat(password.length) : null,
+      length: password?.length,
+      bytes: password ? Buffer.from(password, 'utf8').length : 0,
+      hasSpaces: password?.includes(' '),
+      hasNewlines: password?.includes('\n'),
+      hasTabs: password?.includes('\t'),
+      firstChar: password ? password.charCodeAt(0) : null,
+      lastChar: password ? password.charCodeAt(password.length - 1) : null,
+    })
+    
+    // API endpoint для T-Bank согласно документации:
+    // Документация: https://developer.tbank.ru/eacq/intro/errors/test-cases
+    // Боевая среда (production): https://securepay.tinkoff.ru/v2/Init
+    // Тестовая среда: https://rest-api-test.tinkoff.ru/v2/Init (требует добавления IP в белый список)
+    
+    // По умолчанию используем PRODUCTION URL для всех терминалов
+    let apiUrl = 'https://securepay.tinkoff.ru/v2/Init'
+    
+    // Если явно указан другой URL, используем его
+    if (process.env.TBANK_API_URL) {
+      apiUrl = process.env.TBANK_API_URL
+      if (!apiUrl.endsWith('/Init')) {
+        apiUrl = apiUrl.replace(/\/$/, '') + '/Init'
+      }
+    }
+    
+    const isDemoTerminal = terminalId?.includes('DEMO')
+    console.log('Using API URL:', apiUrl, isDemoTerminal ? '(DEMO terminal -> PRODUCTION URL as per docs)' : '(PRODUCTION terminal)')
+
+    console.log('Environment check:', {
+      hasTerminalId: !!terminalId,
+      hasPassword: !!password,
+      terminalId: terminalId?.substring(0, 10) + '...',
+      apiUrl,
+      siteUrl: process.env.NEXT_PUBLIC_SITE_URL,
+    })
+
+    if (!terminalId || !password) {
+      console.error('T-Bank credentials missing!')
+      return NextResponse.json(
+        { ok: false, error: 'T-Bank credentials not configured' },
+        { status: 500 }
+      )
+    }
+
+    const amount = Number(body?.amount || 0)
+    const orderId = body?.orderId || body?.order_id
+
+    console.log('Parsed values:', { amount, orderId, amountInKopecks: Math.round(amount * 100) })
+
+    if (!amount || amount <= 0) {
+      console.error('Invalid amount:', amount)
+      return NextResponse.json(
+        { ok: false, error: 'Invalid amount' },
+        { status: 400 }
+      )
+    }
+
+    if (!orderId) {
+      console.error('Order ID missing!')
+      return NextResponse.json(
+        { ok: false, error: 'Order ID is required' },
+        { status: 400 }
+      )
+    }
+
+    // Формируем данные для Init запроса
+    // Сумма в копейках
+    const amountInKopecks = Math.round(amount * 100)
+
+    // Формируем базовые данные для Init запроса
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, '') || 'http://localhost:3000'
+    
+    // Формируем данные для Init запроса
+    // ВАЖНО: Description передается как есть, со всеми пробелами (без trim)
+    const description = body?.description || `Заказ #${orderId}`
+    
+    // Формируем данные для Init запроса
+    // Согласно документации, Amount должен быть числом, OrderId - строкой
+    // ВАЖНО: baseUrl должен указывать на реальный домен для production (не localhost)
+    const initData: any = {
+      TerminalKey: terminalId,
+      Amount: amountInKopecks, // Число в копейках
+      OrderId: String(orderId), // Строка
+      Description: description, // Строка со всеми пробелами
+      SuccessURL: body?.successUrl || `${baseUrl}/order/success?order=${orderId}`,
+      FailURL: body?.failUrl || `${baseUrl}/order/fail?order=${orderId}`,
+      NotificationURL: `${baseUrl}/api/payments/tbank/callback`,
+    }
+    
+    // Дополнительная проверка для DEMO терминала
+    console.log('=== DEMO Terminal Check ===')
+    console.log('TerminalKey matches DEMO:', terminalId.includes('DEMO'))
+    console.log('Using API URL:', apiUrl)
+    console.log('Init data types:', {
+      TerminalKey: typeof initData.TerminalKey,
+      Amount: typeof initData.Amount,
+      OrderId: typeof initData.OrderId,
+      Description: typeof initData.Description,
+    })
+
+    // Добавляем DATA только если есть email или phone
+    if (body?.email || body?.phone) {
+      initData.DATA = {}
+      if (body?.email) initData.DATA.Email = body.email
+      if (body?.phone) initData.DATA.Phone = body.phone
+    }
+
+    // Receipt добавляем только если он есть
+    if (body?.receipt) {
+      initData.Receipt = body.receipt
+    }
+
+    // Формируем строку для подписи согласно документации T-Bank
+    // Документация: https://developer.tbank.ru/eacq/intro/developer/token
+    // ВАЖНО: Согласно ответу поддержки: "Для метода Init в формировании подписи запроса участвуют 
+    // ВСЕ корневые объекты, переданные в запросе, и исключаются объекты Receipt и DATA."
+    // Это означает, что SuccessURL, FailURL, NotificationURL ДОЛЖНЫ участвовать в подписи!
+    // Алгоритм:
+    // 1. Собрать массив параметров корневого объекта (исключаем только вложенные объекты: Receipt, DATA)
+    // 2. Исключаем из подписи: Token (это сам токен, его не подписываем)
+    // 3. Добавить Password в массив параметров
+    // 4. Отсортировать массив по алфавиту по ключу
+    // 5. Конкатенировать только значения в строку
+    // 6. Применить SHA-256 (с поддержкой UTF-8)
+    
+    // Создаем копию initData без полей, которые не входят в подпись
+    // ВАЖНО: Исключаем ТОЛЬКО Token, Receipt и DATA. Все остальные корневые поля участвуют!
+    const signData: Record<string, any> = { ...initData }
+    delete signData.Token   // Токен не участвует в подписи (это сам токен)
+    delete signData.Receipt // Вложенный объект не участвует
+    delete signData.DATA    // Вложенный объект не участвует
+    
+    console.log('=== Fields for Signature ===')
+    console.log('All initData fields:', Object.keys(initData))
+    console.log('Fields excluded from signature:', ['Token', 'Receipt', 'DATA'])
+    console.log('Fields included in signature:', Object.keys(signData))
+    console.log('NOTE: SuccessURL, FailURL, NotificationURL ARE included as per support response!')
+    
+    // Преобразуем все значения в строки согласно документации T-Bank
+    // ВАЖНО: В документации показано, что Amount в подписи - это СТРОКА "19200", а не число!
+    // Все значения должны быть строками БЕЗ trim
+    // Description передается со всеми пробелами
+    const signFields: Record<string, string> = {}
+    for (const key in signData) {
+      const value = signData[key]
+      if (value !== null && value !== undefined) {
+        // Все значения преобразуем в строки БЕЗ trim
+        // Согласно документации, значения должны быть как есть
+        // Amount должен быть строкой (в документации: {"Amount": "19200"})
+        signFields[key] = String(value)
+      }
+    }
+    
+    // Добавляем Password в массив параметров (ВАЖНО: Password включается в сортировку!)
+    // Password должен быть строкой БЕЗ trim
+    const passwordStr = String(password)
+    signFields.Password = passwordStr
+    
+    // Дополнительная проверка: убеждаемся, что пароль не содержит невидимых символов
+    console.log('=== Password Debug ===')
+    console.log('Password from env (raw):', JSON.stringify(password))
+    console.log('Password in signature:', JSON.stringify(passwordStr))
+    console.log('Password bytes:', Buffer.from(passwordStr, 'utf8').toString('hex'))
+    console.log('Password char codes:', Array.from(passwordStr).map(c => c.charCodeAt(0)))
+    
+    // Сортируем ключи по алфавиту и формируем строку из значений
+    const sortedKeys = Object.keys(signFields).sort()
+    const signString = sortedKeys.map(key => signFields[key]).join('')
+    
+    console.log('=== Signature Debug ===')
+    console.log('Sign fields order (alphabetical, Password included):', sortedKeys)
+    console.log('Sign fields values (detailed):')
+    sortedKeys.forEach(key => {
+      const value = signFields[key]
+      console.log(`  ${key}: "${value}" (length: ${value.length}, type: ${typeof value})`)
+      // Для пароля показываем только длину
+      if (key === 'Password') {
+        console.log(`    Password value: "${'*'.repeat(value.length)}"`)
+      }
+    })
+    console.log('Sign string (Password included in alphabetical order):', signString)
+    console.log('Sign string length:', signString.length)
+    console.log('Sign string bytes (UTF-8):', Buffer.from(signString, 'utf8').length)
+    console.log('Terminal ID:', terminalId)
+    console.log('Password length:', passwordStr.length)
+    console.log('Original initData (for reference):', JSON.stringify({
+      TerminalKey: initData.TerminalKey,
+      Amount: initData.Amount,
+      OrderId: initData.OrderId,
+      Description: initData.Description,
+    }, null, 2))
+    
+    // Тестовая проверка: создаем подпись по примеру из документации
+    // Пример из документации: Amount=19200, Description="Подарочная карта на 1000 рублей", OrderId="00000", Password="11111111111111", TerminalKey="MerchantTerminalKey"
+    // Ожидаемая строка: "19200Подарочная карта на 1000 рублей0000011111111111111MerchantTerminalKey"
+    // Ожидаемый токен: "72dd466f8ace0a37a1f740ce5fb78101712bc0665d91a8108c7c8a0ccd426db2"
+    const testFields = {
+      Amount: '19200',
+      Description: 'Подарочная карта на 1000 рублей',
+      OrderId: '00000',
+      Password: '11111111111111',
+      TerminalKey: 'MerchantTerminalKey',
+    }
+    const testSortedKeys = Object.keys(testFields).sort()
+    const testSignString = testSortedKeys.map(key => testFields[key as keyof typeof testFields]).join('')
+    const testToken = crypto.createHash('sha256').update(testSignString).digest('hex')
+    console.log('=== Test Signature (from documentation example) ===')
+    console.log('Test sign string:', testSignString)
+    console.log('Test token:', testToken)
+    console.log('Expected token:', '72dd466f8ace0a37a1f740ce5fb78101712bc0665d91a8108c7c8a0ccd426db2')
+    console.log('Test token matches:', testToken === '72dd466f8ace0a37a1f740ce5fb78101712bc0665d91a8108c7c8a0ccd426db2')
+
+    // Создаем подпись (SHA-256)
+    const token = crypto.createHash('sha256').update(signString).digest('hex')
+
+    const requestPayload = {
+      ...initData,
+      Token: token,
+    }
+
+    // Логируем запрос для отладки (без пароля)
+    console.log('=== T-Bank Init Request ===')
+    console.log('URL:', apiUrl)
+    console.log('Request payload:', JSON.stringify(requestPayload, null, 2))
+    console.log('Sign string:', signString)
+    console.log('Token (signature):', token)
+
+    // Отправляем запрос в T-Bank API
+    // ВАЖНО: Для тестового API (rest-api-test.tinkoff.ru) ваш IP должен быть в белом списке!
+    // Чтобы добавить IP в белый список, отправьте запрос в T-Bank:
+    // - Email: acq_help@tbank.ru
+    // - Укажите: ИНН, наименование организации, IP-адрес, URL (rest-api-test.tinkoff.ru)
+    console.log('=== Request Info ===')
+    console.log('API URL:', apiUrl)
+    console.log('NOTE: For test API, your IP must be whitelisted!')
+    
+    const response = await fetch(apiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: JSON.stringify(requestPayload),
+    })
+
+    // Проверяем Content-Type перед парсингом JSON
+    const contentType = response.headers.get('content-type') || ''
+    let responseData: any
+    
+    if (contentType.includes('application/json')) {
+      responseData = await response.json()
+    } else {
+      // Если ответ не JSON, читаем как текст для отладки
+      const textResponse = await response.text()
+      console.error('T-Bank returned non-JSON response:', {
+        status: response.status,
+        statusText: response.statusText,
+        contentType,
+        body: textResponse.substring(0, 500), // Первые 500 символов
+      })
+      throw new Error(`T-Bank API returned non-JSON response (${response.status}): ${textResponse.substring(0, 100)}`)
+    }
+
+    console.log('=== T-Bank Init Response ===')
+    console.log('Status:', response.status, response.statusText)
+    console.log('Response:', JSON.stringify(responseData, null, 2))
+
+    if (!response.ok || responseData.ErrorCode !== '0') {
+      console.error('T-Bank Init error:', {
+        status: response.status,
+        statusText: response.statusText,
+        errorCode: responseData.ErrorCode,
+        message: responseData.Message,
+        details: responseData.Details,
+        fullResponse: responseData,
+      })
+      return NextResponse.json(
+        {
+          ok: false,
+          error: responseData.Message || responseData.Details || 'T-Bank API error',
+          errorCode: responseData.ErrorCode,
+        },
+        { status: response.ok ? 400 : 500 }
+      )
+    }
+
+    // Возвращаем PaymentURL для редиректа пользователя
+    return NextResponse.json({
+      ok: true,
+      paymentUrl: responseData.PaymentURL,
+      paymentId: responseData.PaymentId,
+      orderId: responseData.OrderId,
+    })
+  } catch (e: any) {
+    console.error('T-Bank create payment error:', e)
+    return NextResponse.json(
+      { ok: false, error: e?.message || 'Unknown error' },
+      { status: 500 }
+    )
+  }
+}
+
+
+

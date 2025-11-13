@@ -6,6 +6,7 @@ import { WishlistProvider } from '@/components/WishlistContext'
 import { Suspense } from 'react'
 import BootLoader from '@/components/BootLoader'
 import AppShell from '@/components/AppShell'
+import TBankWidgetWrapper from '@/components/TBankWidgetWrapper'
 
 export const metadata: Metadata = {
   title: 'ARTECO - Интернет-магазин',
@@ -77,6 +78,8 @@ export default function RootLayout({
             </WishlistProvider>
           </CartProvider>
         </Providers>
+        {/* T-Bank Payment Widget */}
+        <TBankWidgetWrapper />
       </body>
     </html>
   )

@@ -2,11 +2,17 @@
 
 import Link from 'next/link'
 import { useCart } from '@/components/CartContext'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import ProductGrid from '@/components/ProductGrid'
 import { useSession } from 'next-auth/react'
+
+declare global {
+  interface Window {
+    PaymentIntegration?: any
+  }
+}
 
 export default function CartPage() {
   const { items, total, updateQty, remove, clear, add } = useCart()
@@ -18,6 +24,7 @@ export default function CartPage() {
   const [consents, setConsents] = useState({ privacy: false, marketing: false, calls: false })
   const [contact, setContact] = useState({ name: '', phone: '', email: '' })
   const [userProfile, setUserProfile] = useState<{ name: string | null; phone: string | null } | null>(null)
+  const profileLoadedRef = useRef<string | null>(null)
   const [deliveryType, setDeliveryType] = useState<'courier'|'pickup'>('courier')
   const [address, setAddress] = useState('')
   const [needAssembly, setNeedAssembly] = useState(false)
@@ -126,6 +133,10 @@ export default function CartPage() {
       const userPhone = (session as any)?.phone
       if (!userPhone) return
 
+      // Проверяем, не загружали ли уже профиль для этого телефона
+      if (profileLoadedRef.current === userPhone) return
+      profileLoadedRef.current = userPhone
+
       try {
         const { data, error } = await supabase
           .from('users_local')
@@ -144,6 +155,7 @@ export default function CartPage() {
         }
       } catch (err) {
         console.error('Ошибка загрузки профиля:', err)
+        profileLoadedRef.current = null // Сбрасываем при ошибке, чтобы можно было повторить
       }
     }
 
@@ -212,6 +224,111 @@ export default function CartPage() {
     } catch (e: any) {
       alert(e?.message || 'Не удалось оформить заказ')
     } finally {
+      setPlacing(false)
+    }
+  }
+
+  async function startTBankPayment() {
+    // Проверки формы
+    if (placing) return
+    const nextErrors = {
+      name: !contact.name,
+      phone: !contact.phone,
+      privacy: !consents.privacy,
+      delivery: !deliveryType,
+    }
+    setErrors(nextErrors)
+    if (nextErrors.name || nextErrors.phone || nextErrors.privacy || nextErrors.delivery) {
+      setShowFillModal(true)
+      return
+    }
+
+    try {
+      setPlacing(true)
+      const userId = null
+
+      // Сначала создаем заказ
+      const payload = {
+        user_id: userId,
+        contact,
+        items: items.map(it => ({ id: it.id, name: it.name, qty: it.qty, price: it.price, color: it.color || null, options: it.options || null })),
+        total,
+        delivery: { type: deliveryType, address: address || null, needAssembly, needUtilization },
+        payment: { method: 'card' },
+      }
+      
+      const orderResp = await fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+      
+      const orderData = await orderResp.json()
+      if (!orderResp.ok || !orderData?.success) {
+        throw new Error(orderData?.error || 'Order creation failed')
+      }
+
+      const orderId = orderData.id
+      const amountInKopecks = Math.round(total * 100)
+      
+      console.log('Opening T-Bank payment widget:', {
+        orderId,
+        amount: total,
+        amountInKopecks,
+        email: contact.email,
+        phone: contact.phone,
+      })
+
+      // Создаем платеж через API и получаем PaymentURL для редиректа
+      // Виджет T-Bank используется для инициализации, но для создания платежа нужен API вызов
+      const paymentPayload = {
+        amount: total,
+        orderId: orderId,
+        description: `Заказ #${orderId}`,
+        email: contact.email || null,
+        phone: contact.phone || null,
+      }
+      
+      console.log('Creating T-Bank payment:', paymentPayload)
+      
+      let paymentResp: Response
+      let paymentData: any
+      
+      try {
+        paymentResp = await fetch('/api/payments/tbank/create', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(paymentPayload),
+        })
+      } catch (fetchError: any) {
+        console.error('Fetch error:', fetchError)
+        throw new Error(`Не удалось подключиться к серверу: ${fetchError?.message || 'Unknown error'}`)
+      }
+
+      try {
+        paymentData = await paymentResp.json()
+      } catch (jsonError: any) {
+        console.error('JSON parse error:', jsonError)
+        const text = await paymentResp.text()
+        console.error('Response text:', text)
+        throw new Error(`Ошибка ответа сервера: ${text.substring(0, 100)}`)
+      }
+      
+      console.log('Payment response:', { status: paymentResp.status, data: paymentData })
+      
+      if (!paymentResp.ok || !paymentData?.ok) {
+        console.error('Payment creation failed:', paymentData)
+        throw new Error(paymentData?.error || 'Не удалось создать платеж')
+      }
+
+      // Перенаправляем пользователя на страницу оплаты T-Bank
+      if (paymentData.paymentUrl) {
+        window.location.href = paymentData.paymentUrl
+      } else {
+        throw new Error('Payment URL not received')
+      }
+    } catch (e: any) {
+      alert(e?.message || 'Не удалось создать платеж')
       setPlacing(false)
     }
   }
@@ -646,6 +763,14 @@ export default function CartPage() {
               >
                 {ypLoading ? 'Открываем Yandex Pay…' : 'Оплатить через Yandex Pay'}
               </button>
+            ) : paymentMethod === 'card' ? (
+              <button
+                onClick={startTBankPayment}
+                disabled={placing}
+                className="block w-full text-center py-3 rounded-full bg-black text-white font-semibold disabled:opacity-60"
+              >
+                {placing ? 'Создаём платёж…' : 'Оплатить картой онлайн'}
+              </button>
             ) : (
               <button onClick={placeOrder} disabled={placing} className="block w-full text-center py-3 rounded-full bg-black text-white font-semibold disabled:opacity-60">
                 {placing ? 'Оформляем…' : 'Оформить заказ'}
@@ -674,5 +799,3 @@ export default function CartPage() {
     </div>
   )
 }
-
-
