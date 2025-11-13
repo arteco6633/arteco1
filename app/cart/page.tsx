@@ -287,6 +287,11 @@ export default function CartPage() {
         description: `Заказ #${orderId}`,
         email: contact.email || null,
         phone: contact.phone || null,
+        items: items.map(it => ({ 
+          name: it.name, 
+          qty: it.qty, 
+          price: it.price 
+        })), // Передаем товары для формирования Receipt
       }
       
       console.log('Creating T-Bank payment:', paymentPayload)
@@ -317,8 +322,14 @@ export default function CartPage() {
       console.log('Payment response:', { status: paymentResp.status, data: paymentData })
       
       if (!paymentResp.ok || !paymentData?.ok) {
-        console.error('Payment creation failed:', paymentData)
-        throw new Error(paymentData?.error || 'Не удалось создать платеж')
+        console.error('=== Payment Creation Failed ===')
+        console.error('Status:', paymentResp.status)
+        console.error('Response data:', paymentData)
+        console.error('Error code:', paymentData?.errorCode)
+        console.error('Error message:', paymentData?.error)
+        const errorMessage = paymentData?.error || paymentData?.message || 'Не удалось создать платеж'
+        const errorCode = paymentData?.errorCode ? ` (Код ошибки: ${paymentData.errorCode})` : ''
+        throw new Error(`${errorMessage}${errorCode}`)
       }
 
       // Перенаправляем пользователя на страницу оплаты T-Bank

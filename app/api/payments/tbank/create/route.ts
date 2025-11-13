@@ -78,11 +78,20 @@ export async function POST(req: Request) {
     })
 
     if (!terminalId || !password) {
-      console.error('T-Bank credentials missing!')
+      console.error('=== T-Bank credentials missing! ===')
+      console.error('TBANK_TERMINAL_ID:', terminalId ? 'present' : 'MISSING')
+      console.error('TBANK_PASSWORD:', password ? 'present' : 'MISSING')
       return NextResponse.json(
-        { ok: false, error: 'T-Bank credentials not configured' },
+        { ok: false, error: 'T-Bank credentials not configured. Проверьте переменные окружения TBANK_TERMINAL_ID и TBANK_PASSWORD' },
         { status: 500 }
       )
+    }
+    
+    // Проверка формата terminalId для реального терминала
+    if (!terminalId.includes('DEMO') && terminalId.length < 10) {
+      console.warn('=== Warning: Terminal ID seems too short for production ===')
+      console.warn('Terminal ID length:', terminalId.length)
+      console.warn('Terminal ID:', terminalId.substring(0, 10) + '...')
     }
 
     const amount = Number(body?.amount || 0)
@@ -130,6 +139,11 @@ export async function POST(req: Request) {
       NotificationURL: `${baseUrl}/api/payments/tbank/callback`,
     }
     
+    console.log('=== URL Configuration ===')
+    console.log('NEXT_PUBLIC_SITE_URL:', process.env.NEXT_PUBLIC_SITE_URL)
+    console.log('baseUrl:', baseUrl)
+    console.log('NotificationURL:', initData.NotificationURL)
+    
     // Дополнительная проверка для DEMO терминала
     console.log('=== DEMO Terminal Check ===')
     console.log('TerminalKey matches DEMO:', terminalId.includes('DEMO'))
@@ -148,8 +162,68 @@ export async function POST(req: Request) {
       if (body?.phone) initData.DATA.Phone = body.phone
     }
 
-    // Receipt добавляем только если он есть
-    if (body?.receipt) {
+    // Receipt обязателен для реального терминала (не DEMO)
+    // Согласно документации T-Bank, для production терминала Receipt обязателен
+    if (!terminalId.includes('DEMO')) {
+      // Формируем Receipt для реального терминала
+      // ВАЖНО: Email или Phone обязательны для Receipt
+      const receiptEmail = body?.email || null
+      const receiptPhone = body?.phone ? body.phone.replace(/\D/g, '').replace(/^8/, '7') : null
+      
+      if (!receiptEmail && !receiptPhone) {
+        console.warn('=== Warning: No email or phone for Receipt ===')
+        console.warn('Receipt requires Email or Phone. Using phone from contact if available.')
+      }
+      
+      const receipt: any = {
+        Taxation: 'usn_income', // Упрощенная система налогообложения (доходы)
+        Items: [],
+      }
+      
+      // Email или Phone обязательны для Receipt
+      if (receiptEmail) receipt.Email = receiptEmail
+      if (receiptPhone) receipt.Phone = receiptPhone
+      
+      // Если есть данные о товарах, добавляем их в чек
+      if (body?.items && Array.isArray(body.items) && body.items.length > 0) {
+        receipt.Items = body.items.map((item: any) => ({
+          Name: String(item.name || 'Товар').substring(0, 128), // Максимум 128 символов
+          Price: Math.round((item.price || 0) * 100), // Цена в копейках
+          Quantity: Math.max(1, Math.round(item.qty || 1)), // Количество (минимум 1)
+          Amount: Math.round((item.price || 0) * (item.qty || 1) * 100), // Сумма в копейках
+          Tax: 'none', // Без НДС (для УСН доходы)
+        }))
+        
+        // Проверяем, что сумма Items совпадает с общей суммой
+        const itemsTotal = receipt.Items.reduce((sum: number, item: any) => sum + item.Amount, 0)
+        if (itemsTotal !== amountInKopecks) {
+          console.warn('=== Warning: Items total does not match order total ===')
+          console.warn('Items total:', itemsTotal, 'Order total:', amountInKopecks)
+          // Корректируем последний товар, чтобы сумма совпадала
+          if (receipt.Items.length > 0) {
+            const diff = amountInKopecks - itemsTotal
+            receipt.Items[receipt.Items.length - 1].Amount += diff
+            receipt.Items[receipt.Items.length - 1].Price = Math.round(receipt.Items[receipt.Items.length - 1].Amount / receipt.Items[receipt.Items.length - 1].Quantity)
+          }
+        }
+      } else {
+        // Если товары не переданы, создаем один товар на всю сумму
+        receipt.Items = [{
+          Name: String(description || 'Заказ').substring(0, 128),
+          Price: amountInKopecks,
+          Quantity: 1,
+          Amount: amountInKopecks,
+          Tax: 'none',
+        }]
+      }
+      
+      initData.Receipt = receipt
+      console.log('=== Receipt for Production Terminal ===')
+      console.log('Receipt:', JSON.stringify(receipt, null, 2))
+      console.log('Receipt Items count:', receipt.Items.length)
+      console.log('Receipt Items total:', receipt.Items.reduce((sum: number, item: any) => sum + item.Amount, 0))
+    } else if (body?.receipt) {
+      // Для DEMO терминала Receipt опционален, но если передан - используем
       initData.Receipt = body.receipt
     }
 
@@ -317,11 +391,19 @@ export async function POST(req: Request) {
         details: responseData.Details,
         fullResponse: responseData,
       })
+      // Логируем полную информацию об ошибке
+      console.error('=== T-Bank API Error Details ===')
+      console.error('ErrorCode:', responseData.ErrorCode)
+      console.error('Message:', responseData.Message)
+      console.error('Details:', responseData.Details)
+      console.error('Full response:', JSON.stringify(responseData, null, 2))
+      
       return NextResponse.json(
         {
           ok: false,
           error: responseData.Message || responseData.Details || 'T-Bank API error',
           errorCode: responseData.ErrorCode,
+          details: responseData.Details,
         },
         { status: response.ok ? 400 : 500 }
       )
