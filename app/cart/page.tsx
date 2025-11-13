@@ -193,7 +193,8 @@ export default function CartPage() {
     try {
       setPlacing(true)
       // Получаем user_id из сессии, если пользователь авторизован
-      const userId = session?.user?.id || null
+      // В NextAuth user.id может быть недоступен напрямую, используем phone для идентификации
+      const userId = null // user_id будет null, так как используем phone для связи заказов
       
       const payload = {
         user_id: userId,
