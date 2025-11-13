@@ -24,6 +24,7 @@ export default function CRMOrdersPage() {
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
   const [viewMode, setViewMode] = useState<'kanban' | 'list'>('kanban')
+  const [deletingOrderId, setDeletingOrderId] = useState<number | null>(null)
 
   useEffect(() => {
     loadOrders()
@@ -141,13 +142,52 @@ export default function CRMOrdersPage() {
     e.preventDefault()
   }
 
+  async function handleDeleteOrder(orderId: number) {
+    if (!confirm(`Вы уверены, что хотите удалить заказ #${orderId}? Это действие нельзя отменить.`)) {
+      return
+    }
+
+    try {
+      setDeletingOrderId(orderId)
+      const resp = await fetch('/api/crm/orders', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: orderId })
+      })
+
+      if (!resp.ok) {
+        const data = await resp.json().catch(() => ({}))
+        throw new Error(data?.error || 'Не удалось удалить заказ')
+      }
+
+      // Удаляем заказ из списка
+      setOrders(prev => prev.filter(o => o.id !== orderId))
+    } catch (err: any) {
+      console.error('Ошибка удаления заказа:', err)
+      alert(err?.message || 'Не удалось удалить заказ')
+    } finally {
+      setDeletingOrderId(null)
+    }
+  }
+
   function OrderCard({ order }: { order: Order }) {
+    const isDeleting = deletingOrderId === order.id
+
     return (
       <div
-        draggable
-        onDragStart={(e) => e.dataTransfer.setData('text/plain', String(order.id))}
-        className="bg-white border rounded-lg p-3 shadow-sm hover:shadow-md transition cursor-grab active:cursor-grabbing"
+        draggable={!isDeleting}
+        onDragStart={(e) => {
+          if (!isDeleting) {
+            e.dataTransfer.setData('text/plain', String(order.id))
+          }
+        }}
+        className="bg-white border rounded-lg p-3 shadow-sm hover:shadow-md transition cursor-grab active:cursor-grabbing relative"
       >
+        {isDeleting && (
+          <div className="absolute inset-0 bg-white/80 rounded-lg flex items-center justify-center z-10">
+            <div className="inline-block animate-spin rounded-full h-5 w-5 border-b-2 border-gray-900"></div>
+          </div>
+        )}
         <div className="flex items-center justify-between">
           <div className="font-medium text-sm">#{order.order_number}</div>
           <div className={`px-2 py-0.5 rounded-full text-[11px] ${getStatusColor(order.status)}`}>{getStatusText(order.status)}</div>
@@ -156,7 +196,20 @@ export default function CRMOrdersPage() {
         <div className="text-xs text-gray-500">{order.user_phone}</div>
         <div className="mt-2 flex items-center justify-between">
           <div className="text-sm font-semibold">{(order.total_amount || order.total || 0).toLocaleString('ru-RU')} ₽</div>
-          <Link className="text-xs text-blue-600 hover:text-blue-500" href={`/crm/orders/${order.id}`}>Открыть →</Link>
+          <div className="flex items-center gap-2">
+            <Link className="text-xs text-blue-600 hover:text-blue-500" href={`/crm/orders/${order.id}`}>Открыть →</Link>
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                handleDeleteOrder(order.id)
+              }}
+              disabled={isDeleting}
+              className="text-xs text-red-600 hover:text-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Удалить заказ"
+            >
+              ×
+            </button>
+          </div>
         </div>
       </div>
     )

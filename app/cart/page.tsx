@@ -17,6 +17,7 @@ export default function CartPage() {
   const [acceptAll, setAcceptAll] = useState(false)
   const [consents, setConsents] = useState({ privacy: false, marketing: false, calls: false })
   const [contact, setContact] = useState({ name: '', phone: '', email: '' })
+  const [userProfile, setUserProfile] = useState<{ name: string | null; phone: string | null } | null>(null)
   const [deliveryType, setDeliveryType] = useState<'courier'|'pickup'>('courier')
   const [address, setAddress] = useState('')
   const [needAssembly, setNeedAssembly] = useState(false)
@@ -503,12 +504,21 @@ export default function CartPage() {
                   value={contact.phone}
                   onChange={e => { setContact({ ...contact, phone: e.target.value }); if (errors.phone) setErrors({ ...errors, phone: false }) }}
                 />
-                <input
-                  className="w-full border rounded-lg px-3 py-2 sm:col-span-2"
-                  placeholder="Почта"
-                  value={contact.email}
-                  onChange={e => setContact({ ...contact, email: e.target.value })}
-                />
+                <div className="sm:col-span-2">
+                  <input
+                    type="email"
+                    className="w-full border-2 border-blue-300 rounded-lg px-3 py-2 bg-blue-50/50 focus:border-blue-500 focus:bg-blue-50 focus:outline-none transition-colors"
+                    placeholder="Почта (для уведомлений о статусе заказа)"
+                    value={contact.email}
+                    onChange={e => setContact({ ...contact, email: e.target.value })}
+                  />
+                  <p className="mt-2 text-xs text-blue-600 flex items-start gap-1.5">
+                    <svg className="w-4 h-4 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span>Укажите email, чтобы получать уведомления об изменении статуса вашего заказа</span>
+                  </p>
+                </div>
               </div>
               <div className="mt-4 text-sm text-gray-600">Чтобы оформить заказ, нам нужно разрешение на использование ваших данных:</div>
               <div className="mt-3 space-y-3">

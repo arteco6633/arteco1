@@ -44,6 +44,7 @@ export default function CRMOrderDetailPage() {
   const [order, setOrder] = useState<Order | null>(null)
   const [orderItems, setOrderItems] = useState<OrderItem[]>([])
   const [loading, setLoading] = useState(true)
+  const [deleting, setDeleting] = useState(false)
 
   useEffect(() => {
     if (orderId) {
@@ -164,6 +165,35 @@ export default function CRMOrderDetailPage() {
     return texts[status] || status
   }
 
+  async function handleDeleteOrder() {
+    if (!order) return
+    
+    if (!confirm(`Вы уверены, что хотите удалить заказ #${order.id}? Это действие нельзя отменить.`)) {
+      return
+    }
+
+    try {
+      setDeleting(true)
+      const resp = await fetch('/api/crm/orders', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: order.id })
+      })
+
+      if (!resp.ok) {
+        const data = await resp.json().catch(() => ({}))
+        throw new Error(data?.error || 'Не удалось удалить заказ')
+      }
+
+      // Перенаправляем на страницу списка заказов
+      router.push('/crm/orders')
+    } catch (err: any) {
+      console.error('Ошибка удаления заказа:', err)
+      alert(err?.message || 'Не удалось удалить заказ')
+      setDeleting(false)
+    }
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -225,7 +255,16 @@ export default function CRMOrderDetailPage() {
             <Link href="/crm/orders" className="text-blue-600 hover:text-blue-500 text-sm mb-4 inline-block">
               ← Вернуться к списку заказов
             </Link>
-            <h2 className="text-3xl font-bold text-gray-900 mt-2">Заказ #{order.order_number}</h2>
+            <div className="flex items-center justify-between mt-2">
+              <h2 className="text-3xl font-bold text-gray-900">Заказ #{order.order_number}</h2>
+              <button
+                onClick={handleDeleteOrder}
+                disabled={deleting}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm font-medium"
+              >
+                {deleting ? 'Удаление...' : 'Удалить заказ'}
+              </button>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
