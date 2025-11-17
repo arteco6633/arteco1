@@ -1598,10 +1598,29 @@ export default function ProductPage() {
                 </button>
               )}
 
-              {/* Изображение */}
+              {/* Изображение с поддержкой свайпов */}
               <div 
                 className="relative w-full h-full"
                 onClick={(e) => e.stopPropagation()}
+                onTouchStart={(e) => {
+                  touchStartX.current = e.touches[0].clientX
+                }}
+                onTouchMove={(e) => {
+                  if (touchStartX.current === null) return
+                  const diff = touchStartX.current - e.touches[0].clientX
+                  if (Math.abs(diff) > 50) {
+                    if (diff > 0 && interiorPreviewIdx < product.interior_images.length - 1) {
+                      setInteriorPreviewIdx(interiorPreviewIdx + 1)
+                      touchStartX.current = null
+                    } else if (diff < 0 && interiorPreviewIdx > 0) {
+                      setInteriorPreviewIdx(interiorPreviewIdx - 1)
+                      touchStartX.current = null
+                    }
+                  }
+                }}
+                onTouchEnd={() => {
+                  touchStartX.current = null
+                }}
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img 
@@ -1610,6 +1629,13 @@ export default function ProductPage() {
                   className="max-w-full max-h-full mx-auto object-contain rounded-lg"
                 />
               </div>
+
+              {/* Счетчик изображений */}
+              {product.interior_images.length > 1 && (
+                <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-10 text-white/80 text-sm">
+                  {interiorPreviewIdx + 1} / {product.interior_images.length}
+                </div>
+              )}
 
               {/* Индикатор текущего изображения */}
               {product.interior_images.length > 1 && (
