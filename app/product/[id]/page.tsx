@@ -1509,25 +1509,65 @@ export default function ProductPage() {
         {/* Фото в интерьере */}
         {Array.isArray(product?.interior_images) && product.interior_images.length > 0 && (
           <section className="mt-8 md:mt-12">
-            <h2 className="text-xl sm:text-2xl md:text-3xl font-bold mb-4 md:mb-6">Фото в интерьере</h2>
+            <div className="flex items-center justify-between mb-4 md:mb-6">
+              <h2 className="text-xl sm:text-2xl md:text-3xl font-bold">Фото в интерьере</h2>
+              {/* Индикатор прокрутки на мобильных */}
+              {product.interior_images.length > 3 && (
+                <div className="md:hidden flex items-center gap-1 text-sm text-gray-500">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16l-4-4m0 0l4-4m-4 4h18" />
+                  </svg>
+                  <span>Листайте</span>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                  </svg>
+                </div>
+              )}
+            </div>
             <div 
-              className="overflow-x-auto -mx-4 px-4 scrollbar-hide"
+              className="overflow-x-auto -mx-4 px-4 scrollbar-hide snap-x snap-mandatory"
               style={{
-                touchAction: 'pan-x pan-y pinch-zoom',
+                touchAction: 'pan-x',
                 overscrollBehaviorX: 'contain',
-                overscrollBehaviorY: 'auto',
-                WebkitOverflowScrolling: 'touch'
+                overscrollBehaviorY: 'none',
+                WebkitOverflowScrolling: 'touch',
+                scrollSnapType: 'x mandatory'
+              }}
+              onTouchStart={(e) => {
+                // Предотвращаем вертикальную прокрутку при горизонтальном свайпе
+                const touch = e.touches[0]
+                const startX = touch.clientX
+                const startY = touch.clientY
+                
+                const handleMove = (moveEvent: TouchEvent) => {
+                  const moveTouch = moveEvent.touches[0]
+                  const diffX = Math.abs(moveTouch.clientX - startX)
+                  const diffY = Math.abs(moveTouch.clientY - startY)
+                  
+                  // Если горизонтальное движение больше вертикального, блокируем вертикальную прокрутку
+                  if (diffX > diffY && diffX > 10) {
+                    moveEvent.preventDefault()
+                  }
+                }
+                
+                const handleEnd = () => {
+                  document.removeEventListener('touchmove', handleMove)
+                  document.removeEventListener('touchend', handleEnd)
+                }
+                
+                document.addEventListener('touchmove', handleMove, { passive: false })
+                document.addEventListener('touchend', handleEnd)
               }}
             >
-              <div className="flex gap-4 md:gap-6">
+              <div className="flex gap-4 md:gap-6" style={{ paddingRight: product.interior_images.length > 3 ? '1rem' : '0' }}>
                 {product.interior_images.map((url, idx) => (
                   <div 
                     key={idx} 
-                    className="relative flex-shrink-0 rounded-xl overflow-hidden bg-gray-100 cursor-pointer transition-transform hover:scale-[1.02]"
+                    className="relative flex-shrink-0 rounded-xl overflow-hidden bg-gray-100 cursor-pointer transition-transform hover:scale-[1.02] snap-start"
                     style={{ 
-                      width: 'calc((100vw - 2rem - 1rem) / 3)',
-                      minWidth: '280px',
-                      maxWidth: 'calc((100% - 2rem) / 3)'
+                      width: 'calc(100vw - 2rem)',
+                      minWidth: 'calc(100vw - 2rem)',
+                      maxWidth: 'calc(100vw - 2rem)'
                     }}
                     onClick={() => setInteriorPreviewIdx(idx)}
                   >
@@ -1536,11 +1576,17 @@ export default function ProductPage() {
                         src={url}
                         alt={`${product.name} в интерьере ${idx + 1}`}
                         fill
-                        sizes="(max-width: 640px) 280px, (max-width: 1024px) calc((100vw - 2rem) / 3), calc((100vw - 2rem) / 3)"
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) calc((100vw - 2rem) / 3), calc((100vw - 2rem) / 3)"
                         className="object-cover"
                         unoptimized={true}
                       />
                     </div>
+                    {/* Индикатор номера фото на мобильных */}
+                    {product.interior_images.length > 1 && (
+                      <div className="absolute bottom-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded-full">
+                        {idx + 1} / {product.interior_images.length}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
