@@ -564,8 +564,11 @@ export default function CartPage() {
           amount: { value: (it.price * it.qty).toFixed(2), currency: 'RUB' }
         }))
 
-        const merchantId = data.merchantId || (process.env.NEXT_PUBLIC_YANDEX_MERCHANT_ID as any)
-        const paymentData = {
+        // Поддержка разных вариантов названий переменных
+        const merchantId = data.merchantId || 
+          (process.env.NEXT_PUBLIC_YANDEX_PAY_MERCHANT_ID as any) ||
+          (process.env.NEXT_PUBLIC_YANDEX_MERCHANT_ID as any)
+        const paymentData: any = {
           version: 2,
           merchant: { id: String(merchantId), name: 'ARTECO' },
           currencyCode: 'RUB',
@@ -576,6 +579,15 @@ export default function CartPage() {
             items: paymentItems
           },
           buyer: { phone: contact.phone || '' }
+        }
+
+        // Добавляем Split (оплата частями), если включен и выбран метод оплаты Split
+        if (data.enableSplit && paymentMethod === 'split') {
+          paymentData.split = {
+            enabled: true,
+            // Можно указать минимальную сумму для Split (например, от 3000 рублей)
+            minAmount: { value: '3000.00', currency: 'RUB' }
+          }
         }
 
         // Создаём checkout с обработчиками событий сразу в subscriptions
@@ -995,13 +1007,17 @@ export default function CartPage() {
               <div className="text-2xl font-bold">{total.toLocaleString('ru-RU')} ₽</div>
             </div>
             <div className="text-sm text-gray-500 mb-4">Доставка и сборка будут рассчитаны менеджером после подтверждения заказа.</div>
-            {paymentMethod === 'yap' ? (
+            {paymentMethod === 'yap' || paymentMethod === 'split' ? (
               <button
                 onClick={startYandexPay}
                 disabled={placing || ypLoading}
                 className="block w-full text-center py-3 rounded-full bg-black text-white font-semibold disabled:opacity-60"
               >
-                {ypLoading ? 'Открываем Yandex Pay…' : 'Оплатить через Yandex Pay'}
+                {ypLoading 
+                  ? 'Открываем Yandex Pay…' 
+                  : paymentMethod === 'split' 
+                    ? 'Оплатить частями с Яндекс Сплит' 
+                    : 'Оплатить через Yandex Pay'}
               </button>
             ) : paymentMethod === 'card' || paymentMethod === 'sberpay' ? (
               <button
