@@ -1563,12 +1563,7 @@ export default function ProductPage() {
                 {product.interior_images.map((url, idx) => (
                   <div 
                     key={idx} 
-                    className="relative flex-shrink-0 rounded-xl overflow-hidden bg-gray-100 cursor-pointer transition-transform hover:scale-[1.02] snap-start"
-                    style={{ 
-                      width: 'calc(100vw - 2rem)',
-                      minWidth: 'calc(100vw - 2rem)',
-                      maxWidth: 'calc(100vw - 2rem)'
-                    }}
+                    className="relative flex-shrink-0 rounded-xl overflow-hidden bg-gray-100 cursor-pointer transition-transform hover:scale-[1.02] snap-start w-[calc(100vw-2rem)] min-w-[calc(100vw-2rem)] max-w-[calc(100vw-2rem)] md:w-[calc((100vw-2rem-2rem)/3)] md:min-w-[280px] md:max-w-[calc((100vw-2rem-2rem)/3)]"
                     onClick={() => setInteriorPreviewIdx(idx)}
                   >
                     <div className="relative aspect-[4/3]">
