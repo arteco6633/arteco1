@@ -487,7 +487,7 @@ export default function ProductPage() {
               <div className="flex-1 relative">
                 <div
                   ref={leftMainImageRef}
-                  className="rounded-lg overflow-hidden shadow-lg relative aspect-[4/3] md:aspect-square group max-h-[70vh] md:max-h-none"
+                  className="rounded-lg overflow-hidden shadow-lg relative aspect-[3/4] md:aspect-square group max-h-[400px] md:max-h-none"
                   style={{ 
                     // Блокируем вертикальную прокрутку при горизонтальном свайпе
                     touchAction: (product.images && product.images.length > 1) ? 'pan-x' : 'auto',
@@ -521,8 +521,7 @@ export default function ProductPage() {
                       if (!isHorizontalSwipeRef.current) {
                         isHorizontalSwipeRef.current = true
                       }
-                      // Блокируем вертикальную прокрутку при горизонтальном свайпе
-                      e.preventDefault()
+                      // Не используем preventDefault() - CSS touch-action уже блокирует вертикальную прокрутку
                     } else if (diffY > 10 && diffY > diffX * 1.5) {
                       // Если это явно вертикальный свайп, сбрасываем флаг
                       isHorizontalSwipeRef.current = false
@@ -667,29 +666,8 @@ export default function ProductPage() {
                       scrollSnapType: 'x mandatory'
                     }}
                     onTouchStart={(e) => {
-                      // Предотвращаем вертикальную прокрутку при горизонтальном свайпе
-                      const touch = e.touches[0]
-                      const startX = touch.clientX
-                      const startY = touch.clientY
-                      
-                      const handleMove = (moveEvent: TouchEvent) => {
-                        const moveTouch = moveEvent.touches[0]
-                        const diffX = Math.abs(moveTouch.clientX - startX)
-                        const diffY = Math.abs(moveTouch.clientY - startY)
-                        
-                        // Если горизонтальное движение больше вертикального, блокируем вертикальную прокрутку
-                        if (diffX > diffY && diffX > 10) {
-                          moveEvent.preventDefault()
-                        }
-                      }
-                      
-                      const handleEnd = () => {
-                        document.removeEventListener('touchmove', handleMove)
-                        document.removeEventListener('touchend', handleEnd)
-                      }
-                      
-                      document.addEventListener('touchmove', handleMove, { passive: false })
-                      document.addEventListener('touchend', handleEnd)
+                      // CSS touch-action уже настроен, дополнительная обработка не требуется
+                      e.stopPropagation()
                     }}
                   >
                     <div className="flex gap-2" style={{ minWidth: 'max-content' }}>
@@ -1575,29 +1553,8 @@ export default function ProductPage() {
                 scrollSnapType: 'x mandatory'
               }}
               onTouchStart={(e) => {
-                // Предотвращаем вертикальную прокрутку при горизонтальном свайпе
-                const touch = e.touches[0]
-                const startX = touch.clientX
-                const startY = touch.clientY
-                
-                const handleMove = (moveEvent: TouchEvent) => {
-                  const moveTouch = moveEvent.touches[0]
-                  const diffX = Math.abs(moveTouch.clientX - startX)
-                  const diffY = Math.abs(moveTouch.clientY - startY)
-                  
-                  // Если горизонтальное движение больше вертикального, блокируем вертикальную прокрутку
-                  if (diffX > diffY && diffX > 10) {
-                    moveEvent.preventDefault()
-                  }
-                }
-                
-                const handleEnd = () => {
-                  document.removeEventListener('touchmove', handleMove)
-                  document.removeEventListener('touchend', handleEnd)
-                }
-                
-                document.addEventListener('touchmove', handleMove, { passive: false })
-                document.addEventListener('touchend', handleEnd)
+                // CSS touch-action уже настроен, дополнительная обработка не требуется
+                e.stopPropagation()
               }}
             >
               <div className="flex gap-4 md:gap-6" style={{ paddingRight: product.interior_images.length > 3 ? '1rem' : '0' }}>
