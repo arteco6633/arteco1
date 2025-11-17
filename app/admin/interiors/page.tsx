@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import { supabase } from '@/lib/supabase'
+import Link from 'next/link'
 
 interface Interior {
   id: number
@@ -62,6 +63,7 @@ export default function AdminInteriorsPage() {
   const [uploadingGallery, setUploadingGallery] = useState(false)
   const [uploadingVideos, setUploadingVideos] = useState(false)
   const [uploadingDocuments, setUploadingDocuments] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
   const coverInputRef = useRef<HTMLInputElement>(null)
   const galleryInputRef = useRef<HTMLInputElement>(null)
   const videoInputRef = useRef<HTMLInputElement>(null)
@@ -395,231 +397,466 @@ export default function AdminInteriorsPage() {
     }
   }
 
-  return (
-    <main className="max-w-[1200px] mx-auto px-4 md:px-6 py-8">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-10">
-        <div>
-          <h1 className="text-3xl font-semibold mb-2">Интерьеры клиентов</h1>
-          <p className="text-sm text-gray-500">
-            Управляйте галереей проектов для страницы партнёров. Добавляйте фотографии, описания и метрики.
-          </p>
+  // Иконки
+  const Icons = {
+    ArrowLeft: () => (
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+      </svg>
+    ),
+    Plus: () => (
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+      </svg>
+    ),
+    Edit: () => (
+      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+      </svg>
+    ),
+    Trash: () => (
+      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+      </svg>
+    ),
+    Close: () => (
+      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+      </svg>
+    ),
+  }
+
+  const filteredInteriors = interiors.filter((interior) => {
+    if (!searchQuery) return true
+    const query = searchQuery.toLowerCase()
+    return (
+      interior.title.toLowerCase().includes(query) ||
+      interior.subtitle?.toLowerCase().includes(query) ||
+      interior.description?.toLowerCase().includes(query) ||
+      interior.location?.toLowerCase().includes(query) ||
+      interior.style?.toLowerCase().includes(query)
+    )
+  })
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <p className="mt-4 text-gray-600">Загрузка...</p>
         </div>
-        <button
-          onClick={openCreateModal}
-          className="inline-flex items-center justify-center gap-2 rounded-lg bg-black px-5 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-gray-900"
-        >
-          <span>Новый интерьер</span>
-        </button>
       </div>
+    )
+  }
 
-      {loading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {Array.from({ length: 6 }).map((_, index) => (
-            <div key={index} className="rounded-2xl border border-gray-200 bg-white p-4 animate-pulse h-[280px]" />
-          ))}
-        </div>
-      ) : interiors.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-gray-300 bg-white py-16 text-center text-gray-500">
-          Добавьте первый интерьер, чтобы он появился в галерее партнёров.
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {interiors.map((interior) => (
-            <div
-              key={interior.id}
-              className="relative flex h-full flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm"
-            >
-              <div className="relative h-44 overflow-hidden bg-gray-100">
-                {interior.cover_image ? (
-                  <Image
-                    src={interior.cover_image}
-                    alt={interior.title}
-                    fill
-                    className="object-cover"
-                    sizes="(max-width: 1024px) 100vw, 33vw"
-                    unoptimized={interior.cover_image?.includes('unsplash.com') || false}
-                  />
-                ) : (
-                  <div className="flex h-full items-center justify-center text-xs text-gray-400">
-                    Обложка отсутствует
-                  </div>
-                )}
-                <span className="absolute left-4 top-4 rounded-full bg-white/85 px-3 py-1 text-[10px] uppercase tracking-[0.35em] text-gray-700">
-                  ID #{interior.id}
-                </span>
-              </div>
-              <div className="flex flex-1 flex-col gap-3 p-5">
-                <div>
-                  <h3 className="text-lg font-medium text-gray-900 line-clamp-2">{interior.title}</h3>
-                  {interior.location && (
-                    <p className="mt-1 text-sm text-gray-500">{interior.location}</p>
-                  )}
-                </div>
-                {interior.description && (
-                  <p className="text-sm text-gray-500 line-clamp-3">{interior.description}</p>
-                )}
-                <div className="flex flex-wrap items-center gap-2 text-xs text-gray-400">
-                  {interior.gallery_images?.length ? (
-                    <span className="flex items-center gap-1 rounded-full bg-gray-100 px-2 py-1">
-                      <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M3 7h18M3 7l3 9h12l3-9M9 12h.01M15 12h.01" />
-                      </svg>
-                      {interior.gallery_images.length}
-                    </span>
-                  ) : null}
-                  {interior.video_urls?.length ? (
-                    <span className="flex items-center gap-1 rounded-full bg-gray-100 px-2 py-1">
-                      <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M8 5v14l11-7-11-7z" />
-                      </svg>
-                      {interior.video_urls.length}
-                    </span>
-                  ) : null}
-                  {interior.document_files?.length ? (
-                    <span className="flex items-center gap-1 rounded-full bg-gray-100 px-2 py-1">
-                      <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M7 7v10a4 4 0 004 4h6" />
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M7 7h4.5a2.5 2.5 0 012.5 2.5V21" />
-                      </svg>
-                      {interior.document_files.length}
-                    </span>
-                  ) : null}
-                </div>
-                <div className="mt-auto flex items-center justify-between">
-                  <button
-                    onClick={() => openEditModal(interior)}
-                    className="text-sm font-medium text-black hover:text-gray-800"
-                  >
-                    Редактировать
-                  </button>
-                  <button
-                    onClick={() => handleDelete(interior.id)}
-                    className="text-sm text-red-500 hover:text-red-600"
-                  >
-                    Удалить
-                  </button>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-8">
-          <div className="absolute inset-0 bg-black/50" onClick={() => setShowModal(false)} />
-          <div className="relative z-10 w-full max-w-3xl rounded-3xl bg-white shadow-xl">
-            <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
-              <div>
-                <h2 className="text-xl font-semibold">
-                  {activeId ? 'Редактирование интерьера' : 'Новый интерьер'}
-                </h2>
-                <p className="text-sm text-gray-500">Добавьте описание, фото и параметры квартиры.</p>
-              </div>
-              <button
-                onClick={() => setShowModal(false)}
-                className="rounded-full border border-gray-200 bg-white p-2 text-gray-500 hover:text-gray-700"
-                aria-label="Закрыть"
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
+      {/* Хедер */}
+      <header className="bg-white border-b border-gray-200 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
+            <div className="flex items-center gap-4">
+              <Link
+                href="/admin"
+                className="flex items-center text-gray-600 hover:text-gray-900 transition-colors"
               >
-                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
+                <Icons.ArrowLeft />
+              </Link>
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">Интерьеры клиентов</h1>
+                <p className="text-sm text-gray-500 mt-0.5">
+                  Управляйте галереей проектов для страницы партнёров
+                </p>
+              </div>
             </div>
+            <button
+              onClick={openCreateModal}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+            >
+              <Icons.Plus />
+              <span>Добавить интерьер</span>
+            </button>
+          </div>
+        </div>
+      </header>
 
-            <form onSubmit={handleSubmit} className="max-h-[80vh] overflow-y-auto px-6 py-6">
-              <div className="grid grid-cols-1 gap-5">
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <label className="flex flex-col gap-2 text-sm">
-                    <span className="font-medium">Название проекта</span>
+      {/* Основной контент */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Статистика */}
+        <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-6">
+          <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
+            <div className="text-sm text-gray-600 mb-1">Всего интерьеров</div>
+            <div className="text-3xl font-bold text-gray-900">{interiors.length}</div>
+          </div>
+          <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
+            <div className="text-sm text-gray-600 mb-1">С галереей</div>
+            <div className="text-3xl font-bold text-blue-600">
+              {interiors.filter(i => i.gallery_images && i.gallery_images.length > 0).length}
+            </div>
+          </div>
+          <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
+            <div className="text-sm text-gray-600 mb-1">С видео</div>
+            <div className="text-3xl font-bold text-green-600">
+              {interiors.filter(i => i.video_urls && i.video_urls.length > 0).length}
+            </div>
+          </div>
+          <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
+            <div className="text-sm text-gray-600 mb-1">С документами</div>
+            <div className="text-3xl font-bold text-purple-600">
+              {interiors.filter(i => i.document_files && i.document_files.length > 0).length}
+            </div>
+          </div>
+        </div>
+
+        {/* Поиск */}
+        {interiors.length > 0 && (
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 mb-6">
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Поиск интерьеров..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+              />
+              <svg className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Сетка интерьеров */}
+        {interiors.length === 0 ? (
+          <div className="bg-white rounded-xl border border-dashed border-gray-300 py-16 text-center">
+            <svg className="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+            </svg>
+            <p className="text-gray-600 text-lg font-medium mb-2">Интерьеры отсутствуют</p>
+            <p className="text-gray-500 text-sm mb-4">Добавьте первый интерьер, чтобы он появился в галерее партнёров</p>
+            <button
+              onClick={openCreateModal}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+            >
+              <Icons.Plus />
+              <span>Добавить первый интерьер</span>
+            </button>
+          </div>
+        ) : filteredInteriors.length === 0 ? (
+          <div className="bg-white rounded-xl border border-gray-200 py-16 text-center">
+            <svg className="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <p className="text-gray-600 text-lg font-medium">Интерьеры не найдены</p>
+            <p className="text-gray-500 text-sm mt-1">Попробуйте изменить параметры поиска</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {filteredInteriors.map((interior) => (
+              <div
+                key={interior.id}
+                className="relative flex h-full flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm hover:shadow-md transition-shadow group"
+              >
+                <div className="relative h-48 overflow-hidden bg-gray-100">
+                  {interior.cover_image ? (
+                    <Image
+                      src={interior.cover_image}
+                      alt={interior.title}
+                      fill
+                      className="object-cover transition-transform group-hover:scale-105"
+                      sizes="(max-width: 1024px) 100vw, 33vw"
+                      unoptimized={interior.cover_image?.includes('unsplash.com') || false}
+                    />
+                  ) : (
+                    <div className="flex h-full items-center justify-center text-xs text-gray-400">
+                      Обложка отсутствует
+                    </div>
+                  )}
+                  <span className="absolute left-4 top-4 rounded-full bg-white/90 backdrop-blur-sm px-3 py-1 text-xs font-medium text-gray-700">
+                    #{interior.id}
+                  </span>
+                </div>
+                <div className="flex flex-1 flex-col gap-3 p-5">
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 line-clamp-2">{interior.title}</h3>
+                    {interior.subtitle && (
+                      <p className="mt-1 text-sm text-gray-600 line-clamp-1">{interior.subtitle}</p>
+                    )}
+                    {interior.location && (
+                      <p className="mt-1 text-sm text-gray-500 flex items-center gap-1">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                        {interior.location}
+                      </p>
+                    )}
+                    {(interior.area || interior.style) && (
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {interior.area && (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">
+                            {interior.area}
+                          </span>
+                        )}
+                        {interior.style && (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                            {interior.style}
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  {interior.description && (
+                    <p className="text-sm text-gray-500 line-clamp-2">{interior.description}</p>
+                  )}
+                  <div className="flex flex-wrap items-center gap-2 text-xs">
+                    {interior.gallery_images?.length ? (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-gray-100 text-gray-700 font-medium">
+                        <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                          <circle cx="8.5" cy="8.5" r="1.5" />
+                          <polyline points="21 15 16 10 5 21" />
+                        </svg>
+                        {interior.gallery_images.length}
+                      </span>
+                    ) : null}
+                    {interior.video_urls?.length ? (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-green-100 text-green-700 font-medium">
+                        <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <polygon points="5 3 19 12 5 21 5 3" />
+                        </svg>
+                        {interior.video_urls.length}
+                      </span>
+                    ) : null}
+                    {interior.document_files?.length ? (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-purple-100 text-purple-700 font-medium">
+                        <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+                          <polyline points="14 2 14 8 20 8" />
+                          <line x1="16" y1="13" x2="8" y2="13" />
+                          <line x1="16" y1="17" x2="8" y2="17" />
+                          <polyline points="10 9 9 9 8 9" />
+                        </svg>
+                        {interior.document_files.length}
+                      </span>
+                    ) : null}
+                  </div>
+                  <div className="mt-auto flex items-center gap-2 pt-3 border-t border-gray-100">
+                    <button
+                      onClick={() => openEditModal(interior)}
+                      className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 text-sm font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 hover:border-blue-300 transition-all"
+                    >
+                      <Icons.Edit />
+                      <span>Редактировать</span>
+                    </button>
+                    <button
+                      onClick={() => handleDelete(interior.id)}
+                      className="inline-flex items-center justify-center w-9 h-9 text-red-600 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 hover:border-red-300 transition-all"
+                      title="Удалить интерьер"
+                    >
+                      <Icons.Trash />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </main>
+
+      {/* Модальное окно */}
+      {showModal && (
+        <div className="fixed inset-0 bg-white z-50 overflow-y-auto">
+          {/* Хедер модального окна */}
+          <div className="sticky top-0 bg-white border-b border-gray-200 shadow-sm z-10">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="flex items-center justify-between h-16">
+                <h2 className="text-2xl font-bold text-gray-900">
+                  {activeId ? 'Редактировать интерьер' : 'Добавить интерьер'}
+                </h2>
+                <button
+                  onClick={() => setShowModal(false)}
+                  className="flex items-center justify-center w-10 h-10 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                  disabled={saving}
+                >
+                  <Icons.Close />
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Контент модального окна */}
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <form onSubmit={handleSubmit} className="space-y-8">
+              {/* Основная информация */}
+              <div className="bg-white rounded-xl border border-gray-200 p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-6 pb-3 border-b border-gray-200">
+                  Основная информация
+                </h3>
+                <div className="space-y-5">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Название проекта <span className="text-red-500">*</span>
+                    </label>
                     <input
+                      type="text"
+                      required
                       value={form.title}
                       onChange={(e) => setForm((prev) => ({ ...prev, title: e.target.value }))}
-                      className="rounded-lg border border-gray-200 px-3 py-2"
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                       placeholder="Кухня Лакони"
                     />
-                  </label>
-                  <label className="flex flex-col gap-2 text-sm">
-                    <span className="font-medium">Подзаголовок / комментарий</span>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Подзаголовок / комментарий
+                    </label>
                     <input
+                      type="text"
                       value={form.subtitle}
                       onChange={(e) => setForm((prev) => ({ ...prev, subtitle: e.target.value }))}
-                      className="rounded-lg border border-gray-200 px-3 py-2"
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                       placeholder="Апартаменты для молодой пары"
                     />
-                  </label>
-                  <label className="flex flex-col gap-2 text-sm">
-                    <span className="font-medium">Локация</span>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Описание
+                    </label>
+                    <textarea
+                      value={form.description}
+                      onChange={(e) => setForm((prev) => ({ ...prev, description: e.target.value }))}
+                      rows={5}
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors resize-none"
+                      placeholder="Расскажите историю проекта, используемые материалы и интересные решения."
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Параметры проекта */}
+              <div className="bg-white rounded-xl border border-gray-200 p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-6 pb-3 border-b border-gray-200">
+                  Параметры проекта
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Локация
+                    </label>
                     <input
+                      type="text"
                       value={form.location}
                       onChange={(e) => setForm((prev) => ({ ...prev, location: e.target.value }))}
-                      className="rounded-lg border border-gray-200 px-3 py-2"
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                       placeholder="Москва, ЖК Ривер Парк"
                     />
-                  </label>
-                  <label className="flex flex-col gap-2 text-sm">
-                    <span className="font-medium">Площадь / метрика</span>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Площадь / метрика
+                    </label>
                     <input
+                      type="text"
                       value={form.area}
                       onChange={(e) => setForm((prev) => ({ ...prev, area: e.target.value }))}
-                      className="rounded-lg border border-gray-200 px-3 py-2"
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                       placeholder="72 м²"
                     />
-                  </label>
-                  <label className="flex flex-col gap-2 text-sm">
-                    <span className="font-medium">Стиль</span>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Стиль
+                    </label>
                     <input
+                      type="text"
                       value={form.style}
                       onChange={(e) => setForm((prev) => ({ ...prev, style: e.target.value }))}
-                      className="rounded-lg border border-gray-200 px-3 py-2"
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                       placeholder="Современная классика"
                     />
-                  </label>
-                  <label className="flex flex-col gap-2 text-sm">
-                    <span className="font-medium">Порядок сортировки</span>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Порядок сортировки
+                    </label>
                     <input
+                      type="number"
                       value={form.sort_order}
                       onChange={(e) => setForm((prev) => ({ ...prev, sort_order: e.target.value }))}
-                      className="rounded-lg border border-gray-200 px-3 py-2"
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                       placeholder="Например, 10"
+                      min="0"
                     />
-                  </label>
+                    <p className="mt-1 text-xs text-gray-500">
+                      Чем меньше число, тем выше интерьер в списке
+                    </p>
+                  </div>
                 </div>
+              </div>
 
-                <label className="flex flex-col gap-2 text-sm">
-                  <span className="font-medium">Описание</span>
-                  <textarea
-                    value={form.description}
-                    onChange={(e) => setForm((prev) => ({ ...prev, description: e.target.value }))}
-                    rows={5}
-                    className="rounded-lg border border-gray-200 px-3 py-2"
-                    placeholder="Расскажите историю проекта, используемые материалы и интересные решения."
-                  />
-                </label>
-
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-[2fr_3fr]">
+              {/* Обложка и галерея */}
+              <div className="bg-white rounded-xl border border-gray-200 p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-6 pb-3 border-b border-gray-200">
+                  Изображения
+                </h3>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium">Обложка интерьера</span>
-                      {uploadingCover && <span className="text-xs text-gray-400">Загрузка...</span>}
-                    </div>
-                    <div className="relative aspect-[4/3] overflow-hidden rounded-2xl border border-dashed border-gray-300 bg-gray-50">
-                      {form.cover_image ? (
-                        <Image
-                          src={form.cover_image}
-                          alt="Обложка интерьера"
-                          fill
-                          className="object-cover"
-                          sizes="(max-width: 768px) 100vw, 40vw"
-                          unoptimized={form.cover_image?.includes('unsplash.com') || false}
-                        />
-                      ) : (
-                        <div className="flex h-full flex-col items-center justify-center gap-2 text-center text-sm text-gray-400">
-                          Загрузите визуализацию
-                        </div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Обложка интерьера <span className="text-red-500">*</span>
+                      </label>
+                      {uploadingCover && (
+                        <span className="text-xs text-gray-500 flex items-center gap-1">
+                          <svg className="animate-spin h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          Загрузка...
+                        </span>
                       )}
-                      <div className="absolute inset-x-0 bottom-3 flex justify-center">
-                        <label className="inline-flex cursor-pointer items-center rounded-full bg-black px-4 py-2 text-xs font-medium uppercase tracking-[0.2em] text-white shadow hover:bg-gray-900">
+                    </div>
+                    <div className="relative aspect-[4/3] overflow-hidden rounded-xl border-2 border-dashed border-gray-300 bg-gray-50">
+                      {form.cover_image ? (
+                        <>
+                          <Image
+                            src={form.cover_image}
+                            alt="Обложка интерьера"
+                            fill
+                            className="object-cover"
+                            sizes="(max-width: 1024px) 100vw, 50vw"
+                            unoptimized={form.cover_image?.includes('unsplash.com') || false}
+                          />
+                          <div className="absolute inset-0 bg-black/0 hover:bg-black/10 transition-colors flex items-center justify-center">
+                            <label className="inline-flex cursor-pointer items-center rounded-lg bg-white/90 backdrop-blur-sm px-4 py-2 text-sm font-medium text-gray-700 shadow hover:bg-white transition-colors">
+                              <input
+                                ref={coverInputRef}
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                onChange={handleCoverSelect}
+                              />
+                              {uploadingCover ? 'Загрузка...' : 'Заменить'}
+                            </label>
+                          </div>
+                        </>
+                      ) : (
+                        <label className="flex h-full flex-col items-center justify-center gap-3 cursor-pointer hover:bg-gray-100 transition-colors">
                           <input
                             ref={coverInputRef}
                             type="file"
@@ -627,21 +864,35 @@ export default function AdminInteriorsPage() {
                             className="hidden"
                             onChange={handleCoverSelect}
                           />
-                          {uploadingCover ? 'Загрузка...' : form.cover_image ? 'Заменить' : 'Загрузить'}
+                          <svg className="h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                          <span className="text-sm font-medium text-gray-600">Загрузить обложку</span>
+                          <span className="text-xs text-gray-500">Нажмите для выбора файла</span>
                         </label>
-                      </div>
+                      )}
                     </div>
                   </div>
 
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium">Галерея (доп. кадры)</span>
-                      {uploadingGallery && <span className="text-xs text-gray-400">Загрузка...</span>}
+                      <label className="block text-sm font-medium text-gray-700">
+                        Галерея (доп. кадры)
+                      </label>
+                      {uploadingGallery && (
+                        <span className="text-xs text-gray-500 flex items-center gap-1">
+                          <svg className="animate-spin h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          Загрузка...
+                        </span>
+                      )}
                     </div>
-                    <div className="rounded-2xl border border-dashed border-gray-300 bg-gray-50 p-4">
-                      <div className="grid grid-cols-2 gap-3">
+                    <div className="rounded-xl border-2 border-dashed border-gray-300 bg-gray-50 p-4">
+                      <div className="grid grid-cols-3 gap-3">
                         {form.gallery_images.map((url, index) => (
-                          <div key={url} className="relative aspect-square overflow-hidden rounded-xl border border-gray-200 bg-white">
+                          <div key={url} className="relative aspect-square overflow-hidden rounded-lg border border-gray-200 bg-white group">
                             <Image
                               src={form.gallery_previews[index] || url}
                               alt="Превью изображения"
@@ -653,16 +904,16 @@ export default function AdminInteriorsPage() {
                             <button
                               type="button"
                               onClick={() => removeGalleryImage(url)}
-                              className="absolute right-2 top-2 rounded-full bg-black/70 p-1 text-white shadow"
+                              className="absolute right-2 top-2 rounded-full bg-red-600 p-1.5 text-white shadow opacity-0 group-hover:opacity-100 transition-opacity"
                               aria-label="Удалить изображение"
                             >
-                              <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                              <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                               </svg>
                             </button>
                           </div>
                         ))}
-                        <label className="flex aspect-square cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-gray-300 bg-white text-center text-xs text-gray-400 transition hover:border-gray-400">
+                        <label className="flex aspect-square cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-gray-300 bg-white text-center text-xs text-gray-500 transition hover:border-gray-400 hover:bg-gray-50">
                           <input
                             ref={galleryInputRef}
                             type="file"
@@ -671,44 +922,58 @@ export default function AdminInteriorsPage() {
                             className="hidden"
                             onChange={handleGallerySelect}
                           />
-                          <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                          <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                           </svg>
-                          <span>Добавить</span>
+                          <span className="font-medium">Добавить</span>
                         </label>
                       </div>
                     </div>
                   </div>
                 </div>
+              </div>
 
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              {/* Видео и документы */}
+              <div className="bg-white rounded-xl border border-gray-200 p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-6 pb-3 border-b border-gray-200">
+                  Видео и документы
+                </h3>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium">Видео</span>
-                      {uploadingVideos && <span className="text-xs text-gray-400">Загрузка...</span>}
+                      <label className="block text-sm font-medium text-gray-700">Видео</label>
+                      {uploadingVideos && (
+                        <span className="text-xs text-gray-500 flex items-center gap-1">
+                          <svg className="animate-spin h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          Загрузка...
+                        </span>
+                      )}
                     </div>
-                    <div className="rounded-2xl border border-dashed border-gray-300 bg-gray-50 p-4">
-                      <div className="space-y-3">
+                    <div className="rounded-xl border-2 border-dashed border-gray-300 bg-gray-50 p-4">
+                      <div className="space-y-2">
                         {form.video_urls.map((url) => (
-                          <div key={url} className="flex items-center justify-between rounded-xl border border-gray-200 bg-white px-3 py-2">
-                            <div className="flex items-center gap-3 text-sm text-gray-700">
-                              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-900 text-white">
-                                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                                  <path strokeLinecap="round" strokeLinejoin="round" d="M8 5v14l11-7-11-7z" />
+                          <div key={url} className="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-3 py-2.5 hover:bg-gray-50 transition-colors">
+                            <div className="flex items-center gap-3 text-sm text-gray-700 flex-1 min-w-0">
+                              <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-green-100 text-green-700">
+                                <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                  <polygon points="5 3 19 12 5 21 5 3" />
                                 </svg>
                               </div>
-                              <span className="max-w-[180px] truncate">{url.split('/').pop()}</span>
+                              <span className="truncate flex-1">{url.split('/').pop()}</span>
                             </div>
                             <button
                               type="button"
                               onClick={() => removeVideo(url)}
-                              className="text-sm text-red-500 hover:text-red-600"
+                              className="ml-2 text-sm text-red-600 hover:text-red-700 font-medium"
                             >
                               Удалить
                             </button>
                           </div>
                         ))}
-                        <label className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-gray-300 bg-white px-4 py-6 text-center text-xs text-gray-400 transition hover:border-gray-400">
+                        <label className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-gray-300 bg-white px-4 py-6 text-center text-sm text-gray-500 transition hover:border-gray-400 hover:bg-gray-50">
                           <input
                             ref={videoInputRef}
                             type="file"
@@ -717,11 +982,11 @@ export default function AdminInteriorsPage() {
                             className="hidden"
                             onChange={handleVideoSelect}
                           />
-                          <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M4 8v8a2 2 0 002 2h8l6 4V4l-6 4H6a2 2 0 00-2 2z" />
+                          <svg className="h-8 w-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
                           </svg>
-                          <span>Добавить видео</span>
-                          <span className="text-[10px] text-gray-400">MP4/WebM до 200 МБ — отображаются отдельным блоком</span>
+                          <span className="font-medium">Добавить видео</span>
+                          <span className="text-xs text-gray-400">MP4/WebM до 200 МБ</span>
                         </label>
                       </div>
                     </div>
@@ -729,30 +994,42 @@ export default function AdminInteriorsPage() {
 
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium">Документы / PDF</span>
-                      {uploadingDocuments && <span className="text-xs text-gray-400">Загрузка...</span>}
+                      <label className="block text-sm font-medium text-gray-700">Документы / PDF</label>
+                      {uploadingDocuments && (
+                        <span className="text-xs text-gray-500 flex items-center gap-1">
+                          <svg className="animate-spin h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          Загрузка...
+                        </span>
+                      )}
                     </div>
-                    <div className="rounded-2xl border border-dashed border-gray-300 bg-gray-50 p-4">
+                    <div className="rounded-xl border-2 border-dashed border-gray-300 bg-gray-50 p-4">
                       <div className="space-y-2">
                         {form.document_files.map((doc) => (
-                          <div key={doc.url} className="flex items-center justify-between rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700">
-                            <span className="flex items-center gap-2 truncate">
-                              <svg className="h-4 w-4 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M7 7v10a4 4 0 004 4h6" />
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M7 7h4.5a2.5 2.5 0 012.5 2.5V21" />
-                              </svg>
-                              <span className="truncate max-w-[180px]">{doc.name || doc.url.split('/').pop()}</span>
+                          <div key={doc.url} className="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-3 py-2.5 hover:bg-gray-50 transition-colors">
+                            <span className="flex items-center gap-3 text-sm text-gray-700 flex-1 min-w-0">
+                              <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-purple-100 text-purple-700">
+                                <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                  <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+                                  <polyline points="14 2 14 8 20 8" />
+                                  <line x1="16" y1="13" x2="8" y2="13" />
+                                  <line x1="16" y1="17" x2="8" y2="17" />
+                                </svg>
+                              </div>
+                              <span className="truncate flex-1">{doc.name || doc.url.split('/').pop()}</span>
                             </span>
                             <button
                               type="button"
                               onClick={() => removeDocument(doc.url)}
-                              className="text-sm text-red-500 hover:text-red-600"
+                              className="ml-2 text-sm text-red-600 hover:text-red-700 font-medium"
                             >
                               Удалить
                             </button>
                           </div>
                         ))}
-                        <label className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-gray-300 bg-white px-4 py-6 text-center text-xs text-gray-400 transition hover:border-gray-400">
+                        <label className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-gray-300 bg-white px-4 py-6 text-center text-sm text-gray-500 transition hover:border-gray-400 hover:bg-gray-50">
                           <input
                             ref={documentInputRef}
                             type="file"
@@ -761,11 +1038,14 @@ export default function AdminInteriorsPage() {
                             className="hidden"
                             onChange={handleDocumentSelect}
                           />
-                          <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                          <svg className="h-8 w-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+                            <polyline points="14 2 14 8 20 8" />
+                            <line x1="16" y1="13" x2="8" y2="13" />
+                            <line x1="16" y1="17" x2="8" y2="17" />
                           </svg>
-                          <span>Прикрепить PDF</span>
-                          <span className="text-[10px] text-gray-400">Презентации, планы</span>
+                          <span className="font-medium">Прикрепить PDF</span>
+                          <span className="text-xs text-gray-400">Презентации, планы</span>
                         </label>
                       </div>
                     </div>
@@ -773,30 +1053,44 @@ export default function AdminInteriorsPage() {
                 </div>
               </div>
 
-              <div className="mt-6 flex items-center justify-end gap-3">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowModal(false)
-                    setForm(emptyForm)
-                    setActiveId(null)
-                  }}
-                  className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50"
-                >
-                  Отмена
-                </button>
-                <button
-                  type="submit"
-                  disabled={saving}
-                  className="rounded-lg bg-black px-5 py-2 text-sm font-medium text-white shadow hover:bg-gray-900 disabled:opacity-70"
-                >
-                  {saving ? 'Сохраняю...' : 'Сохранить'}
-                </button>
+              {/* Панель действий */}
+              <div className="sticky bottom-0 bg-white border-t border-gray-200 shadow-lg py-4 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8">
+                <div className="flex flex-col sm:flex-row gap-3 justify-end">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowModal(false)
+                      setForm(emptyForm)
+                      setActiveId(null)
+                    }}
+                    className="px-6 py-3 bg-gray-100 text-gray-800 rounded-lg hover:bg-gray-200 transition-colors font-medium"
+                    disabled={saving}
+                  >
+                    Отмена
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={saving}
+                    className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  >
+                    {saving ? (
+                      <>
+                        <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Сохранение...
+                      </>
+                    ) : (
+                      'Сохранить интерьер'
+                    )}
+                  </button>
+                </div>
               </div>
             </form>
           </div>
         </div>
       )}
-    </main>
+    </div>
   )
 }

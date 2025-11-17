@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
+import Link from 'next/link'
 // Navbar удалён для админ-панели
 
 interface PromoBlock {
@@ -24,6 +25,7 @@ export default function AdminBannersPage() {
   const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string>('')
   const [uploading, setUploading] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -190,21 +192,29 @@ export default function AdminBannersPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-xl">Загрузка...</div>
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <p className="mt-4 text-gray-600">Загрузка...</p>
+        </div>
       </div>
     )
   }
 
   // Иконки
   const Icons = {
+    ArrowLeft: () => (
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+      </svg>
+    ),
     Check: () => (
-      <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
       </svg>
     ),
     X: () => (
-      <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
       </svg>
     ),
@@ -223,7 +233,22 @@ export default function AdminBannersPage() {
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
       </svg>
     ),
+    Close: () => (
+      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+      </svg>
+    ),
   }
+
+  const filteredBanners = banners.filter((banner) => {
+    if (!searchQuery) return true
+    const query = searchQuery.toLowerCase()
+    return (
+      banner.title.toLowerCase().includes(query) ||
+      banner.description?.toLowerCase().includes(query) ||
+      banner.position.toLowerCase().includes(query)
+    )
+  })
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
@@ -231,7 +256,15 @@ export default function AdminBannersPage() {
       <header className="bg-white border-b border-gray-200 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            <h1 className="text-2xl font-bold text-gray-900">Управление баннерами</h1>
+            <div className="flex items-center gap-4">
+              <Link
+                href="/admin"
+                className="flex items-center text-gray-600 hover:text-gray-900 transition-colors"
+              >
+                <Icons.ArrowLeft />
+              </Link>
+              <h1 className="text-2xl font-bold text-gray-900">Управление баннерами</h1>
+            </div>
             <button
               onClick={openAddModal}
               className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
@@ -245,220 +278,436 @@ export default function AdminBannersPage() {
 
       {/* Основной контент */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Статистика */}
+        <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-6">
+          <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
+            <div className="text-sm text-gray-600 mb-1">Всего баннеров</div>
+            <div className="text-3xl font-bold text-gray-900">{banners.length}</div>
+          </div>
+          <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
+            <div className="text-sm text-gray-600 mb-1">Активных</div>
+            <div className="text-3xl font-bold text-green-600">
+              {banners.filter(b => b.is_active).length}
+            </div>
+          </div>
+          <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
+            <div className="text-sm text-gray-600 mb-1">На главной</div>
+            <div className="text-3xl font-bold text-blue-600">
+              {banners.filter(b => b.position === 'homepage').length}
+            </div>
+          </div>
+          <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
+            <div className="text-sm text-gray-600 mb-1">С кнопкой</div>
+            <div className="text-3xl font-bold text-purple-600">
+              {banners.filter(b => b.button_text).length}
+            </div>
+          </div>
+        </div>
+
+        {/* Таблица баннеров */}
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+          <div className="p-6 border-b border-gray-200">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-gray-900">Список баннеров</h2>
+              <div className="flex items-center gap-3">
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Поиск баннеров..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm w-64"
+                  />
+                  <svg className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                  {searchQuery && (
+                    <button
+                      onClick={() => setSearchQuery('')}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
           <div className="overflow-x-auto">
-            <table className="w-full">
+            <table className="w-full min-w-[1000px]">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">ID</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Название</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Позиция</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Порядок</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Активен</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Изображение</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Действия</th>
+                  <th className="px-4 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider w-16">ID</th>
+                  <th className="px-4 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider min-w-[200px]">Баннер</th>
+                  <th className="px-4 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider w-32">Позиция</th>
+                  <th className="px-4 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider w-24">Порядок</th>
+                  <th className="px-4 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider w-32">Статус</th>
+                  <th className="px-4 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider w-64">Действия</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {banners.map((banner) => (
-                  <tr key={banner.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{banner.id}</td>
-                    <td className="px-6 py-4 text-sm font-medium text-gray-900">{banner.title}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{banner.position}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{banner.sort_order}</td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {banner.is_active ? (
-                        <span className="inline-flex items-center">
-                          <Icons.Check />
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center">
-                          <Icons.X />
-                        </span>
-                      )}
+                {filteredBanners.map((banner) => (
+                  <tr key={banner.id} className="hover:bg-gray-50 transition-colors group">
+                    <td className="px-4 py-4 whitespace-nowrap">
+                      <span className="text-sm font-mono text-gray-500">#{banner.id}</span>
                     </td>
-                  <td>
-                    <img
-                      src={banner.image_url}
-                      alt={banner.title}
-                      className="w-24 h-16 object-cover rounded"
-                    />
-                  </td>
-                  <td>
-                    <button
-                      onClick={() => openEditModal(banner)}
-                      className="btn btn-secondary mr-2"
-                    >
-                      Редактировать
-                    </button>
-                    <button
-                      onClick={() => handleDelete(banner.id)}
-                      className="btn btn-danger"
-                    >
-                      Удалить
-                    </button>
-                  </td>
-                </tr>
+                    <td className="px-4 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="flex-shrink-0">
+                          <img
+                            src={banner.image_url}
+                            alt={banner.title}
+                            className="w-20 h-14 object-cover rounded-lg border border-gray-200"
+                          />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-medium text-gray-900 truncate">{banner.title}</div>
+                          {banner.description && (
+                            <div className="text-xs text-gray-500 truncate mt-0.5">{banner.description}</div>
+                          )}
+                          {banner.link_url && (
+                            <div className="text-xs text-blue-600 truncate mt-1">
+                              <a href={banner.link_url} target="_blank" rel="noopener noreferrer" className="hover:underline">
+                                {banner.link_url}
+                              </a>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium bg-gray-100 text-gray-800">
+                        {banner.position === 'homepage' ? 'Главная' : 
+                         banner.position === 'top' ? 'Верх' :
+                         banner.position === 'middle' ? 'Середина' :
+                         banner.position === 'bottom' ? 'Низ' : banner.position}
+                      </span>
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap">
+                      <span className="text-sm text-gray-600 font-medium">{banner.sort_order}</span>
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap">
+                      <span
+                        className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${
+                          banner.is_active
+                            ? 'bg-green-100 text-green-800'
+                            : 'bg-gray-100 text-gray-800'
+                        }`}
+                      >
+                        {banner.is_active ? (
+                          <>
+                            <Icons.Check />
+                            Активен
+                          </>
+                        ) : (
+                          <>
+                            <Icons.X />
+                            Неактивен
+                          </>
+                        )}
+                      </span>
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap">
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => openEditModal(banner)}
+                          className="inline-flex items-center justify-center w-9 h-9 text-blue-600 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 hover:border-blue-300 transition-all shadow-sm"
+                          title="Редактировать баннер"
+                        >
+                          <Icons.Edit />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(banner.id)}
+                          className="inline-flex items-center justify-center w-9 h-9 text-red-600 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 hover:border-red-300 transition-all shadow-sm"
+                          title="Удалить баннер"
+                        >
+                          <Icons.Trash />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
                 ))}
               </tbody>
             </table>
           </div>
         </div>
+
+        {filteredBanners.length === 0 && (
+          <div className="text-center py-12 bg-white rounded-xl border border-gray-200">
+            <svg className="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            <p className="text-gray-600 text-lg font-medium">
+              {searchQuery ? 'Баннеры не найдены' : 'Баннеры отсутствуют'}
+            </p>
+            {!searchQuery && (
+              <button
+                onClick={openAddModal}
+                className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+              >
+                <Icons.Plus />
+                <span>Добавить первый баннер</span>
+              </button>
+            )}
+          </div>
+        )}
       </main>
 
       {/* Модальное окно */}
       {showModal && (
         <div className="fixed inset-0 bg-white z-50 overflow-y-auto">
-          <div className="sticky top-0 bg-white border-b shadow-sm z-10 p-4">
-            <div className="container mx-auto flex justify-between items-center">
-              <h2 className="text-2xl md:text-3xl font-bold">
-                {editingBanner ? 'Редактировать баннер' : 'Добавить баннер'}
-              </h2>
-              <button
-                onClick={() => setShowModal(false)}
-                className="text-gray-500 hover:text-gray-700 text-3xl"
-                disabled={uploading}
-              >
-                ×
-              </button>
+          {/* Хедер модального окна */}
+          <div className="sticky top-0 bg-white border-b border-gray-200 shadow-sm z-10">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="flex items-center justify-between h-16">
+                <h2 className="text-2xl font-bold text-gray-900">
+                  {editingBanner ? 'Редактировать баннер' : 'Добавить баннер'}
+                </h2>
+                <button
+                  onClick={() => setShowModal(false)}
+                  className="flex items-center justify-center w-10 h-10 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                  disabled={uploading}
+                >
+                  <Icons.Close />
+                </button>
+              </div>
             </div>
           </div>
 
-          <div className="container mx-auto p-4 md:p-6 max-w-4xl">
-            <form onSubmit={handleSubmit}>
-                <div className="mb-4">
-                  <label className="block mb-2 font-semibold">Название</label>
-                  <input
-                    type="text"
-                    className="w-full px-3 py-2 border rounded-lg"
-                    value={formData.title}
-                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                    required
-                  />
-                </div>
+          {/* Контент модального окна */}
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <form onSubmit={handleSubmit} className="space-y-8">
+              {/* Основная информация */}
+              <div className="bg-white rounded-xl border border-gray-200 p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-6 pb-3 border-b border-gray-200">
+                  Основная информация
+                </h3>
+                <div className="space-y-5">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Название <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      value={formData.title}
+                      onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                      placeholder="Введите название баннера"
+                      required
+                    />
+                  </div>
 
-                <div className="mb-4">
-                  <label className="block mb-2 font-semibold">Описание</label>
-                  <textarea
-                    className="w-full px-3 py-2 border rounded-lg"
-                    rows={3}
-                    value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  />
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Описание
+                    </label>
+                    <textarea
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors resize-none"
+                      rows={4}
+                      value={formData.description}
+                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                      placeholder="Введите описание баннера (необязательно)"
+                    />
+                  </div>
                 </div>
+              </div>
 
-                <div className="mb-4">
-                  <label className="block mb-2 font-semibold">Изображение</label>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="w-full px-3 py-2 border rounded-lg"
-                    onChange={handleImageSelect}
-                  />
+              {/* Изображение баннера */}
+              <div className="bg-white rounded-xl border border-gray-200 p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-6 pb-3 border-b border-gray-200">
+                  Изображение баннера
+                </h3>
+                <div className="space-y-5">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Загрузить изображение
+                    </label>
+                    <div className="flex items-center gap-4">
+                      <label className="flex items-center justify-center px-6 py-3 bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-100 hover:border-gray-400 transition-colors">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={handleImageSelect}
+                        />
+                        <span className="text-sm font-medium text-gray-700">Выбрать файл</span>
+                      </label>
+                      {selectedImageFile && (
+                        <span className="text-sm text-gray-600">{selectedImageFile.name}</span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Или введите URL изображения
+                    </label>
+                    <input
+                      type="text"
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      value={formData.image_url}
+                      onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
+                      placeholder="https://example.com/image.jpg"
+                    />
+                  </div>
+
                   {(imagePreview || formData.image_url) && (
                     <div className="mt-4">
-                      <img
-                        src={imagePreview || formData.image_url}
-                        alt="Превью"
-                        className="w-96 h-64 object-cover rounded-lg border"
-                      />
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Превью изображения
+                      </label>
+                      <div className="relative inline-block">
+                        <img
+                          src={imagePreview || formData.image_url}
+                          alt="Превью баннера"
+                          className="max-w-full h-auto max-h-96 object-contain rounded-lg border-2 border-gray-200"
+                        />
+                      </div>
                     </div>
                   )}
                 </div>
+              </div>
 
-                <div className="mb-4">
-                  <label className="block mb-2 font-semibold">
-                    URL изображения (или загрузите файл выше)
-                  </label>
-                  <input
-                    type="text"
-                    className="w-full px-3 py-2 border rounded-lg"
-                    value={formData.image_url}
-                    onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
-                    placeholder="https://..."
-                  />
+              {/* Ссылки и действия */}
+              <div className="bg-white rounded-xl border border-gray-200 p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-6 pb-3 border-b border-gray-200">
+                  Ссылки и действия
+                </h3>
+                <div className="space-y-5">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Ссылка (URL)
+                    </label>
+                    <input
+                      type="text"
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      value={formData.link_url}
+                      onChange={(e) => setFormData({ ...formData, link_url: e.target.value })}
+                      placeholder="https://example.com"
+                    />
+                    <p className="mt-1 text-xs text-gray-500">
+                      URL, на который будет вести баннер при клике
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Текст кнопки
+                    </label>
+                    <input
+                      type="text"
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      value={formData.button_text}
+                      onChange={(e) => setFormData({ ...formData, button_text: e.target.value })}
+                      placeholder="Перейти в каталог"
+                    />
+                    <p className="mt-1 text-xs text-gray-500">
+                      Текст кнопки на баннере (если требуется)
+                    </p>
+                  </div>
                 </div>
+              </div>
 
-                <div className="mb-4">
-                  <label className="block mb-2 font-semibold">Ссылка (URL)</label>
-                  <input
-                    type="text"
-                    className="w-full px-3 py-2 border rounded-lg"
-                    value={formData.link_url}
-                    onChange={(e) => setFormData({ ...formData, link_url: e.target.value })}
-                    placeholder="https://..."
-                  />
-                </div>
+              {/* Настройки отображения */}
+              <div className="bg-white rounded-xl border border-gray-200 p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-6 pb-3 border-b border-gray-200">
+                  Настройки отображения
+                </h3>
+                <div className="space-y-5">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Позиция <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors bg-white"
+                      value={formData.position}
+                      onChange={(e) => setFormData({ ...formData, position: e.target.value })}
+                      required
+                    >
+                      <option value="homepage">Главная страница</option>
+                      <option value="top">Верх</option>
+                      <option value="middle">Середина</option>
+                      <option value="bottom">Низ</option>
+                    </select>
+                  </div>
 
-                <div className="mb-4">
-                  <label className="block mb-2 font-semibold">Текст кнопки</label>
-                  <input
-                    type="text"
-                    className="w-full px-3 py-2 border rounded-lg"
-                    value={formData.button_text}
-                    onChange={(e) => setFormData({ ...formData, button_text: e.target.value })}
-                    placeholder="Перейти в каталог"
-                  />
-                </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Порядок сортировки <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="number"
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      value={formData.sort_order}
+                      onChange={(e) => setFormData({ ...formData, sort_order: e.target.value })}
+                      placeholder="0"
+                      required
+                      min="0"
+                    />
+                    <p className="mt-1 text-xs text-gray-500">
+                      Чем меньше число, тем выше баннер в списке
+                    </p>
+                  </div>
 
-                <div className="mb-4">
-                  <label className="block mb-2 font-semibold">Позиция</label>
-                  <select
-                    className="w-full px-3 py-2 border rounded-lg"
-                    value={formData.position}
-                    onChange={(e) => setFormData({ ...formData, position: e.target.value })}
-                    required
-                  >
-                    <option value="homepage">Главная страница</option>
-                    <option value="top">Верх</option>
-                    <option value="middle">Середина</option>
-                    <option value="bottom">Низ</option>
-                  </select>
-                </div>
-
-                <div className="mb-4">
-                  <label className="block mb-2 font-semibold">Порядок сортировки</label>
-                  <input
-                    type="number"
-                    className="w-full px-3 py-2 border rounded-lg"
-                    value={formData.sort_order}
-                    onChange={(e) => setFormData({ ...formData, sort_order: e.target.value })}
-                    required
-                  />
-                </div>
-
-                <div className="mb-6">
-                  <label className="flex items-center">
+                  <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg border border-gray-200">
                     <input
                       type="checkbox"
-                      className="mr-3 w-5 h-5"
+                      id="is_active"
+                      className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
                       checked={formData.is_active}
                       onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
                     />
-                    <span className="font-semibold">Активен</span>
-                  </label>
-                </div>
-
-                <div className="sticky bottom-0 bg-white border-t py-4 mt-6">
-                  <div className="flex flex-col sm:flex-row gap-3 justify-end">
-                    <button
-                      type="button"
-                      onClick={() => setShowModal(false)}
-                      className="px-6 py-3 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors font-semibold"
-                      disabled={uploading}
-                    >
-                      Отмена
-                    </button>
-                    <button 
-                      type="submit" 
-                      className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold disabled:opacity-50"
-                      disabled={uploading}
-                    >
-                      {uploading ? 'Сохранение...' : 'Сохранить'}
-                    </button>
+                    <label htmlFor="is_active" className="flex items-center gap-2 cursor-pointer">
+                      <span className="text-sm font-medium text-gray-700">Баннер активен</span>
+                      {formData.is_active ? (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                          <Icons.Check />
+                          Активен
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                          <Icons.X />
+                          Неактивен
+                        </span>
+                      )}
+                    </label>
                   </div>
                 </div>
-              </form>
+              </div>
+
+              {/* Панель действий */}
+              <div className="sticky bottom-0 bg-white border-t border-gray-200 shadow-lg py-4 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8">
+                <div className="flex flex-col sm:flex-row gap-3 justify-end">
+                  <button
+                    type="button"
+                    onClick={() => setShowModal(false)}
+                    className="px-6 py-3 bg-gray-100 text-gray-800 rounded-lg hover:bg-gray-200 transition-colors font-medium"
+                    disabled={uploading}
+                  >
+                    Отмена
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    disabled={uploading}
+                  >
+                    {uploading ? (
+                      <>
+                        <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Сохранение...
+                      </>
+                    ) : (
+                      'Сохранить баннер'
+                    )}
+                  </button>
+                </div>
+              </div>
+            </form>
           </div>
         </div>
       )}

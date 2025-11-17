@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
+import Link from 'next/link'
 // Navbar удалён для админ-панели
 
 interface Category {
@@ -22,6 +23,7 @@ export default function AdminCategoriesPage() {
   const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string>('')
   const [uploading, setUploading] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -262,12 +264,57 @@ export default function AdminCategoriesPage() {
 
   // Иконки
   const Icons = {
+    ArrowLeft: () => (
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+      </svg>
+    ),
     Plus: () => (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
       </svg>
     ),
+    Edit: () => (
+      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+      </svg>
+    ),
+    Trash: () => (
+      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+      </svg>
+    ),
+    Close: () => (
+      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+      </svg>
+    ),
+    Drag: () => (
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
+      </svg>
+    ),
+    Check: () => (
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+      </svg>
+    ),
+    X: () => (
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+      </svg>
+    ),
   }
+
+  const filteredCategories = categories.filter((category) => {
+    if (!searchQuery) return true
+    const query = searchQuery.toLowerCase()
+    return (
+      category.name.toLowerCase().includes(query) ||
+      category.description?.toLowerCase().includes(query) ||
+      category.slug.toLowerCase().includes(query)
+    )
+  })
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
@@ -275,7 +322,15 @@ export default function AdminCategoriesPage() {
       <header className="bg-white border-b border-gray-200 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            <h1 className="text-2xl font-bold text-gray-900">Управление категориями</h1>
+            <div className="flex items-center gap-4">
+              <Link
+                href="/admin"
+                className="flex items-center text-gray-600 hover:text-gray-900 transition-colors"
+              >
+                <Icons.ArrowLeft />
+              </Link>
+              <h1 className="text-2xl font-bold text-gray-900">Управление категориями</h1>
+            </div>
             <button
               onClick={openAddModal}
               className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
@@ -289,152 +344,372 @@ export default function AdminCategoriesPage() {
 
       {/* Основной контент */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-
-        <div className="flex justify-end mb-4">
-          <button onClick={saveOrder} className="px-4 py-2 rounded-lg bg-black text-white hover:bg-black/90">Сохранить порядок</button>
+        {/* Статистика */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+          <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
+            <div className="text-sm text-gray-600 mb-1">Всего категорий</div>
+            <div className="text-3xl font-bold text-gray-900">{categories.length}</div>
+          </div>
+          <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
+            <div className="text-sm text-gray-600 mb-1">Активных</div>
+            <div className="text-3xl font-bold text-green-600">
+              {categories.filter(c => c.is_active).length}
+            </div>
+          </div>
+          <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
+            <div className="text-sm text-gray-600 mb-1">Неактивных</div>
+            <div className="text-3xl font-bold text-gray-600">
+              {categories.filter(c => !c.is_active).length}
+            </div>
+          </div>
         </div>
 
+        {/* Панель управления */}
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 mb-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex-1 w-full sm:w-auto">
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Поиск категорий..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full sm:w-64 pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                />
+                <svg className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery('')}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                )}
+              </div>
+            </div>
+            <button
+              onClick={saveOrder}
+              className="flex items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors font-medium"
+            >
+              <Icons.Check />
+              <span>Сохранить порядок</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Сетка категорий */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {categories.map((category, idx) => (
+          {filteredCategories.map((category, idx) => (
             <div
               key={category.id}
-              className={`bg-white rounded-lg shadow-md p-6 border ${overIndex===idx ? 'border-blue-400' : 'border-transparent'}`}
+              className={`group relative bg-white rounded-xl border-2 transition-all duration-200 ${
+                overIndex === idx
+                  ? 'border-blue-400 shadow-lg scale-105'
+                  : dragIndex === idx
+                  ? 'border-gray-300 opacity-50'
+                  : 'border-gray-200 hover:border-gray-300 hover:shadow-lg'
+              }`}
               draggable
               onDragStart={() => onDragStart(idx)}
               onDragOver={(e) => onDragOver(e, idx)}
               onDrop={() => onDrop(idx)}
             >
-              {category.image_url && (
-                <div className="mb-4">
+              {/* Индикатор перетаскивания */}
+              <div className="absolute top-3 left-3 p-1.5 bg-gray-100 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity cursor-move">
+                <Icons.Drag />
+              </div>
+
+              {/* Изображение */}
+              {category.image_url ? (
+                <div className="w-full h-48 overflow-hidden rounded-t-xl">
                   <img
                     src={category.image_url}
                     alt={category.name}
-                    className="w-full h-48 object-cover rounded-lg"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
                   />
                 </div>
+              ) : (
+                <div className="w-full h-48 bg-gradient-to-br from-gray-100 to-gray-200 rounded-t-xl flex items-center justify-center">
+                  <svg className="w-16 h-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </div>
               )}
-              <h3 className="text-xl font-semibold mb-2">{category.name}</h3>
-              {category.description && (
-                <p className="text-gray-600 text-sm mb-4">{category.description}</p>
-              )}
-              <div className="flex items-center justify-between">
-                <span
-                  className={`px-3 py-1 rounded-full text-sm ${
-                    category.is_active
-                      ? 'bg-green-100 text-green-800'
-                      : 'bg-gray-100 text-gray-800'
-                  }`}
-                >
-                  {category.is_active ? 'Активна' : 'Неактивна'}
-                </span>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => openEditModal(category)}
-                    className="text-blue-600 hover:text-blue-800"
+
+              {/* Контент */}
+              <div className="p-5">
+                <h3 className="text-lg font-semibold text-gray-900 mb-2 line-clamp-1">{category.name}</h3>
+                {category.description && (
+                  <p className="text-sm text-gray-600 mb-4 line-clamp-2">{category.description}</p>
+                )}
+                
+                <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+                  <span
+                    className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${
+                      category.is_active
+                        ? 'bg-green-100 text-green-800'
+                        : 'bg-gray-100 text-gray-800'
+                    }`}
                   >
-                    Редактировать
-                  </button>
-                  <button
-                    onClick={() => handleDelete(category.id)}
-                    className="text-red-600 hover:text-red-800"
-                  >
-                    Удалить
-                  </button>
+                    {category.is_active ? (
+                      <>
+                        <Icons.Check />
+                        Активна
+                      </>
+                    ) : (
+                      <>
+                        <Icons.X />
+                        Неактивна
+                      </>
+                    )}
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => openEditModal(category)}
+                      className="inline-flex items-center justify-center w-9 h-9 text-blue-600 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 hover:border-blue-300 transition-all shadow-sm"
+                      title="Редактировать категорию"
+                    >
+                      <Icons.Edit />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(category.id)}
+                      className="inline-flex items-center justify-center w-9 h-9 text-red-600 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 hover:border-red-300 transition-all shadow-sm"
+                      title="Удалить категорию"
+                    >
+                      <Icons.Trash />
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
           ))}
         </div>
 
+        {filteredCategories.length === 0 && (
+          <div className="text-center py-12">
+            <svg className="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+            </svg>
+            <p className="text-gray-600 text-lg font-medium">
+              {searchQuery ? 'Категории не найдены' : 'Категории отсутствуют'}
+            </p>
+            {!searchQuery && (
+              <button
+                onClick={openAddModal}
+                className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+              >
+                <Icons.Plus />
+                <span>Добавить первую категорию</span>
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Модальное окно - Полноэкранное */}
         {showModal && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-8 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-              <h2 className="text-2xl font-bold mb-6">
-                {editingCategory ? 'Редактировать категорию' : 'Добавить категорию'}
-              </h2>
-              
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium mb-2">Название</label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-                  />
+          <div className="fixed inset-0 bg-gray-50 z-50 overflow-y-auto">
+            {/* Шапка с кнопкой закрытия */}
+            <div className="sticky top-0 bg-white border-b border-gray-200 shadow-sm z-10">
+              <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="flex items-center justify-between h-16">
+                  <div>
+                    <h2 className="text-xl font-bold text-gray-900">
+                      {editingCategory ? 'Редактировать категорию' : 'Добавить категорию'}
+                    </h2>
+                    <p className="text-sm text-gray-500 mt-0.5">
+                      {editingCategory ? `ID: ${editingCategory.id}` : 'Заполните все необходимые поля'}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setShowModal(false)}
+                    className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                    disabled={uploading}
+                  >
+                    <Icons.Close />
+                  </button>
                 </div>
+              </div>
+            </div>
 
-                <div>
-                  <label className="block text-sm font-medium mb-2">Описание</label>
-                  <textarea
-                    value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-                    rows={3}
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-2">URL (slug)</label>
-                  <input
-                    type="text"
-                    value={formData.slug}
-                    onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-                    placeholder="Будет сгенерирован автоматически"
-                    className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-2">Изображение</label>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageSelect}
-                    className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-                  />
-                  {imagePreview && (
-                    <div className="mt-4">
-                      <img
-                        src={imagePreview}
-                        alt="Превью"
-                        className="w-full h-48 object-cover rounded-lg"
+            {/* Контент формы */}
+            <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-24">
+              <form id="category-form" onSubmit={handleSubmit} className="space-y-8">
+                {/* Основная информация */}
+                <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-6 pb-3 border-b border-gray-200">
+                    Основная информация
+                  </h3>
+                  <div className="space-y-6">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Название категории <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={formData.name}
+                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                        placeholder="Введите название категории"
                       />
                     </div>
-                  )}
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Описание
+                        <span className="ml-2 text-xs text-gray-500 font-normal">(необязательно)</span>
+                      </label>
+                      <textarea
+                        value={formData.description}
+                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all resize-none"
+                        rows={4}
+                        placeholder="Опишите категорию"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        URL (slug)
+                        <span className="ml-2 text-xs text-gray-500 font-normal">(необязательно)</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.slug}
+                        onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
+                        placeholder="Будет сгенерирован автоматически"
+                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all font-mono"
+                      />
+                      <p className="text-xs text-gray-500 mt-1.5">
+                        Используется для URL страницы категории. Если не указан, будет создан автоматически из названия.
+                      </p>
+                    </div>
+                  </div>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    id="is_active"
-                    checked={formData.is_active}
-                    onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
-                    className="w-4 h-4"
-                  />
-                  <label htmlFor="is_active" className="text-sm font-medium">
-                    Активна
-                  </label>
+                {/* Изображение */}
+                <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-6 pb-3 border-b border-gray-200">
+                    Изображение категории
+                  </h3>
+                  <div className="space-y-6">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Загрузить изображение
+                      </label>
+                      <div className="flex items-start gap-4">
+                        <div className="flex-shrink-0">
+                          {imagePreview ? (
+                            <img
+                              src={imagePreview}
+                              alt="Превью"
+                              className="w-40 h-40 object-cover rounded-lg border-2 border-gray-200"
+                            />
+                          ) : (
+                            <div className="w-40 h-40 rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 flex items-center justify-center">
+                              <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                              </svg>
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex-1">
+                          <label className="inline-flex items-center px-4 py-2.5 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 cursor-pointer transition-colors border border-blue-200">
+                            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                            </svg>
+                            <span className="text-sm font-medium">Выбрать файл</span>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
+                              onChange={handleImageSelect}
+                            />
+                          </label>
+                          <p className="text-xs text-gray-500 mt-2">
+                            Рекомендуемый размер: 800x600px. Форматы: JPG, PNG, WebP
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
-                <div className="flex gap-4 pt-4">
-                  <button
-                    type="button"
-                    onClick={() => setShowModal(false)}
-                    className="flex-1 px-4 py-2 border rounded-lg hover:bg-gray-50 transition"
-                  >
-                    Отмена
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={uploading}
-                    className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:bg-gray-400"
-                  >
-                    {uploading ? 'Сохранение...' : 'Сохранить'}
-                  </button>
+                {/* Настройки */}
+                <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-6 pb-3 border-b border-gray-200">
+                    Настройки
+                  </h3>
+                  <div className="space-y-4">
+                    <label className="flex items-center gap-3 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors">
+                      <input
+                        type="checkbox"
+                        id="is_active"
+                        checked={formData.is_active}
+                        onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
+                        className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+                      />
+                      <div className="flex-1">
+                        <div className="text-sm font-medium text-gray-900">Активна</div>
+                        <div className="text-xs text-gray-500">Категория будет отображаться на сайте</div>
+                      </div>
+                      {formData.is_active ? (
+                        <Icons.Check className="w-5 h-5 text-green-600" />
+                      ) : (
+                        <Icons.X className="w-5 h-5 text-gray-400" />
+                      )}
+                    </label>
+                  </div>
                 </div>
               </form>
+
+              {/* Фиксированная панель с кнопками */}
+              <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-20">
+                <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+                  <div className="flex items-center justify-between">
+                    <button 
+                      type="button" 
+                      onClick={() => setShowModal(false)}
+                      className="px-6 py-2.5 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+                      disabled={uploading}
+                    >
+                      Отмена
+                    </button>
+                    <div className="flex items-center gap-3">
+                      {uploading && (
+                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                          <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                          <span>Сохранение...</span>
+                        </div>
+                      )}
+                      <button 
+                        type="submit" 
+                        form="category-form"
+                        className="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 shadow-sm"
+                        disabled={uploading}
+                      >
+                        {uploading ? (
+                          <>
+                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                            <span>Сохранение...</span>
+                          </>
+                        ) : (
+                          <>
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                            <span>Сохранить категорию</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         )}
