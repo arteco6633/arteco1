@@ -1489,19 +1489,35 @@ export default function ProductPage() {
         {Array.isArray(product?.interior_images) && product.interior_images.length > 0 && (
           <section className="mt-8 md:mt-12">
             <h2 className="text-xl sm:text-2xl md:text-3xl font-bold mb-4 md:mb-6">Фото в интерьере</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-              {product.interior_images.map((url, idx) => (
-                <div key={idx} className="relative aspect-[4/3] rounded-xl overflow-hidden bg-gray-100">
-                  <Image
-                    src={url}
-                    alt={`${product.name} в интерьере ${idx + 1}`}
-                    fill
-                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                    className="object-cover"
-                    unoptimized={true}
-                  />
-                </div>
-              ))}
+            <div 
+              className="overflow-x-auto -mx-4 px-4 scrollbar-hide"
+              style={{
+                touchAction: 'pan-x pan-y pinch-zoom',
+                overscrollBehaviorX: 'contain',
+                overscrollBehaviorY: 'auto',
+                WebkitOverflowScrolling: 'touch'
+              }}
+            >
+              <div className="flex gap-4 md:gap-6" style={{ minWidth: 'max-content' }}>
+                {product.interior_images.map((url, idx) => (
+                  <div 
+                    key={idx} 
+                    className="relative flex-shrink-0 rounded-xl overflow-hidden bg-gray-100"
+                    style={{ width: 'calc((100vw - 2rem - 2rem) / 3)', minWidth: '280px', maxWidth: '400px' }}
+                  >
+                    <div className="relative aspect-[4/3]">
+                      <Image
+                        src={url}
+                        alt={`${product.name} в интерьере ${idx + 1}`}
+                        fill
+                        sizes="(max-width: 640px) 280px, (max-width: 1024px) 320px, 400px"
+                        className="object-cover"
+                        unoptimized={true}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </section>
         )}
