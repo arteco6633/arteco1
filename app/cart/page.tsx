@@ -46,23 +46,56 @@ export default function CartPage() {
       }
 
       // Проверяем, не загружается ли уже скрипт
-      const existingScript = document.querySelector('script[src*="pay.yandex.ru/sdk"]')
+      const existingScript = document.querySelector('script[src*="pay.yandex.ru/sdk"]') as HTMLScriptElement | null
       if (existingScript) {
-        console.log('SDK script already in DOM, waiting...')
-        // Ждём загрузки существующего скрипта
+        console.log('SDK script already in DOM, checking status...')
+        console.log('Script src:', existingScript.src)
+        console.log('Script element:', existingScript)
+        
+        // Проверяем, есть ли обработчики событий
+        const hasOnLoad = existingScript.onload !== null
+        const hasOnError = existingScript.onerror !== null
+        console.log('Script has onload handler:', hasOnLoad)
+        console.log('Script has onerror handler:', hasOnError)
+        
+        // Если скрипт уже в DOM, но объект не появился - это проблема
+        console.warn('⚠️ Script exists in DOM but YaPay object not found')
+        console.warn('This usually means:')
+        console.warn('1. Script failed to execute (CORS, domain whitelist, etc.)')
+        console.warn('2. Script executed but YaPay object was not created')
+        console.warn('3. Check Network tab for errors loading:', existingScript.src)
+        console.warn('4. Check Console tab for JavaScript errors')
+        
+        // Ждём загрузки существующего скрипта с более длинными задержками
+        const delays = [500, 1000, 2000, 3000, 5000]
+        let attempt = 0
+        
         const checkInterval = setInterval(() => {
           if (typeof window !== 'undefined' && (window as any).YaPay) {
             clearInterval(checkInterval)
             clearTimeout(timeout)
             console.log('✓ SDK loaded from existing script')
             resolve()
+            return
           }
-        }, 200)
+          
+          attempt++
+          if (attempt >= delays.length) {
+            clearInterval(checkInterval)
+            clearTimeout(timeout)
+            console.error('✗ Script exists but YaPay object never appeared')
+            console.error('Please check:')
+            console.error('1. Network tab - status of', existingScript.src)
+            console.error('2. Console for JavaScript errors')
+            console.error('3. Yandex Pay console - domain whitelist settings')
+            reject(new Error('SDK script exists but YaPay object not found - check Network tab and domain whitelist'))
+          }
+        }, delays[attempt] || 200)
         
         const timeout = setTimeout(() => {
           clearInterval(checkInterval)
-          reject(new Error('SDK script exists but YaPay object not found'))
-        }, 10000)
+          reject(new Error('SDK script exists but YaPay object not found - timeout'))
+        }, 15000)
         
         return
       }

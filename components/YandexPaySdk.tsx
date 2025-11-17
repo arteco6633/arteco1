@@ -48,13 +48,29 @@ export default function YandexPaySdk() {
       onLoad={() => {
         console.log('✓ Yandex Pay SDK script loaded from:', SDK_URL)
         
+        // Проверяем статус загрузки скрипта
+        const scripts = document.querySelectorAll('script[src*="pay.yandex.ru"]')
+        console.log('Found Yandex Pay scripts in DOM:', scripts.length)
+        scripts.forEach((script: any, idx: number) => {
+          const src = script.getAttribute('src')
+          const complete = script.complete
+          const readyState = script.readyState
+          console.log(`Script ${idx + 1}:`, {
+            src,
+            complete,
+            readyState,
+            onload: typeof script.onload,
+            onerror: typeof script.onerror
+          })
+        })
+        
         // Проверяем доступность SDK сразу после загрузки
         if (checkSdkAvailability()) {
           return
         }
 
         // Если SDK не найден сразу, проверяем с задержками
-        const delays = [100, 300, 500, 1000, 2000]
+        const delays = [100, 300, 500, 1000, 2000, 3000, 5000]
         let attempt = 0
 
         const checkWithDelay = () => {
@@ -68,18 +84,27 @@ export default function YandexPaySdk() {
           } else {
             console.warn('⚠️ Yandex Pay SDK script loaded but YaPay object not found after multiple attempts')
             console.warn('SDK URL:', SDK_URL)
+            console.warn('Current domain:', window.location.hostname)
+            console.warn('Protocol:', window.location.protocol)
             console.warn('This may indicate:')
-            console.warn('1. Network issues')
-            console.warn('2. CORS restrictions (if on HTTP)')
-            console.warn('3. Browser extensions blocking the script')
+            console.warn('1. Domain not whitelisted in Yandex Pay console')
+            console.warn('2. CORS restrictions')
+            console.warn('3. Browser extensions blocking script execution')
             console.warn('4. Issues on Yandex Pay server side')
+            console.warn('5. Script loaded but failed to execute')
             
-            // Пробуем проверить, загрузился ли скрипт вообще
-            const scripts = document.querySelectorAll('script[src*="pay.yandex.ru"]')
-            console.log('Found Yandex Pay scripts in DOM:', scripts.length)
-            scripts.forEach((script, idx) => {
-              console.log(`Script ${idx + 1}:`, script.getAttribute('src'))
-            })
+            // Проверяем, есть ли ошибки в консоли
+            console.warn('Please check Network tab for:', SDK_URL)
+            console.warn('Look for:')
+            console.warn('- Status code (should be 200)')
+            console.warn('- CORS headers')
+            console.warn('- Response content')
+            
+            // Пробуем проверить глобальные объекты
+            console.log('Checking global objects:')
+            console.log('- window.YaPay:', typeof window.YaPay)
+            console.log('- window.YandexPay:', typeof (window as any).YandexPay)
+            console.log('- window.pay:', typeof (window as any).pay)
           }
         }
 
