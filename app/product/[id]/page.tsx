@@ -618,7 +618,7 @@ export default function ProductPage() {
                               setSyncedRightHeight(leftMainImageRef.current.offsetHeight || 0)
                             }
                           }}
-                          onLoadingComplete={() => setLoadedImages((prev) => ({ ...prev, [idx]: true }))}
+                          onLoad={() => setLoadedImages((prev) => ({ ...prev, [idx]: true }))}
                         />
                       </div>
                     ))}
