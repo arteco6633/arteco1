@@ -182,12 +182,19 @@ export default function ProductPage() {
     // Используем небольшую задержку для гарантии, что элемент отрендерился в DOM
     let cleanupFn: (() => void) | null = null
     let timeoutId: NodeJS.Timeout | null = null
+    let attempts = 0
+    const maxAttempts = 20 // Максимум 20 попыток (1 секунда)
     
     const setupHandlers = () => {
       const imageElement = leftMainImageRef.current
       if (!imageElement) {
-        // Если элемент еще не готов, пробуем еще раз через небольшую задержку
-        timeoutId = setTimeout(setupHandlers, 50)
+        attempts++
+        if (attempts < maxAttempts) {
+          // Если элемент еще не готов, пробуем еще раз через небольшую задержку
+          timeoutId = setTimeout(setupHandlers, 50)
+          return
+        }
+        // Если элемент не найден после всех попыток, прекращаем
         return
       }
 
