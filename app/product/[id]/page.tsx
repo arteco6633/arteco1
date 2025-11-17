@@ -1606,13 +1606,13 @@ export default function ProductPage() {
                   touchStartX.current = e.touches[0].clientX
                 }}
                 onTouchMove={(e) => {
-                  if (touchStartX.current === null) return
+                  if (touchStartX.current === null || !Array.isArray(product?.interior_images)) return
                   const diff = touchStartX.current - e.touches[0].clientX
                   if (Math.abs(diff) > 50) {
-                    if (diff > 0 && interiorPreviewIdx < product.interior_images.length - 1) {
+                    if (diff > 0 && interiorPreviewIdx !== null && interiorPreviewIdx < product.interior_images.length - 1) {
                       setInteriorPreviewIdx(interiorPreviewIdx + 1)
                       touchStartX.current = null
-                    } else if (diff < 0 && interiorPreviewIdx > 0) {
+                    } else if (diff < 0 && interiorPreviewIdx !== null && interiorPreviewIdx > 0) {
                       setInteriorPreviewIdx(interiorPreviewIdx - 1)
                       touchStartX.current = null
                     }
