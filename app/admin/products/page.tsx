@@ -354,6 +354,7 @@ export default function AdminProductsPage() {
       schemes: (product.schemes as any) || [],
       videos: (product.videos as any) || [],
       downloadable_files: (product.downloadable_files as any) || [],
+      interior_images: (product.interior_images as any) || [],
       category_id: product.category_id.toString(),
       is_featured: product.is_featured,
       is_new: product.is_new,
