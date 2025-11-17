@@ -999,8 +999,8 @@ export default function AdminProductsPage() {
                       </label>
                       <select
                         className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all bg-white"
-                        value={formData.category_id}
-                        onChange={(e) => setFormData({ ...formData, category_id: parseInt(e.target.value) })}
+                        value={String(formData.category_id || '')}
+                        onChange={(e) => setFormData({ ...formData, category_id: e.target.value })}
                         required
                       >
                         <option value="">Выберите категорию</option>
