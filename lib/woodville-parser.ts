@@ -246,7 +246,7 @@ function parsePriceFromHtml(html: string): number | null {
   
   // Сначала пробуем найти цену через паттерны
   for (const pattern of pricePatterns) {
-    const matches = html.matchAll(new RegExp(pattern, 'gi'))
+    const matches = Array.from(html.matchAll(new RegExp(pattern, 'gi')))
     for (const match of matches) {
       if (match && match[1]) {
         // Извлекаем число из строки (убираем пробелы и запятые)
