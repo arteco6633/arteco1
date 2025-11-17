@@ -614,11 +614,11 @@ export default function ProductPage() {
                           className={`object-contain object-center transition-opacity duration-300 ${loadedImages[idx] ? 'opacity-100' : 'opacity-0'}`}
                           unoptimized={true}
                           onLoad={() => {
+                            setLoadedImages((prev) => ({ ...prev, [idx]: true }))
                             if (idx === 0 && leftMainImageRef.current) {
                               setSyncedRightHeight(leftMainImageRef.current.offsetHeight || 0)
                             }
                           }}
-                          onLoad={() => setLoadedImages((prev) => ({ ...prev, [idx]: true }))}
                         />
                       </div>
                     ))}
