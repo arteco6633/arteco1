@@ -71,6 +71,7 @@ interface Product {
   schemes?: string[] | null
   videos?: string[] | null
   downloadable_files?: Array<{ url: string; name: string }> | null
+  interior_images?: string[] | null
   category_id: number
   is_featured: boolean
   is_new: boolean
@@ -103,6 +104,10 @@ export default function AdminProductsPage() {
   // DnD для схем товара
   const schemeInputRef = useRef<HTMLInputElement | null>(null)
   const [isDraggingSchemes, setIsDraggingSchemes] = useState(false)
+  // DnD для изображений интерьера
+  const interiorInputRef = useRef<HTMLInputElement | null>(null)
+  const [isDraggingInterior, setIsDraggingInterior] = useState(false)
+  const [uploadingInterior, setUploadingInterior] = useState(false)
   // DnD для файлов для скачивания
   const filesInputRef = useRef<HTMLInputElement | null>(null)
   const [isDraggingFiles, setIsDraggingFiles] = useState(false)
@@ -150,6 +155,7 @@ export default function AdminProductsPage() {
     schemes: [] as string[],
     videos: [] as string[],
     downloadable_files: [] as Array<{ url: string; name: string }>,
+    interior_images: [] as string[],
     category_id: '',
     is_featured: false,
     is_new: false,
@@ -294,6 +300,7 @@ export default function AdminProductsPage() {
       schemes: [],
       videos: [],
       downloadable_files: [],
+      interior_images: [],
       category_id: '',
       is_featured: false,
       is_new: false,
@@ -604,6 +611,7 @@ export default function AdminProductsPage() {
         schemes: formData.schemes,
         videos: formData.videos,
         downloadable_files: formData.downloadable_files,
+        interior_images: formData.interior_images,
         category_id: parseInt(formData.category_id),
         is_featured: formData.is_featured,
         is_new: formData.is_new,
@@ -1240,6 +1248,69 @@ export default function AdminProductsPage() {
                         </div>
                       )}
                     </div>
+                  </div>
+                </div>
+
+                {/* Фото в интерьере */}
+                <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-6 pb-3 border-b border-gray-200">
+                    Фото в интерьере
+                  </h3>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Изображения товара в интерьере
+                    </label>
+                    <div
+                      className={`w-full border-2 ${isDraggingInterior ? 'border-blue-500 bg-blue-50' : 'border-dashed border-gray-300'} rounded-lg p-5 text-center transition-colors`}
+                      onDragOver={(e) => { e.preventDefault(); setIsDraggingInterior(true) }}
+                      onDragLeave={() => setIsDraggingInterior(false)}
+                      onDrop={async (e) => {
+                        e.preventDefault(); setIsDraggingInterior(false);
+                        const files = Array.from(e.dataTransfer.files || [])
+                        if (files.length === 0) return
+                        try { 
+                          setUploadingInterior(true); 
+                          const urls = await uploadGalleryFiles(files); 
+                          setFormData({ ...formData, interior_images: [...formData.interior_images, ...urls] }) 
+                        } catch(err){ 
+                          console.error(err); 
+                          alert('Не удалось загрузить изображения') 
+                        } finally { 
+                          setUploadingInterior(false) 
+                        }
+                      }}
+                    >
+                      <p className="mb-2 text-sm text-gray-600">Перетащите изображения или</p>
+                      <button type="button" className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium" onClick={() => interiorInputRef.current?.click()} disabled={uploadingInterior}>
+                        Выбрать файлы
+                      </button>
+                      <input ref={interiorInputRef} type="file" accept="image/*" multiple className="hidden" onChange={async (e)=>{ 
+                        const files = Array.from(e.target.files||[]); 
+                        if(files.length===0) return; 
+                        try{ 
+                          setUploadingInterior(true); 
+                          const urls= await uploadGalleryFiles(files); 
+                          setFormData({ ...formData, interior_images: [...formData.interior_images, ...urls] }) 
+                        }catch(err){ 
+                          console.error(err); 
+                          alert('Не удалось загрузить изображения') 
+                        } finally { 
+                          setUploadingInterior(false); 
+                          if(interiorInputRef.current) interiorInputRef.current.value='' 
+                        } 
+                      }} />
+                      {uploadingInterior && <div className="mt-2 text-sm text-gray-500">Загрузка...</div>}
+                    </div>
+                    {formData.interior_images.length > 0 && (
+                      <div className="mt-4 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
+                        {formData.interior_images.map((url, idx) => (
+                          <div key={idx} className="relative">
+                            <img src={url} className="w-full h-32 object-cover rounded-lg" alt={`Интерьер ${idx + 1}`} />
+                            <button type="button" className="absolute -top-2 -right-2 bg-white rounded-full border w-6 h-6 text-xs hover:bg-red-50 transition-colors flex items-center justify-center" onClick={() => setFormData({ ...formData, interior_images: formData.interior_images.filter((_,i)=>i!==idx) })}>×</button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
 

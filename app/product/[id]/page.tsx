@@ -40,6 +40,7 @@ interface Product {
   schemes?: string[] | null
   videos?: string[] | null
   downloadable_files?: Array<{ url: string; name: string }> | null
+  interior_images?: string[] | null
   category_id: number
   is_featured: boolean
   is_new: boolean
@@ -1482,6 +1483,27 @@ export default function ProductPage() {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={previewImage} alt="Превью модуля" className="max-w-[90vw] max-h-[85vh] rounded-lg shadow-2xl object-contain" />
           </div>
+        )}
+
+        {/* Фото в интерьере */}
+        {Array.isArray(product?.interior_images) && product.interior_images.length > 0 && (
+          <section className="mt-8 md:mt-12">
+            <h2 className="text-xl sm:text-2xl md:text-3xl font-bold mb-4 md:mb-6">Фото в интерьере</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+              {product.interior_images.map((url, idx) => (
+                <div key={idx} className="relative aspect-[4/3] rounded-xl overflow-hidden bg-gray-100">
+                  <Image
+                    src={url}
+                    alt={`${product.name} в интерьере ${idx + 1}`}
+                    fill
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                    className="object-cover"
+                    unoptimized={true}
+                  />
+                </div>
+              ))}
+            </div>
+          </section>
         )}
 
         {related.length > 0 && (
