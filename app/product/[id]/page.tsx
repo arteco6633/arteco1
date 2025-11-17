@@ -100,6 +100,7 @@ export default function ProductPage() {
   const [modules, setModules] = useState<Array<{ id:number; name:string; price:number; image_url?:string|null; description?:string|null; width?:number|null; height?:number|null; depth?:number|null; kind?:string|null }>>([])
   const [selectedModules, setSelectedModules] = useState<Record<number, number>>({})
   const [previewImage, setPreviewImage] = useState<string | null>(null)
+  const [interiorPreviewIdx, setInteriorPreviewIdx] = useState<number | null>(null)
   const [openModuleGroup, setOpenModuleGroup] = useState<'base' | 'wall' | 'tall' | 'other' | null>('base')
   const finalPrice = useMemo(() => {
     if (!product) return 0
@@ -220,6 +221,26 @@ export default function ProductPage() {
   useEffect(() => {
     setActiveSchemeIdx(0)
   }, [product?.id])
+
+  // Обработка клавиатуры для модального окна фото в интерьере
+  useEffect(() => {
+    if (interiorPreviewIdx === null) return
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (interiorPreviewIdx === null || !Array.isArray(product?.interior_images)) return
+
+      if (e.key === 'Escape') {
+        setInteriorPreviewIdx(null)
+      } else if (e.key === 'ArrowLeft' && interiorPreviewIdx > 0) {
+        setInteriorPreviewIdx(interiorPreviewIdx - 1)
+      } else if (e.key === 'ArrowRight' && interiorPreviewIdx < product.interior_images.length - 1) {
+        setInteriorPreviewIdx(interiorPreviewIdx + 1)
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [interiorPreviewIdx, product?.interior_images])
 
   const customSpecs = Array.isArray((product?.specs as any)?.custom)
     ? ((product?.specs as any)?.custom as Array<{ label?: string; value?: string }>)
@@ -1502,12 +1523,13 @@ export default function ProductPage() {
                 {product.interior_images.map((url, idx) => (
                   <div 
                     key={idx} 
-                    className="relative flex-shrink-0 rounded-xl overflow-hidden bg-gray-100"
+                    className="relative flex-shrink-0 rounded-xl overflow-hidden bg-gray-100 cursor-pointer transition-transform hover:scale-[1.02]"
                     style={{ 
                       width: 'calc((100vw - 2rem - 1rem) / 3)',
                       minWidth: '280px',
                       maxWidth: 'calc((100% - 2rem) / 3)'
                     }}
+                    onClick={() => setInteriorPreviewIdx(idx)}
                   >
                     <div className="relative aspect-[4/3]">
                       <Image
@@ -1524,6 +1546,91 @@ export default function ProductPage() {
               </div>
             </div>
           </section>
+        )}
+
+        {/* Модальное окно для просмотра фото в интерьере */}
+        {interiorPreviewIdx !== null && Array.isArray(product?.interior_images) && product.interior_images.length > 0 && (
+          <div 
+            className="fixed inset-0 z-[100] bg-black/90 grid place-items-center p-4"
+            onClick={() => setInteriorPreviewIdx(null)}
+          >
+            <div className="relative w-full h-full max-w-7xl max-h-[90vh] flex items-center justify-center">
+              {/* Кнопка закрытия */}
+              <button
+                onClick={() => setInteriorPreviewIdx(null)}
+                className="absolute top-4 right-4 z-10 w-10 h-10 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white transition-colors"
+                aria-label="Закрыть"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+
+              {/* Кнопка "Назад" */}
+              {product.interior_images.length > 1 && interiorPreviewIdx > 0 && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setInteriorPreviewIdx(interiorPreviewIdx - 1)
+                  }}
+                  className="absolute left-4 z-10 w-12 h-12 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white transition-colors"
+                  aria-label="Предыдущее фото"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                </button>
+              )}
+
+              {/* Кнопка "Вперед" */}
+              {product.interior_images.length > 1 && interiorPreviewIdx < product.interior_images.length - 1 && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setInteriorPreviewIdx(interiorPreviewIdx + 1)
+                  }}
+                  className="absolute right-4 z-10 w-12 h-12 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white transition-colors"
+                  aria-label="Следующее фото"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+              )}
+
+              {/* Изображение */}
+              <div 
+                className="relative w-full h-full"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img 
+                  src={product.interior_images[interiorPreviewIdx]} 
+                  alt={`${product.name} в интерьере ${interiorPreviewIdx + 1}`}
+                  className="max-w-full max-h-full mx-auto object-contain rounded-lg"
+                />
+              </div>
+
+              {/* Индикатор текущего изображения */}
+              {product.interior_images.length > 1 && (
+                <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-10 flex gap-2">
+                  {product.interior_images.map((_, idx) => (
+                    <button
+                      key={idx}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setInteriorPreviewIdx(idx)
+                      }}
+                      className={`w-2 h-2 rounded-full transition-all ${
+                        idx === interiorPreviewIdx ? 'bg-white w-8' : 'bg-white/50 hover:bg-white/75'
+                      }`}
+                      aria-label={`Фото ${idx + 1}`}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
         )}
 
         {related.length > 0 && (
