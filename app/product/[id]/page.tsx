@@ -1325,50 +1325,83 @@ export default function ProductPage() {
           {activeTab === 'schemes' && (
             <div className="w-full grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-6">
               <div className="md:col-span-5 flex flex-col items-center gap-4">
-                {Array.isArray(product?.schemes) && product.schemes.length > 0 ? (
+                {Array.isArray(product?.schemes) && product.schemes.length > 0 && product.schemes.filter(s => s && s.trim()).length > 0 ? (
                   <>
-                    <div className="w-full rounded-[28px] border border-gray-200 bg-white shadow-[0_28px_90px_-60px_rgba(15,23,42,0.45)] overflow-hidden">
-                      <div className="relative aspect-[4/3] bg-white">
-                        <Image
-                          src={product.schemes[Math.min(activeSchemeIdx, product.schemes.length - 1)]}
-                          alt={`Схема ${Math.min(activeSchemeIdx, product.schemes.length - 1) + 1}`}
-                          fill
-                          sizes="(max-width: 768px) 100vw, 520px"
-                          className="object-contain bg-white"
-                          quality={95}
-                        />
-                        <a
-                          href={product.schemes[Math.min(activeSchemeIdx, product.schemes.length - 1)]}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="absolute top-3 right-3 inline-flex items-center gap-2 rounded-full bg-white/90 px-3 py-1 text-xs font-medium text-gray-700 shadow hover:bg-white transition"
-                        >
-                          Открыть
-                        </a>
-                      </div>
-                    </div>
-                    {product.schemes.length > 1 && (
-                      <div className="flex w-full gap-2 overflow-x-auto pb-1">
-                        {product.schemes.map((schemeUrl, idx) => (
-                          <button
-                            key={`${schemeUrl}-${idx}`}
-                            type="button"
-                            onClick={() => setActiveSchemeIdx(idx)}
-                            className={`relative h-20 w-28 flex-shrink-0 overflow-hidden rounded-xl border transition ${
-                              idx === activeSchemeIdx ? 'border-gray-900 shadow-md' : 'border-gray-200 hover:border-gray-300'
-                            }`}
-                          >
-                            <Image
-                              src={schemeUrl}
-                              alt={`Схема ${idx + 1}`}
-                              fill
-                              sizes="112px"
-                              className="object-contain bg-white"
-                            />
-                          </button>
-                        ))}
-                      </div>
-                    )}
+                    {(() => {
+                      const validSchemes = product.schemes.filter(s => s && s.trim())
+                      const currentScheme = validSchemes[Math.min(activeSchemeIdx, validSchemes.length - 1)]
+                      
+                      if (!currentScheme) {
+                        return (
+                          <div className="w-full rounded-[28px] border border-gray-200 bg-gray-50 p-8 text-center text-gray-500">
+                            Схема не найдена
+                          </div>
+                        )
+                      }
+                      
+                      return (
+                        <>
+                          <div className="w-full rounded-[28px] border border-gray-200 bg-white shadow-[0_28px_90px_-60px_rgba(15,23,42,0.45)] overflow-hidden">
+                            <div className="relative aspect-[4/3] bg-white">
+                              <Image
+                                src={currentScheme}
+                                alt={`Схема ${Math.min(activeSchemeIdx, validSchemes.length - 1) + 1}`}
+                                fill
+                                sizes="(max-width: 768px) 100vw, 520px"
+                                className="object-contain bg-white"
+                                quality={95}
+                                unoptimized={true}
+                                onError={(e) => {
+                                  console.error('Ошибка загрузки схемы:', currentScheme)
+                                  const target = e.target as HTMLImageElement
+                                  target.style.display = 'none'
+                                }}
+                              />
+                              <a
+                                href={currentScheme}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="absolute top-3 right-3 inline-flex items-center gap-2 rounded-full bg-white/90 px-3 py-1 text-xs font-medium text-gray-700 shadow hover:bg-white transition"
+                              >
+                                Открыть
+                              </a>
+                            </div>
+                          </div>
+                          {validSchemes.length > 1 && (
+                            <div className="flex w-full gap-2 overflow-x-auto pb-1">
+                              {validSchemes.map((schemeUrl, idx) => {
+                                if (!schemeUrl || !schemeUrl.trim()) return null
+                                
+                                return (
+                                  <button
+                                    key={`${schemeUrl}-${idx}`}
+                                    type="button"
+                                    onClick={() => setActiveSchemeIdx(idx)}
+                                    className={`relative h-20 w-28 flex-shrink-0 overflow-hidden rounded-xl border transition ${
+                                      idx === activeSchemeIdx ? 'border-gray-900 shadow-md' : 'border-gray-200 hover:border-gray-300'
+                                    }`}
+                                  >
+                                    <Image
+                                      src={schemeUrl}
+                                      alt={`Схема ${idx + 1}`}
+                                      fill
+                                      sizes="112px"
+                                      className="object-contain bg-white"
+                                      unoptimized={true}
+                                      onError={(e) => {
+                                        console.error('Ошибка загрузки миниатюры схемы:', schemeUrl)
+                                        const target = e.target as HTMLImageElement
+                                        target.style.display = 'none'
+                                      }}
+                                    />
+                                  </button>
+                                )
+                              })}
+                            </div>
+                          )}
+                        </>
+                      )
+                    })()}
                     {product.downloadable_files && product.downloadable_files.length > 0 && (
                       <div className="w-full mt-4 border-t pt-4">
                         <h3 className="text-base font-semibold mb-3">Спецификация</h3>
