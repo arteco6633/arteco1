@@ -235,15 +235,17 @@ export default function ProductPage() {
       const isDefinitelyHorizontal = isHorizontal || (Math.abs(dx) > Math.abs(dy) * 1.5)
       
       if (isDefinitelyHorizontal && (distance > minDistance || velocity > minVelocity)) {
-        if (!product?.images || product.images.length <= 1) return
+        // Получаем актуальный массив изображений
+        const images = (product?.images && product.images.length > 0) ? product.images : (product?.image_url ? [product.image_url] : [])
+        if (images.length <= 1) return
         
         if (dx < 0) {
           // Свайп влево - следующее изображение (бесконечный цикл)
-          const nextIdx = activeImageIdx === product.images.length - 1 ? 0 : activeImageIdx + 1
+          const nextIdx = activeImageIdx === images.length - 1 ? 0 : activeImageIdx + 1
           setActiveImageIdx(nextIdx)
         } else if (dx > 0) {
           // Свайп вправо - предыдущее изображение (бесконечный цикл)
-          const prevIdx = activeImageIdx === 0 ? product.images.length - 1 : activeImageIdx - 1
+          const prevIdx = activeImageIdx === 0 ? images.length - 1 : activeImageIdx - 1
           setActiveImageIdx(prevIdx)
         }
       }
