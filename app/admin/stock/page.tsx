@@ -73,6 +73,8 @@ export default function AdminStockPage() {
   } | null>(null)
   const [filter, setFilter] = useState<'all' | 'with-sku' | 'no-sku' | 'low-stock'>('all')
   const [searchQuery, setSearchQuery] = useState('')
+  const [editingCostPriceId, setEditingCostPriceId] = useState<number | null>(null)
+  const [costPriceInput, setCostPriceInput] = useState<string>('')
 
   useEffect(() => {
     loadProducts()
@@ -402,19 +404,19 @@ export default function AdminStockPage() {
         {/* Таблица товаров */}
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full">
+            <table className="w-full min-w-[1400px]">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">ID</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Изображение</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Название</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Артикул (SKU)</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Остаток</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Цена продажи</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Себестоимость</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Маржа</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Обновлено</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Действия</th>
+                  <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">ID</th>
+                  <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Фото</th>
+                  <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider min-w-[200px]">Название</th>
+                  <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">SKU</th>
+                  <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Остаток</th>
+                  <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Цена</th>
+                  <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Себест.</th>
+                  <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Маржа</th>
+                  <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider whitespace-nowrap">Обновлено</th>
+                  <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Действия</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -425,86 +427,142 @@ export default function AdminStockPage() {
                     </td>
                   </tr>
                 ) : (
-                  filteredProducts.map((product) => (
-                    <tr key={product.id} className="hover:bg-gray-50 transition-colors">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{product.id}</td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {product.image_url ? (
-                          <img
-                            src={product.image_url}
-                            alt={product.name}
-                            className="w-16 h-16 object-cover rounded-lg"
-                          />
-                        ) : (
-                          <div className="w-16 h-16 rounded-lg bg-gray-100 grid place-items-center text-xs text-gray-400">
-                            нет фото
-                          </div>
-                        )}
-                      </td>
-                      <td className="px-6 py-4 text-sm font-medium text-gray-900">{product.name}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        {product.sku ? (
-                          <span className="font-mono text-gray-700">{product.sku}</span>
-                        ) : (
-                          <span className="text-gray-400">—</span>
-                        )}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${getStockColor(product.stock_quantity)}`}>
-                          {formatStock(product.stock_quantity)}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">
-                        {product.price.toLocaleString('ru-RU')} ₽
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        {product.cost_price ? (
-                          <span className="text-gray-700">{product.cost_price.toLocaleString('ru-RU')} ₽</span>
-                        ) : (
-                          <span className="text-gray-400">—</span>
-                        )}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        {product.cost_price ? (() => {
-                          const margin = product.price - product.cost_price
-                          const marginPercent = ((margin / product.cost_price) * 100).toFixed(1)
-                          const isPositive = margin >= 0
-                          return (
-                            <div className="flex flex-col">
-                              <span className={isPositive ? 'text-green-600 font-medium' : 'text-red-600 font-medium'}>
-                                {isPositive ? '+' : ''}{margin.toLocaleString('ru-RU')} ₽
-                              </span>
-                              <span className={`text-xs ${isPositive ? 'text-green-500' : 'text-red-500'}`}>
-                                {isPositive ? '+' : ''}{marginPercent}%
-                              </span>
+                  filteredProducts.map((product) => {
+                    const isEditing = editingCostPriceId === product.id
+                    
+                    return (
+                      <tr key={product.id} className="hover:bg-gray-50 transition-colors">
+                        <td className="px-3 py-3 whitespace-nowrap text-xs text-gray-900">{product.id}</td>
+                        <td className="px-3 py-3 whitespace-nowrap">
+                          {product.image_url ? (
+                            <img
+                              src={product.image_url}
+                              alt={product.name}
+                              className="w-12 h-12 object-cover rounded"
+                            />
+                          ) : (
+                            <div className="w-12 h-12 rounded bg-gray-100 grid place-items-center text-[10px] text-gray-400">
+                              нет
                             </div>
-                          )
-                        })() : (
-                          <span className="text-gray-400">—</span>
-                        )}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                        {product.updated_at
-                          ? new Date(product.updated_at).toLocaleString('ru-RU')
-                          : '—'}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        {product.sku ? (
-                          <button
-                            onClick={() => handleSyncProduct(product.id)}
-                            disabled={syncing}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                            title="Синхронизировать этот товар"
-                          >
-                            {syncing ? <Icons.Loading /> : <Icons.Sync />}
-                            <span>Синхр.</span>
-                          </button>
-                        ) : (
-                          <span className="text-gray-400 text-xs">Нет артикула</span>
-                        )}
-                      </td>
-                    </tr>
-                  ))
+                          )}
+                        </td>
+                        <td className="px-3 py-3 text-xs font-medium text-gray-900 max-w-[200px] truncate" title={product.name}>
+                          {product.name}
+                        </td>
+                        <td className="px-3 py-3 whitespace-nowrap text-xs">
+                          {product.sku ? (
+                            <span className="font-mono text-gray-700">{product.sku}</span>
+                          ) : (
+                            <span className="text-gray-400">—</span>
+                          )}
+                        </td>
+                        <td className="px-3 py-3 whitespace-nowrap">
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold ${getStockColor(product.stock_quantity)}`}>
+                            {formatStock(product.stock_quantity)}
+                          </span>
+                        </td>
+                        <td className="px-3 py-3 whitespace-nowrap text-xs text-gray-900 font-medium">
+                          {product.price.toLocaleString('ru-RU')} ₽
+                        </td>
+                        <td className="px-3 py-3 whitespace-nowrap text-xs">
+                          {isEditing ? (
+                            <div className="flex items-center gap-1">
+                              <input
+                                type="number"
+                                value={costPriceInput}
+                                onChange={(e) => setCostPriceInput(e.target.value)}
+                                onBlur={async () => {
+                                  const newCost = costPriceInput ? parseFloat(costPriceInput) : null
+                                  if (newCost !== null && !isNaN(newCost) && newCost >= 0) {
+                                    try {
+                                      const { error } = await supabase
+                                        .from('products')
+                                        .update({ cost_price: newCost })
+                                        .eq('id', product.id)
+                                      if (error) throw error
+                                      await loadProducts()
+                                    } catch (error) {
+                                      console.error('Ошибка обновления себестоимости:', error)
+                                      alert('Ошибка при сохранении себестоимости')
+                                    }
+                                  }
+                                  setEditingCostPriceId(null)
+                                  setCostPriceInput('')
+                                }}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') {
+                                    e.currentTarget.blur()
+                                  } else if (e.key === 'Escape') {
+                                    setEditingCostPriceId(null)
+                                    setCostPriceInput('')
+                                  }
+                                }}
+                                className="w-20 px-2 py-1 text-xs border border-blue-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                autoFocus
+                              />
+                            </div>
+                          ) : (
+                            <div 
+                              className="flex items-center gap-1 cursor-pointer hover:bg-gray-100 px-1 py-0.5 rounded group"
+                              onClick={() => {
+                                setEditingCostPriceId(product.id)
+                                setCostPriceInput(product.cost_price ? product.cost_price.toString() : '')
+                              }}
+                              title="Нажмите, чтобы редактировать себестоимость"
+                            >
+                              {product.cost_price ? (
+                                <span className="text-gray-700">{product.cost_price.toLocaleString('ru-RU')} ₽</span>
+                              ) : (
+                                <span className="text-gray-400 group-hover:text-gray-600">—</span>
+                              )}
+                              <svg className="w-3 h-3 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                              </svg>
+                            </div>
+                          )}
+                        </td>
+                        <td className="px-3 py-3 whitespace-nowrap text-xs">
+                          {product.cost_price ? (() => {
+                            const margin = product.price - product.cost_price
+                            const marginPercent = ((margin / product.cost_price) * 100).toFixed(1)
+                            const isPositive = margin >= 0
+                            return (
+                              <div className="flex flex-col">
+                                <span className={isPositive ? 'text-green-600 font-medium' : 'text-red-600 font-medium'}>
+                                  {isPositive ? '+' : ''}{margin.toLocaleString('ru-RU')} ₽
+                                </span>
+                                <span className={`text-[10px] ${isPositive ? 'text-green-500' : 'text-red-500'}`}>
+                                  {isPositive ? '+' : ''}{marginPercent}%
+                                </span>
+                              </div>
+                            )
+                          })() : (
+                            <span className="text-gray-400">—</span>
+                          )}
+                        </td>
+                        <td className="px-3 py-3 whitespace-nowrap text-[10px] text-gray-600">
+                          {product.updated_at
+                            ? new Date(product.updated_at).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
+                            : '—'}
+                        </td>
+                        <td className="px-3 py-3 whitespace-nowrap text-xs">
+                          {product.sku ? (
+                            <button
+                              onClick={() => handleSyncProduct(product.id)}
+                              disabled={syncing}
+                              className="inline-flex items-center gap-1 px-2 py-1 text-[10px] font-medium text-gray-700 bg-gray-100 rounded hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                              title="Синхронизировать этот товар"
+                            >
+                              {syncing ? <Icons.Loading /> : <Icons.Sync />}
+                              <span>Синхр.</span>
+                            </button>
+                          ) : (
+                            <span className="text-[10px] text-gray-400">Нет SKU</span>
+                          )}
+                        </td>
+                      </tr>
+                    )
+                  })
                 )}
               </tbody>
             </table>
