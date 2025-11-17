@@ -192,16 +192,19 @@ export default function ProductPage() {
       const diffX = Math.abs(touch.clientX - startX)
       const diffY = Math.abs(touch.clientY - startY)
       
-      // Определяем направление на раннем этапе (первые 10-15px движения)
+      // Определяем направление на раннем этапе (первые 5-10px движения)
       // Более строгое условие: горизонтальное движение должно быть в 2.5 раза больше вертикального
-      if (diffX > 10 && diffX > diffY * 2.5) {
+      if (diffX > 5 && diffX > diffY * 2.5) {
         // Устанавливаем флаг горизонтального свайпа
         if (!isHorizontalSwipeRef.current) {
           isHorizontalSwipeRef.current = true
         }
         // Блокируем вертикальную прокрутку только при горизонтальном свайпе
-        e.preventDefault()
-      } else if (diffY > 10 && diffY > diffX * 1.5) {
+        // Проверяем, можно ли отменить событие перед вызовом preventDefault()
+        if (e.cancelable) {
+          e.preventDefault()
+        }
+      } else if (diffY > 5 && diffY > diffX * 1.5) {
         // Если это явно вертикальный свайп, разрешаем прокрутку страницы
         isHorizontalSwipeRef.current = false
       }
