@@ -179,25 +179,16 @@ export default function ProductPage() {
     const images = (product.images && product.images.length > 0) ? product.images : (product.image_url ? [product.image_url] : [])
     if (images.length <= 1) return
 
-    // Используем requestAnimationFrame для гарантии, что элемент отрендерился в DOM
-    let attempts = 0
-    const maxAttempts = 10
+    // Используем небольшую задержку для гарантии, что элемент отрендерился в DOM
+    let cleanupFn: (() => void) | null = null
+    let timeoutId: NodeJS.Timeout | null = null
     
-    const setupHandlers = (): (() => void) | null => {
+    const setupHandlers = () => {
       const imageElement = leftMainImageRef.current
       if (!imageElement) {
-        attempts++
-        if (attempts < maxAttempts) {
-          // Если элемент еще не готов, пробуем еще раз через небольшую задержку
-          requestAnimationFrame(() => {
-            const cleanup = setupHandlers()
-            if (cleanup) {
-              // Сохраняем cleanup функцию для последующего вызова
-              return cleanup
-            }
-          })
-        }
-        return null
+        // Если элемент еще не готов, пробуем еще раз через небольшую задержку
+        timeoutId = setTimeout(setupHandlers, 50)
+        return
       }
 
       const handleTouchStart = (e: TouchEvent) => {
@@ -286,17 +277,18 @@ export default function ProductPage() {
       imageElement.addEventListener('touchmove', handleTouchMove, { passive: false })
       imageElement.addEventListener('touchend', handleTouchEnd, { passive: true })
 
-      return () => {
+      cleanupFn = () => {
         imageElement.removeEventListener('touchstart', handleTouchStart)
         imageElement.removeEventListener('touchmove', handleTouchMove)
         imageElement.removeEventListener('touchend', handleTouchEnd)
       }
     }
 
-    const cleanup = setupHandlers()
+    setupHandlers()
     
     return () => {
-      if (cleanup) cleanup()
+      if (timeoutId) clearTimeout(timeoutId)
+      if (cleanupFn) cleanupFn()
     }
   }, [product, activeImageIdx])
 
