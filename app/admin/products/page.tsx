@@ -36,6 +36,11 @@ const Icons = {
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
     </svg>
   ),
+  Copy: () => (
+    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+    </svg>
+  ),
 }
 
 interface Product {
@@ -643,6 +648,64 @@ export default function AdminProductsPage() {
     }
   }
 
+  function handleDuplicate(product: Product) {
+    // Копируем товар, добавляя "(копия)" к названию
+    setEditingProduct(null) // Сбрасываем editingProduct, чтобы создать новый товар
+    setSelectedImageFile(null)
+    setImagePreview('')
+    setFormData({
+      name: `${product.name} (копия)`,
+      description: product.description || '',
+      price: product.price.toString(),
+      original_price: (product.original_price || '').toString(),
+      sku: '', // Очищаем SKU, чтобы не было дубликатов
+      image_url: product.image_url,
+      images: (product.images as any) || [],
+      colors: Array.isArray(product.colors) && product.colors.length > 0
+        ? (product.colors as any[]).map(c => {
+            if (typeof c === 'string') return { value: c, name: '', imageIndex: null }
+            return { value: (c as any).value, name: (c as any).name || '', imageIndex: (c as any).imageIndex ?? null }
+          })
+        : [],
+      fillings: (product.fillings as any) || [],
+      hinges: (product.hinges as any) || [],
+      drawers: (product.drawers as any) || [],
+      lighting: (product.lighting as any) || [],
+      specs: ((product.specs as any) && typeof (product.specs as any) === 'object') ? { 
+        ...product.specs,
+        custom: Array.isArray((product.specs as any).custom) ? (product.specs as any).custom : []
+      } : { 
+        body_material: '', 
+        facade_material: '', 
+        additional: '',
+        handles: '',
+        handle_material: '',
+        back_wall_material: '',
+        delivery_option: '',
+        feet: '',
+        country: '',
+        custom: []
+      },
+      schemes: (product.schemes as any) || [],
+      videos: (product.videos as any) || [],
+      downloadable_files: (product.downloadable_files as any) || [],
+      category_id: product.category_id.toString(),
+      is_featured: false, // Новый товар не должен быть избранным по умолчанию
+      is_new: false, // Новый товар не должен быть новинкой по умолчанию
+      is_custom_size: !!(product as any).is_custom_size,
+      is_fast_delivery: !!(product as any).is_fast_delivery,
+      is_hidden: true, // Скрываем дубликат по умолчанию, чтобы не было дублей в каталоге
+      related_products: (product as any).related_products || [],
+      color_products: ((product as any).color_products && typeof (product as any).color_products === 'object') 
+        ? (product as any).color_products 
+        : {},
+      rich_content: ((product as any).rich_content && Array.isArray((product as any).rich_content)) 
+        ? (product as any).rich_content 
+        : [],
+    })
+    setShowModal(true)
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 flex items-center justify-center">
@@ -853,18 +916,21 @@ export default function AdminProductsPage() {
                           className="inline-flex items-center justify-center w-9 h-9 text-blue-600 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 hover:border-blue-300 transition-all shadow-sm"
                           title="Редактировать товар"
                         >
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
+                          <Icons.Edit />
+                        </button>
+                        <button
+                          onClick={() => handleDuplicate(product)}
+                          className="inline-flex items-center justify-center w-9 h-9 text-green-600 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 hover:border-green-300 transition-all shadow-sm"
+                          title="Дублировать товар"
+                        >
+                          <Icons.Copy />
                         </button>
                         <button
                           onClick={() => handleDelete(product.id)}
                           className="inline-flex items-center justify-center w-9 h-9 text-red-600 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 hover:border-red-300 transition-all shadow-sm"
                           title="Удалить товар"
                         >
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
+                          <Icons.Trash />
                         </button>
                       </div>
                     </td>
