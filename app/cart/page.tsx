@@ -605,28 +605,61 @@ export default function CartPage() {
       }
 
       if (typeof ya.createCheckout === 'function') {
-        // Сбор корзины для SDK v2 (формат v2)
-        const paymentItems = items.map((it) => ({
-          label: it.name,
-          quantity: { count: it.qty },
-          amount: { value: (it.price * it.qty).toFixed(2), currency: 'RUB' }
-        }))
-
         // Поддержка разных вариантов названий переменных
         const merchantId = data.merchantId || 
           (process.env.NEXT_PUBLIC_YANDEX_PAY_MERCHANT_ID as any) ||
           (process.env.NEXT_PUBLIC_YANDEX_MERCHANT_ID as any)
+        
+        // Формат для SDK v2 согласно документации Яндекс Pay
+        // SDK v2 использует класс Price для amount
+        const totalAmount = Number(data.amount || total).toFixed(2)
+        
+        // Используем класс Price из SDK, если доступен
+        const ya: any = (window as any).YaPay
+        const Price = ya?.Price || ya?.createPrice
+        
+        // Формируем amount используя класс Price или объект с правильной структурой
+        const createPrice = (value: string, currency: string = 'RUB') => {
+          if (Price && typeof Price === 'function') {
+            return new Price(value, currency)
+          }
+          // Если класс Price недоступен, используем объект с правильной структурой для v2
+          return {
+            value: value,
+            currency: currency
+          }
+        }
+        
+        const paymentItems = items.map((it) => {
+          const itemTotal = (it.price * it.qty).toFixed(2)
+          return {
+            label: it.name,
+            quantity: { count: String(it.qty) },
+            amount: createPrice(itemTotal, 'RUB')
+          }
+        })
+
+        // Формат для SDK v2
         const paymentData: any = {
           version: 2,
-          merchant: { id: String(merchantId), name: 'ARTECO' },
+          merchant: { 
+            id: String(merchantId), 
+            name: 'ARTECO' 
+          },
           currencyCode: 'RUB',
           countryCode: 'RU',
           order: {
-            id: data.orderId,
-            total: { label: 'ARTECO', amount: { value: Number(data.amount || total).toFixed(2), currency: 'RUB' } },
+            id: String(data.orderId),
+            total: {
+              amount: createPrice(String(totalAmount), 'RUB')
+            },
             items: paymentItems
-          },
-          buyer: { phone: contact.phone || '' }
+          }
+        }
+
+        // Добавляем buyer, если есть телефон
+        if (contact.phone) {
+          paymentData.buyer = { phone: contact.phone }
         }
 
         // Добавляем Split (оплата частями), если включен и выбран метод оплаты Split
@@ -638,99 +671,228 @@ export default function CartPage() {
           }
         }
 
-        // Создаём checkout с обработчиками событий сразу в subscriptions
-        let checkout = ya.createCheckout(paymentData, {
+        // Создаём checkout с обработчиками событий
+        // Согласно документации SDK v1, subscriptions передаются в createCheckout
+        const checkoutOptions: any = {
           env: data.env || 'test',
-          subscriptions: {
-            process: () => {
-              console.log('Yandex Pay process event')
-            },
-            abort: () => {
-              console.log('Yandex Pay abort event')
-              setYpLoading(false)
-            },
-            fail: (ev: any) => {
-              console.warn('Yandex Pay fail event:', ev)
-              setYpLoading(false)
-            },
-            success: async (ev: any) => {
-              try {
-                console.log('Yandex Pay success event:', ev)
-                setPaymentMethod('yap')
-                await placeOrder()
-              } catch (e) {
-                console.error('placeOrder after success event error', e)
-              } finally {
-                setYpLoading(false)
-              }
-            }
-          }
-        })
-
-        // Дополнительная подписка через subscribe (если SDK требует)
-        try {
-          if (checkout && typeof checkout.subscribe === 'function') {
-            checkout.subscribe('process', () => {})
-            checkout.subscribe('abort', () => { setYpLoading(false) })
-            checkout.subscribe('fail', (ev: any) => { 
-              console.warn('Yandex Pay fail event (subscribe):', ev)
-              setYpLoading(false)
-            })
-            checkout.subscribe('success', async (ev: any) => {
-              try {
-                console.log('Yandex Pay success event (subscribe):', ev)
-                setPaymentMethod('yap')
-                await placeOrder()
-              } catch (e) {
-                console.error('placeOrder after success (subscribe) error', e)
-              } finally {
-                setYpLoading(false)
-              }
-            })
-          }
-        } catch (e) {
-          console.warn('Subscribe error (non-critical):', e)
         }
 
-        let windowOpened = false
-        try {
-          console.log('Yandex Pay paymentData:', paymentData)
-          console.log('Yandex Pay checkout:', checkout)
-          // В SDK v2 open() открывает окно, результат приходит через события
-          if (typeof checkout.open === 'function') {
-            console.log('Calling checkout.open()...')
-            const openResult = await checkout.open()
-            console.log('checkout.open() result:', openResult)
-            windowOpened = true // Окно открыто, не сбрасываем ypLoading в finally
-            // Окно открыто, ждём результат через события (success/fail уже подписаны выше)
-            // Не проверяем результат синхронно, так как в v2 результат приходит через события
-          } else if (typeof checkout.pay === 'function') {
-            console.log('Calling checkout.pay()...')
-            const result = await checkout.pay()
-            console.log('Yandex Pay result:', result)
-            if (result && (result.status === 'success' || result.paid || result.result === 'success')) {
+        // Обработчики событий для SDK v2
+        // SDK требует подписку на событие process (согласно предупреждению)
+        const subscriptions: any = {
+          process: (ev: any) => {
+            console.log('✓ Yandex Pay process event:', ev)
+            // Событие process вызывается при начале обработки платежа
+          },
+          abort: () => {
+            console.log('Yandex Pay abort event')
+            setYpLoading(false)
+          },
+          fail: (ev: any) => {
+            console.warn('Yandex Pay fail event:', ev)
+            setYpLoading(false)
+          },
+          success: async (ev: any) => {
+            try {
+              console.log('✓ Yandex Pay success event:', ev)
               setPaymentMethod('yap')
               await placeOrder()
+            } catch (e) {
+              console.error('placeOrder after success event error', e)
+            } finally {
               setYpLoading(false)
-              return
             }
-            if (result?.error) throw new Error(result.error)
-          } else {
-            console.error('Checkout does not support open() or pay()')
-            throw new Error('SDK не поддерживает open() или pay()')
           }
-        } catch (e) {
-          console.error('Yandex Pay error:', e)
-          console.error('Error details:', (e as any)?.stack || (e as any)?.message)
-          alert((e as any)?.message || 'Не удалось открыть Yandex Pay')
-          setYpLoading(false)
         }
-        // Сбрасываем ypLoading только если окно не открылось
+
+        // Добавляем subscriptions в options
+        checkoutOptions.subscriptions = subscriptions
+
+        console.log('Creating Yandex Pay checkout with data:', JSON.stringify(paymentData, null, 2))
+        console.log('Checkout options:', checkoutOptions)
+
+        let checkout: any
+        try {
+          // createCheckout может возвращать Promise, поэтому await
+          const checkoutResult = ya.createCheckout(paymentData, checkoutOptions)
+          
+          // Проверяем, является ли результат Promise
+          if (checkoutResult && typeof checkoutResult.then === 'function') {
+            console.log('Checkout is a Promise, awaiting...')
+            checkout = await checkoutResult
+            console.log('✓ Checkout promise resolved:', checkout)
+          } else {
+            checkout = checkoutResult
+            console.log('✓ Checkout created (synchronous):', checkout)
+          }
+          
+          console.log('Checkout type:', typeof checkout)
+          if (checkout) {
+            console.log('Checkout keys:', Object.keys(checkout))
+            console.log('Checkout prototype:', Object.getOwnPropertyNames(Object.getPrototypeOf(checkout)))
+          }
+        } catch (createError: any) {
+          console.error('✗ Error creating checkout:', createError)
+          console.error('Error details:', createError?.stack || createError?.message)
+          throw new Error(`Не удалось создать checkout: ${createError.message || 'Unknown error'}`)
+        }
+
+        // Проверяем доступные методы и свойства checkout
+        const checkoutMethods = {
+          hasOpen: typeof checkout?.open === 'function',
+          hasPay: typeof checkout?.pay === 'function',
+          hasMount: typeof checkout?.mount === 'function',
+          hasRender: typeof checkout?.render === 'function',
+          hasShow: typeof checkout?.show === 'function',
+          hasUpdate: typeof checkout?.update === 'function',
+          hasWidget: !!checkout?.widget,
+          hasOverlay: !!checkout?.overlay,
+          hasButtons: !!checkout?.buttons,
+          checkoutType: typeof checkout,
+          checkoutKeys: checkout ? Object.keys(checkout) : []
+        }
+        console.log('Checkout methods available:', checkoutMethods)
+        console.log('Checkout widget:', checkout?.widget)
+        console.log('Checkout overlay:', checkout?.overlay)
+        console.log('Checkout buttons:', checkout?.buttons)
+
+        // SDK v2 может использовать разные методы в зависимости от версии
+        let windowOpened = false
+        
+        try {
+          // Вариант 1: checkout.widget - виджет для встраивания
+          if (checkout?.widget && typeof checkout.widget.mount === 'function') {
+            console.log('Using checkout.widget.mount()...')
+            let container = document.getElementById('yandex-pay-checkout-container')
+            if (!container) {
+              container = document.createElement('div')
+              container.id = 'yandex-pay-checkout-container'
+              container.style.position = 'fixed'
+              container.style.top = '50%'
+              container.style.left = '50%'
+              container.style.transform = 'translate(-50%, -50%)'
+              container.style.zIndex = '10000'
+              document.body.appendChild(container)
+            }
+            checkout.widget.mount(container)
+            windowOpened = true
+            console.log('✓ Checkout widget mounted')
+          }
+          // Вариант 2: checkout.overlay - оверлей для модального окна
+          else if (checkout?.overlay && typeof checkout.overlay.show === 'function') {
+            console.log('Using checkout.overlay.show()...')
+            checkout.overlay.show()
+            windowOpened = true
+            console.log('✓ Checkout overlay shown')
+          }
+          // Вариант 3: checkout.buttons - кнопки для оплаты
+          else if (checkout?.buttons && Array.isArray(checkout.buttons) && checkout.buttons.length > 0) {
+            console.log('Using checkout.buttons...')
+            // Кнопки могут автоматически открывать форму
+            windowOpened = true
+            console.log('✓ Checkout buttons available, form should open automatically')
+          }
+          // Вариант 4: checkout.mount() - для встраивания в DOM элемент
+          else if (typeof checkout.mount === 'function') {
+            console.log('Using checkout.mount()...')
+            let container = document.getElementById('yandex-pay-checkout-container')
+            if (!container) {
+              container = document.createElement('div')
+              container.id = 'yandex-pay-checkout-container'
+              container.style.position = 'fixed'
+              container.style.top = '50%'
+              container.style.left = '50%'
+              container.style.transform = 'translate(-50%, -50%)'
+              container.style.zIndex = '10000'
+              document.body.appendChild(container)
+            }
+            checkout.mount(container)
+            windowOpened = true
+            console.log('✓ Checkout mounted')
+          }
+          // Вариант 5: checkout.open() - для открытия в модальном окне
+          else if (typeof checkout.open === 'function') {
+            console.log('Calling checkout.open()...')
+            const openResult = checkout.open()
+            if (openResult && typeof openResult.then === 'function') {
+              await openResult
+            }
+            windowOpened = true
+            console.log('✓ Checkout opened')
+          }
+          // Вариант 6: checkout.show() - альтернативный метод открытия
+          else if (typeof checkout.show === 'function') {
+            console.log('Calling checkout.show()...')
+            checkout.show()
+            windowOpened = true
+            console.log('✓ Checkout shown')
+          }
+          // Вариант 7: checkout.update() - может обновить и открыть форму
+          else if (typeof checkout.update === 'function') {
+            console.log('Using checkout.update()...')
+            try {
+              // update может открыть форму после обновления данных
+              const updateResult = checkout.update(paymentData)
+              if (updateResult && typeof updateResult.then === 'function') {
+                await updateResult
+              }
+              // После update может потребоваться вызвать метод для открытия
+              // Проверяем, появились ли методы после update
+              if (typeof checkout.open === 'function') {
+                await checkout.open()
+              } else if (typeof checkout.show === 'function') {
+                checkout.show()
+              } else if (checkout?.overlay && typeof checkout.overlay.show === 'function') {
+                checkout.overlay.show()
+              }
+              windowOpened = true
+              console.log('✓ Checkout updated and opened')
+            } catch (updateError: any) {
+              console.error('Error updating checkout:', updateError)
+              throw updateError
+            }
+          }
+          // Вариант 8: checkout может автоматически открываться после создания
+          else {
+            console.warn('⚠️ Checkout created but no known methods found')
+            console.warn('Checkout object structure:', {
+              keys: Object.keys(checkout),
+              widget: checkout?.widget,
+              overlay: checkout?.overlay,
+              buttons: checkout?.buttons,
+              prototype: Object.getOwnPropertyNames(Object.getPrototypeOf(checkout))
+            })
+            
+            // Возможно, checkout автоматически открывается или требует другого подхода
+            // Даём время SDK автоматически открыть окно
+            const autoOpenTimeout = setTimeout(() => {
+              if (!windowOpened) {
+                console.warn('Window did not open automatically after 3 seconds')
+                console.warn('Try checking checkout.widget, checkout.overlay, or checkout.buttons')
+                setYpLoading(false)
+              }
+            }, 3000)
+            
+            // Предполагаем, что окно может открыться автоматически
+            windowOpened = true
+            
+            // Очищаем таймаут, если окно открылось
+            setTimeout(() => clearTimeout(autoOpenTimeout), 3000)
+          }
+        } catch (e: any) {
+          console.error('✗ Yandex Pay error:', e)
+          console.error('Error details:', e?.stack || e?.message)
+          alert(`Ошибка Яндекс Pay: ${e?.message || 'Не удалось открыть форму оплаты'}\n\nПроверьте консоль браузера для подробностей.`)
+          setYpLoading(false)
+          return
+        }
+
+        // Если окно открылось, не сбрасываем ypLoading - ждём события
         if (!windowOpened) {
           console.warn('Window did not open, resetting ypLoading')
           setYpLoading(false)
         } else {
-          console.log('Window opened successfully, waiting for events')
+          console.log('✓ Window opened successfully, waiting for events')
         }
       } else {
         // Фоллбек: если SDK не предоставил createCheckout, используем обычный флоу

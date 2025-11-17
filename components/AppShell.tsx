@@ -11,8 +11,10 @@ import { Suspense } from 'react'
 export default function AppShell({ children }: PropsWithChildren) {
   const pathname = usePathname()
   const isCRM = pathname?.startsWith('/crm')
+  const isAdmin = pathname?.startsWith('/admin')
 
-  if (isCRM) {
+  // Для CRM и админ-панели не показываем Navbar и Footer
+  if (isCRM || isAdmin) {
     return (
       <div className="w-full">
         <Suspense fallback={<div className="min-h-[50vh] w-full grid place-items-center"><div className="flex flex-col items-center gap-4"><div className="text-3xl font-bold tracking-wide">ART × CO</div><div className="w-8 h-8 rounded-full border-2 border-black/20 border-t-black animate-spin" /></div></div>}>

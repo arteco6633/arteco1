@@ -30,7 +30,7 @@ export default function YandexPaySdk() {
 
   return (
     <Script
-      src="https://pay.yandex.ru/sdk/v1/pay.js"
+      src="https://pay.yandex.ru/sdk/v2/pay.js"
       strategy="afterInteractive"
       onLoad={() => {
         // Проверяем доступность SDK после загрузки

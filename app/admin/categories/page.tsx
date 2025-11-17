@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
-import Navbar from '@/components/Navbar'
+// Navbar удалён для админ-панели
 
 interface Category {
   id: number
@@ -251,28 +251,44 @@ export default function AdminCategoriesPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <Navbar />
-        <div className="flex items-center justify-center min-h-[50vh]">
-          <div className="text-xl">Загрузка...</div>
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <p className="mt-4 text-gray-600">Загрузка...</p>
         </div>
       </div>
     )
   }
 
+  // Иконки
+  const Icons = {
+    Plus: () => (
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+      </svg>
+    ),
+  }
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Navbar />
-      <main className="max-w-[1400px] mx-auto px-3 py-8">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold">Управление категориями</h1>
-          <button
-            onClick={openAddModal}
-            className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition"
-          >
-            + Добавить категорию
-          </button>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
+      {/* Хедер */}
+      <header className="bg-white border-b border-gray-200 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
+            <h1 className="text-2xl font-bold text-gray-900">Управление категориями</h1>
+            <button
+              onClick={openAddModal}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+            >
+              <Icons.Plus />
+              <span>Добавить категорию</span>
+            </button>
+          </div>
         </div>
+      </header>
+
+      {/* Основной контент */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
         <div className="flex justify-end mb-4">
           <button onClick={saveOrder} className="px-4 py-2 rounded-lg bg-black text-white hover:bg-black/90">Сохранить порядок</button>

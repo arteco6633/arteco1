@@ -2,8 +2,41 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { supabase } from '@/lib/supabase'
-import Navbar from '@/components/Navbar'
 import Link from 'next/link'
+
+// Минималистичные SVG иконки
+const Icons = {
+  ArrowLeft: () => (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+    </svg>
+  ),
+  Plus: () => (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+    </svg>
+  ),
+  Edit: () => (
+    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+    </svg>
+  ),
+  Trash: () => (
+    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+    </svg>
+  ),
+  Close: () => (
+    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+    </svg>
+  ),
+  Stock: () => (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+    </svg>
+  ),
+}
 
 interface Product {
   id: number
@@ -49,6 +82,7 @@ export default function AdminProductsPage() {
   const [categories, setCategories] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
   const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string>('')
@@ -611,408 +645,671 @@ export default function AdminProductsPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-xl">Загрузка...</div>
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <p className="mt-4 text-gray-600">Загрузка...</p>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      <Navbar />
-      <div className="admin-container">
-        <div className="admin-header">
-          <h1 className="text-3xl font-bold">Управление товарами</h1>
-          <div className="flex gap-3">
-            <Link
-              href="/admin/stock"
-              className="btn btn-secondary"
-            >
-              📦 Остатки
-            </Link>
-            <button onClick={openAddModal} className="btn btn-primary">
-              + Добавить товар
-            </button>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
+      {/* Хедер */}
+      <header className="bg-white border-b border-gray-200 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
+            <div className="flex items-center gap-4">
+              <Link
+                href="/admin"
+                className="flex items-center text-gray-600 hover:text-gray-900 transition-colors"
+              >
+                <Icons.ArrowLeft />
+              </Link>
+              <h1 className="text-2xl font-bold text-gray-900">Управление товарами</h1>
+            </div>
+            <div className="flex items-center gap-3">
+              <Link
+                href="/admin/stock"
+                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-colors"
+              >
+                <Icons.Stock />
+                <span>Остатки</span>
+              </Link>
+              <button
+                onClick={openAddModal}
+                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+              >
+                <Icons.Plus />
+                <span>Добавить товар</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* Основной контент */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Статистика */}
+        <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-6">
+          <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
+            <div className="text-sm text-gray-600 mb-1">Всего товаров</div>
+            <div className="text-3xl font-bold text-gray-900">{products.length}</div>
+          </div>
+          <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
+            <div className="text-sm text-gray-600 mb-1">С артикулом</div>
+            <div className="text-3xl font-bold text-gray-900">
+              {products.filter(p => p.sku).length}
+            </div>
+          </div>
+          <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
+            <div className="text-sm text-gray-600 mb-1">Новинки</div>
+            <div className="text-3xl font-bold text-blue-600">
+              {products.filter(p => p.is_new).length}
+            </div>
+          </div>
+          <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
+            <div className="text-sm text-gray-600 mb-1">Рекомендуемые</div>
+            <div className="text-3xl font-bold text-purple-600">
+              {products.filter(p => p.is_featured).length}
+            </div>
           </div>
         </div>
 
-        <div className="admin-table-container">
-          <table className="admin-table">
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Название</th>
-                <th>Артикул (SKU)</th>
-                <th>Цена</th>
-                <th>Категория</th>
-                <th>Изображение</th>
-                <th>Действия</th>
-              </tr>
-            </thead>
-            <tbody>
-              {products.map((product) => (
-                <tr key={product.id}>
-                  <td>{product.id}</td>
-                  <td>{product.name}</td>
-                  <td>{product.sku || <span className="text-gray-400">—</span>}</td>
-                  <td>{product.price} ₽</td>
-                  <td>{product.category_id}</td>
-                  <td>
-                    {product.image_url ? (
-                      <img
-                        src={product.image_url}
-                        alt={product.name}
-                        className="w-16 h-16 object-cover rounded"
-                      />
-                    ) : (
-                      <div className="w-16 h-16 rounded bg-gray-100 grid place-items-center text-xs text-gray-400">нет фото</div>
-                    )}
-                  </td>
-                  <td>
+        {/* Таблица товаров */}
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+          <div className="p-6 border-b border-gray-200">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-gray-900">Список товаров</h2>
+              <div className="flex items-center gap-3">
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Поиск товаров..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm w-64 transition-all"
+                  />
+                  <svg className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                  {searchQuery && (
                     <button
-                      onClick={() => openEditModal(product)}
-                      className="btn btn-secondary mr-2"
+                      onClick={() => setSearchQuery('')}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
                     >
-                      Редактировать
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
                     </button>
-                    <button
-                      onClick={() => handleDelete(product.id)}
-                      className="btn btn-danger"
-                    >
-                      Удалить
-                    </button>
-                  </td>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[1200px]">
+              <thead className="bg-gray-50 border-b border-gray-200">
+                <tr>
+                  <th className="px-4 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider w-16">ID</th>
+                  <th className="px-4 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider min-w-[300px]">Товар</th>
+                  <th className="px-4 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider w-32">Артикул</th>
+                  <th className="px-4 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider w-28">Цена</th>
+                  <th className="px-4 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider w-24">Категория</th>
+                  <th className="px-4 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider w-32">Статус</th>
+                  <th className="px-4 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider w-64">Действия</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {products
+                  .filter((product) => {
+                    if (!searchQuery) return true
+                    const query = searchQuery.toLowerCase()
+                    return (
+                      product.name.toLowerCase().includes(query) ||
+                      product.description?.toLowerCase().includes(query) ||
+                      product.sku?.toLowerCase().includes(query) ||
+                      product.id.toString().includes(query)
+                    )
+                  })
+                  .map((product) => (
+                  <tr key={product.id} className="hover:bg-gray-50 transition-colors group">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="text-sm font-mono text-gray-500">#{product.id}</span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="flex-shrink-0">
+                          {product.image_url ? (
+                            <img
+                              src={product.image_url}
+                              alt={product.name}
+                              className="w-14 h-14 object-cover rounded-lg border border-gray-200"
+                            />
+                          ) : (
+                            <div className="w-14 h-14 rounded-lg bg-gray-100 grid place-items-center border border-gray-200">
+                              <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                              </svg>
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-medium text-gray-900 truncate">{product.name}</div>
+                          {product.description && (
+                            <div className="text-xs text-gray-500 truncate mt-0.5">{product.description}</div>
+                          )}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {product.sku ? (
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-mono font-medium bg-blue-50 text-blue-700 border border-blue-200">
+                          {product.sku}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-gray-400">—</span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex flex-col">
+                        <span className="text-sm font-semibold text-gray-900">
+                          {product.price.toLocaleString('ru-RU')} ₽
+                        </span>
+                        {product.original_price && (
+                          <span className="text-xs text-gray-400 line-through">
+                            {product.original_price.toLocaleString('ru-RU')} ₽
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="text-sm text-gray-600">{product.category_id}</span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center gap-1.5">
+                        {product.is_new && (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                            Новинка
+                          </span>
+                        )}
+                        {product.is_featured && (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800">
+                            Рекомендуемое
+                          </span>
+                        )}
+                        {product.is_hidden && (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">
+                            Скрыт
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap sticky right-0 bg-white z-10 border-l border-gray-200">
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => openEditModal(product)}
+                          className="inline-flex items-center justify-center w-9 h-9 text-blue-600 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 hover:border-blue-300 transition-all shadow-sm"
+                          title="Редактировать товар"
+                        >
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                          </svg>
+                        </button>
+                        <button
+                          onClick={() => handleDelete(product.id)}
+                          className="inline-flex items-center justify-center w-9 h-9 text-red-600 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 hover:border-red-300 transition-all shadow-sm"
+                          title="Удалить товар"
+                        >
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
 
         {/* Модальное окно - Полноэкранное */}
         {showModal && (
-          <div className="fixed inset-0 bg-white z-50 overflow-y-auto">
+          <div className="fixed inset-0 bg-gray-50 z-50 overflow-y-auto">
             {/* Шапка с кнопкой закрытия */}
-            <div className="sticky top-0 bg-white border-b shadow-sm z-10 p-4">
-              <div className="container mx-auto flex justify-between items-center">
-                <h2 className="text-2xl md:text-3xl font-bold">
-                  {editingProduct ? 'Редактировать товар' : 'Добавить товар'}
-                </h2>
-                <button
-                  onClick={() => setShowModal(false)}
-                  className="text-gray-500 hover:text-gray-700 text-3xl"
-                  disabled={uploading}
-                >
-                  ×
-                </button>
+            <div className="sticky top-0 bg-white border-b border-gray-200 shadow-sm z-10">
+              <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="flex items-center justify-between h-16">
+                  <div>
+                    <h2 className="text-xl font-bold text-gray-900">
+                      {editingProduct ? 'Редактировать товар' : 'Добавить товар'}
+                    </h2>
+                    <p className="text-sm text-gray-500 mt-0.5">
+                      {editingProduct ? `ID: ${editingProduct.id}` : 'Заполните все необходимые поля'}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setShowModal(false)}
+                    className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                    disabled={uploading}
+                  >
+                    <Icons.Close />
+                  </button>
+                </div>
               </div>
             </div>
 
             {/* Контент формы */}
-            <div className="container mx-auto p-4 md:p-6 max-w-4xl">
-              <form onSubmit={handleSubmit}>
-                <div className="mb-4">
-                  <label className="block mb-2 font-semibold">Название</label>
-                  <input
-                    type="text"
-                    className="w-full px-3 py-2 border rounded-lg"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    required
-                  />
-                </div>
-
-                <div className="mb-4">
-                  <label className="block mb-2 font-semibold">Описание</label>
-                  <textarea
-                    className="w-full px-3 py-2 border rounded-lg"
-                    rows={3}
-                    value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    required
-                  />
-                </div>
-
-                <div className="mb-4">
-                  <label className="block mb-2 font-semibold">Цена</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    className="w-full px-3 py-2 border rounded-lg"
-                    value={formData.price}
-                    onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                    required
-                  />
-                </div>
-
-                <div className="mb-4">
-                  <label className="block mb-2 font-semibold">Старая цена (необязательно)</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    className="w-full px-3 py-2 border rounded-lg"
-                    value={formData.original_price}
-                    onChange={(e) => setFormData({ ...formData, original_price: e.target.value })}
-                    placeholder="Оставьте пустым, если старая цена не нужна"
-                  />
-                </div>
-
-                <div className="mb-4">
-                  <label className="block mb-2 font-semibold">Артикул (SKU)</label>
-                  <input
-                    type="text"
-                    className="w-full px-3 py-2 border rounded-lg"
-                    value={formData.sku}
-                    onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
-                    placeholder="Например: 15938 или ART-001"
-                  />
-                  <p className="text-sm text-gray-500 mt-1">
-                    Артикул используется для синхронизации остатков с поставщиками (например, Woodville)
-                  </p>
-                </div>
-
-                <div className="mb-4">
-                  <label className="block mb-2 font-semibold">Изображение</label>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="w-full px-3 py-2 border rounded-lg"
-                    onChange={handleImageSelect}
-                  />
-                  {(imagePreview || formData.image_url) && (
-                    <div className="mt-4">
-                      <img
-                        src={imagePreview || formData.image_url}
-                        alt="Превью"
-                        className="w-48 h-48 object-cover rounded-lg border"
+            <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-24">
+              <form id="product-form" onSubmit={handleSubmit} className="space-y-8">
+                {/* Основная информация */}
+                <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-6 pb-3 border-b border-gray-200">
+                    Основная информация
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Название товара <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                        value={formData.name}
+                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        placeholder="Введите название товара"
+                        required
                       />
                     </div>
-                  )}
+
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Описание <span className="text-red-500">*</span>
+                      </label>
+                      <textarea
+                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all resize-none"
+                        rows={4}
+                        value={formData.description}
+                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                        placeholder="Опишите товар подробно"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Цена <span className="text-red-500">*</span>
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          className="w-full px-4 py-2.5 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                          value={formData.price}
+                          onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                          placeholder="0.00"
+                          required
+                        />
+                        <span className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500">₽</span>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Старая цена
+                        <span className="ml-2 text-xs text-gray-500 font-normal">(необязательно)</span>
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          className="w-full px-4 py-2.5 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                          value={formData.original_price}
+                          onChange={(e) => setFormData({ ...formData, original_price: e.target.value })}
+                          placeholder="0.00"
+                        />
+                        <span className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500">₽</span>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Артикул (SKU)
+                        <span className="ml-2 text-xs text-gray-500 font-normal">(необязательно)</span>
+                      </label>
+                      <input
+                        type="text"
+                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all font-mono"
+                        value={formData.sku}
+                        onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
+                        placeholder="15938 или ART-001"
+                      />
+                      <p className="text-xs text-gray-500 mt-1.5">
+                        Используется для синхронизации остатков с поставщиками (например, Woodville)
+                      </p>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Категория <span className="text-red-500">*</span>
+                      </label>
+                      <select
+                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all bg-white"
+                        value={formData.category_id}
+                        onChange={(e) => setFormData({ ...formData, category_id: parseInt(e.target.value) })}
+                        required
+                      >
+                        <option value="">Выберите категорию</option>
+                        {categories.map((cat) => (
+                          <option key={cat.id} value={cat.id}>
+                            {cat.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
                 </div>
 
-                {/* Галерея изображений: drag & drop + выбор файлов */}
-                <div className="mb-4">
-                  <label className="block mb-2 font-semibold">Доп. изображения (Drag & Drop или выберите файлы)</label>
-                  <div
-                    className={`w-full border-2 ${isDragging ? 'border-blue-500 bg-blue-50' : 'border-dashed border-gray-300'} rounded-lg p-5 text-center transition-colors`}
-                    onDragOver={(e) => { e.preventDefault(); setIsDragging(true) }}
-                    onDragLeave={() => setIsDragging(false)}
-                    onDrop={handleGalleryDrop}
-                  >
-                    <p className="mb-2">Перетащите сюда изображения или</p>
-                    <button type="button" className="px-4 py-2 border rounded-lg hover:bg-gray-50" onClick={() => galleryInputRef.current?.click()} disabled={uploadingGallery}>
-                      Выбрать файлы
-                    </button>
-                    <input ref={galleryInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handleGallerySelect} />
-                    {uploadingGallery && <div className="mt-2 text-sm text-gray-500">Загрузка...</div>}
-                  </div>
-
-                  {formData.images.length > 0 && (
-                    <div className="mt-3 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
-                      {formData.images.map((url, idx) => (
-                        <div 
-                          key={idx} 
-                          className={`relative cursor-move transition-opacity ${
-                            draggedImageIndex === idx ? 'opacity-50' : ''
-                          } ${dragOverImageIndex === idx ? 'ring-2 ring-blue-500' : ''}`}
-                          draggable
-                          onDragStart={(e) => {
-                            setDraggedImageIndex(idx)
-                            e.dataTransfer.effectAllowed = 'move'
-                          }}
-                          onDragOver={(e) => {
-                            e.preventDefault()
-                            e.dataTransfer.dropEffect = 'move'
-                            if (draggedImageIndex !== null && draggedImageIndex !== idx) {
-                              setDragOverImageIndex(idx)
-                            }
-                          }}
-                          onDragLeave={() => {
-                            setDragOverImageIndex(null)
-                          }}
-                          onDrop={(e) => {
-                            e.preventDefault()
-                            if (draggedImageIndex !== null && draggedImageIndex !== idx) {
-                              const newImages = [...formData.images]
-                              const [draggedItem] = newImages.splice(draggedImageIndex, 1)
-                              newImages.splice(idx, 0, draggedItem)
-                              setFormData({ ...formData, images: newImages })
-                            }
-                            setDraggedImageIndex(null)
-                            setDragOverImageIndex(null)
-                          }}
-                          onDragEnd={() => {
-                            setDraggedImageIndex(null)
-                            setDragOverImageIndex(null)
-                          }}
-                        >
-                          <div className="w-full h-32 sm:h-40 md:h-48 bg-gray-100 rounded overflow-hidden flex items-center justify-center">
-                            <img src={url} className="max-w-full max-h-full object-contain rounded pointer-events-none" alt={`Изображение ${idx + 1}`} />
-                          </div>
-                          <button 
-                            type="button" 
-                            className="absolute -top-2 -right-2 bg-white rounded-full border w-7 h-7 text-sm hover:bg-red-50 z-10 flex items-center justify-center font-bold" 
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              setFormData({ ...formData, images: formData.images.filter((_,i)=>i!==idx) })
-                            }}
-                          >
-                            ×
-                          </button>
-                          <div className="absolute bottom-0 left-0 right-0 bg-black/70 text-white text-sm font-semibold text-center py-1.5 rounded-b">
-                            {idx + 1}
-                          </div>
+                {/* Изображения */}
+                <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-6 pb-3 border-b border-gray-200">
+                    Изображения
+                  </h3>
+                  <div className="space-y-6">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Главное изображение
+                      </label>
+                      <div className="flex items-start gap-4">
+                        <div className="flex-shrink-0">
+                          {(imagePreview || formData.image_url) ? (
+                            <img
+                              src={imagePreview || formData.image_url}
+                              alt="Превью"
+                              className="w-32 h-32 object-cover rounded-lg border-2 border-gray-200"
+                            />
+                          ) : (
+                            <div className="w-32 h-32 rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 flex items-center justify-center">
+                              <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                              </svg>
+                            </div>
+                          )}
                         </div>
-                      ))}
+                        <div className="flex-1">
+                          <label className="inline-flex items-center px-4 py-2.5 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 cursor-pointer transition-colors border border-blue-200">
+                            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                            </svg>
+                            <span className="text-sm font-medium">Выбрать файл</span>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
+                              onChange={handleImageSelect}
+                            />
+                          </label>
+                          <p className="text-xs text-gray-500 mt-2">
+                            Рекомендуемый размер: 800x800px. Форматы: JPG, PNG, WebP
+                          </p>
+                        </div>
+                      </div>
                     </div>
-                  )}
+
+                    {/* Галерея изображений: drag & drop + выбор файлов */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Дополнительные изображения
+                      </label>
+                      <div
+                        className={`w-full border-2 ${isDragging ? 'border-blue-500 bg-blue-50' : 'border-dashed border-gray-300'} rounded-lg p-5 text-center transition-colors`}
+                        onDragOver={(e) => { e.preventDefault(); setIsDragging(true) }}
+                        onDragLeave={() => setIsDragging(false)}
+                        onDrop={handleGalleryDrop}
+                      >
+                        <p className="mb-2 text-sm text-gray-600">Перетащите сюда изображения или</p>
+                        <button type="button" className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium" onClick={() => galleryInputRef.current?.click()} disabled={uploadingGallery}>
+                          Выбрать файлы
+                        </button>
+                        <input ref={galleryInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handleGallerySelect} />
+                        {uploadingGallery && <div className="mt-2 text-sm text-gray-500">Загрузка...</div>}
+                      </div>
+
+                      {formData.images.length > 0 && (
+                        <div className="mt-4 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
+                          {formData.images.map((url, idx) => (
+                            <div 
+                              key={idx} 
+                              className={`relative cursor-move transition-opacity ${
+                                draggedImageIndex === idx ? 'opacity-50' : ''
+                              } ${dragOverImageIndex === idx ? 'ring-2 ring-blue-500' : ''}`}
+                              draggable
+                              onDragStart={(e) => {
+                                setDraggedImageIndex(idx)
+                                e.dataTransfer.effectAllowed = 'move'
+                              }}
+                              onDragOver={(e) => {
+                                e.preventDefault()
+                                e.dataTransfer.dropEffect = 'move'
+                                if (draggedImageIndex !== null && draggedImageIndex !== idx) {
+                                  setDragOverImageIndex(idx)
+                                }
+                              }}
+                              onDragLeave={() => {
+                                setDragOverImageIndex(null)
+                              }}
+                              onDrop={(e) => {
+                                e.preventDefault()
+                                if (draggedImageIndex !== null && draggedImageIndex !== idx) {
+                                  const newImages = [...formData.images]
+                                  const [draggedItem] = newImages.splice(draggedImageIndex, 1)
+                                  newImages.splice(idx, 0, draggedItem)
+                                  setFormData({ ...formData, images: newImages })
+                                }
+                                setDraggedImageIndex(null)
+                                setDragOverImageIndex(null)
+                              }}
+                              onDragEnd={() => {
+                                setDraggedImageIndex(null)
+                                setDragOverImageIndex(null)
+                              }}
+                            >
+                              <div className="w-full h-32 sm:h-40 md:h-48 bg-gray-100 rounded overflow-hidden flex items-center justify-center">
+                                <img src={url} className="max-w-full max-h-full object-contain rounded pointer-events-none" alt={`Изображение ${idx + 1}`} />
+                              </div>
+                              <button 
+                                type="button" 
+                                className="absolute -top-2 -right-2 bg-white rounded-full border w-7 h-7 text-sm hover:bg-red-50 z-10 flex items-center justify-center font-bold" 
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  setFormData({ ...formData, images: formData.images.filter((_,i)=>i!==idx) })
+                                }}
+                              >
+                                ×
+                              </button>
+                              <div className="absolute bottom-0 left-0 right-0 bg-black/70 text-white text-sm font-semibold text-center py-1.5 rounded-b">
+                                {idx + 1}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
 
-                {/* Схемы товара: drag & drop + выбор файлов */}
-                <div className="mb-6">
-                  <label className="block mb-2 font-semibold">Схемы товара (Drag & Drop или выбрать файлы)</label>
-                  <div
-                    className={`w-full border-2 ${isDraggingSchemes ? 'border-blue-500 bg-blue-50' : 'border-dashed border-gray-300'} rounded-lg p-5 text-center transition-colors`}
-                    onDragOver={(e) => { e.preventDefault(); setIsDraggingSchemes(true) }}
-                    onDragLeave={() => setIsDraggingSchemes(false)}
-                    onDrop={async (e) => {
-                      e.preventDefault(); setIsDraggingSchemes(false);
-                      const files = Array.from(e.dataTransfer.files || [])
-                      if (files.length === 0) return
-                      try { setUploadingGallery(true); const urls = await uploadGalleryFiles(files); setFormData({ ...formData, schemes: [...formData.schemes, ...urls] }) } catch(err){ console.error(err); alert('Не удалось загрузить схемы') } finally { setUploadingGallery(false) }
-                    }}
-                  >
-                    <p className="mb-2">Перетащите файлы схем или</p>
-                    <button type="button" className="px-4 py-2 border rounded-lg hover:bg-gray-50" onClick={() => schemeInputRef.current?.click()} disabled={uploadingGallery}>
-                      Выбрать файлы
-                    </button>
-                    <input ref={schemeInputRef} type="file" accept="image/*" multiple className="hidden" onChange={async (e)=>{ const files = Array.from(e.target.files||[]); if(files.length===0) return; try{ setUploadingGallery(true); const urls= await uploadGalleryFiles(files); setFormData({ ...formData, schemes: [...formData.schemes, ...urls] }) }catch(err){ console.error(err); alert('Не удалось загрузить схемы') } finally { setUploadingGallery(false); if(schemeInputRef.current) schemeInputRef.current.value='' } }} />
-                    {uploadingGallery && <div className="mt-2 text-sm text-gray-500">Загрузка...</div>}
-                  </div>
-                  {formData.schemes.length > 0 && (
-                    <div className="mt-3 grid grid-cols-5 gap-2">
-                      {formData.schemes.map((url, idx) => (
-                        <div key={idx} className="relative">
-                          <img src={url} className="w-full h-20 object-cover rounded" />
-                          <button type="button" className="absolute -top-2 -right-2 bg-white rounded-full border w-6 h-6 text-xs" onClick={() => setFormData({ ...formData, schemes: formData.schemes.filter((_,i)=>i!==idx) })}>×</button>
+                {/* Схемы товара */}
+                <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-6 pb-3 border-b border-gray-200">
+                    Схемы и файлы
+                  </h3>
+                  <div className="space-y-6">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Схемы товара
+                      </label>
+                      <div
+                        className={`w-full border-2 ${isDraggingSchemes ? 'border-blue-500 bg-blue-50' : 'border-dashed border-gray-300'} rounded-lg p-5 text-center transition-colors`}
+                        onDragOver={(e) => { e.preventDefault(); setIsDraggingSchemes(true) }}
+                        onDragLeave={() => setIsDraggingSchemes(false)}
+                        onDrop={async (e) => {
+                          e.preventDefault(); setIsDraggingSchemes(false);
+                          const files = Array.from(e.dataTransfer.files || [])
+                          if (files.length === 0) return
+                          try { setUploadingGallery(true); const urls = await uploadGalleryFiles(files); setFormData({ ...formData, schemes: [...formData.schemes, ...urls] }) } catch(err){ console.error(err); alert('Не удалось загрузить схемы') } finally { setUploadingGallery(false) }
+                        }}
+                      >
+                        <p className="mb-2 text-sm text-gray-600">Перетащите файлы схем или</p>
+                        <button type="button" className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium" onClick={() => schemeInputRef.current?.click()} disabled={uploadingGallery}>
+                          Выбрать файлы
+                        </button>
+                        <input ref={schemeInputRef} type="file" accept="image/*" multiple className="hidden" onChange={async (e)=>{ const files = Array.from(e.target.files||[]); if(files.length===0) return; try{ setUploadingGallery(true); const urls= await uploadGalleryFiles(files); setFormData({ ...formData, schemes: [...formData.schemes, ...urls] }) }catch(err){ console.error(err); alert('Не удалось загрузить схемы') } finally { setUploadingGallery(false); if(schemeInputRef.current) schemeInputRef.current.value='' } }} />
+                        {uploadingGallery && <div className="mt-2 text-sm text-gray-500">Загрузка...</div>}
+                      </div>
+                      {formData.schemes.length > 0 && (
+                        <div className="mt-4 grid grid-cols-5 gap-2">
+                          {formData.schemes.map((url, idx) => (
+                            <div key={idx} className="relative">
+                              <img src={url} className="w-full h-20 object-cover rounded-lg" />
+                              <button type="button" className="absolute -top-2 -right-2 bg-white rounded-full border w-6 h-6 text-xs hover:bg-red-50 transition-colors flex items-center justify-center" onClick={() => setFormData({ ...formData, schemes: formData.schemes.filter((_,i)=>i!==idx) })}>×</button>
+                            </div>
+                          ))}
                         </div>
-                      ))}
+                      )}
                     </div>
-                  )}
+
+                    {/* Файлы для скачивания */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Файлы для скачивания (PDF, DOC и т.д.)
+                      </label>
+                      <div
+                        className={`w-full border-2 ${isDraggingFiles ? 'border-blue-500 bg-blue-50' : 'border-dashed border-gray-300'} rounded-lg p-5 text-center transition-colors`}
+                        onDragOver={(e) => { e.preventDefault(); setIsDraggingFiles(true) }}
+                        onDragLeave={() => setIsDraggingFiles(false)}
+                        onDrop={async (e) => {
+                          e.preventDefault(); setIsDraggingFiles(false);
+                          const files = Array.from(e.dataTransfer.files || [])
+                          if (files.length === 0) return
+                          try { 
+                            setUploadingFiles(true); 
+                            const uploaded = await uploadDownloadableFiles(files); 
+                            setFormData({ ...formData, downloadable_files: [...formData.downloadable_files, ...uploaded] }) 
+                          } catch(err){ 
+                            console.error(err); 
+                            alert('Не удалось загрузить файлы') 
+                          } finally { 
+                            setUploadingFiles(false) 
+                          }
+                        }}
+                      >
+                        <p className="mb-2 text-sm text-gray-600">Перетащите файлы (PDF, DOC, DOCX и т.д.) или</p>
+                        <button type="button" className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium" onClick={() => filesInputRef.current?.click()} disabled={uploadingFiles}>
+                          Выбрать файлы
+                        </button>
+                        <input ref={filesInputRef} type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.zip,.rar" multiple className="hidden" onChange={async (e)=>{ 
+                          const files = Array.from(e.target.files||[]); 
+                          if(files.length===0) return; 
+                          try{ 
+                            setUploadingFiles(true); 
+                            const uploaded = await uploadDownloadableFiles(files); 
+                            setFormData({ ...formData, downloadable_files: [...formData.downloadable_files, ...uploaded] }) 
+                          }catch(err){ 
+                            console.error(err); 
+                            alert('Не удалось загрузить файлы') 
+                          } finally { 
+                            setUploadingFiles(false); 
+                            if(filesInputRef.current) filesInputRef.current.value='' 
+                          } 
+                        }} />
+                        {uploadingFiles && <div className="mt-2 text-sm text-gray-500">Загрузка...</div>}
+                      </div>
+                      {formData.downloadable_files.length > 0 && (
+                        <div className="mt-4 space-y-2">
+                          {formData.downloadable_files.map((file, idx) => (
+                            <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border">
+                              <div className="flex items-center gap-3">
+                                <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                                <span className="text-sm font-medium text-gray-900">{file.name}</span>
+                              </div>
+                              <button type="button" className="text-red-600 hover:text-red-800 text-sm font-medium transition-colors" onClick={() => setFormData({ ...formData, downloadable_files: formData.downloadable_files.filter((_,i)=>i!==idx) })}>Удалить</button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
 
-                {/* Спецификация: drag & drop + выбор файлов */}
-                <div className="mb-6">
-                  <label className="block mb-2 font-semibold">Спецификация (PDF, DOC и т.д.)</label>
-                  <div
-                    className={`w-full border-2 ${isDraggingFiles ? 'border-blue-500 bg-blue-50' : 'border-dashed border-gray-300'} rounded-lg p-5 text-center transition-colors`}
-                    onDragOver={(e) => { e.preventDefault(); setIsDraggingFiles(true) }}
-                    onDragLeave={() => setIsDraggingFiles(false)}
-                    onDrop={async (e) => {
-                      e.preventDefault(); setIsDraggingFiles(false);
-                      const files = Array.from(e.dataTransfer.files || [])
-                      if (files.length === 0) return
-                      try { 
-                        setUploadingFiles(true); 
-                        const uploaded = await uploadDownloadableFiles(files); 
-                        setFormData({ ...formData, downloadable_files: [...formData.downloadable_files, ...uploaded] }) 
-                      } catch(err){ 
-                        console.error(err); 
-                        alert('Не удалось загрузить файлы') 
-                      } finally { 
-                        setUploadingFiles(false) 
-                      }
-                    }}
-                  >
-                    <p className="mb-2">Перетащите файлы (PDF, DOC, DOCX и т.д.) или</p>
-                    <button type="button" className="px-4 py-2 border rounded-lg hover:bg-gray-50" onClick={() => filesInputRef.current?.click()} disabled={uploadingFiles}>
-                      Выбрать файлы
-                    </button>
-                    <input ref={filesInputRef} type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.zip,.rar" multiple className="hidden" onChange={async (e)=>{ 
-                      const files = Array.from(e.target.files||[]); 
-                      if(files.length===0) return; 
-                      try{ 
-                        setUploadingFiles(true); 
-                        const uploaded = await uploadDownloadableFiles(files); 
-                        setFormData({ ...formData, downloadable_files: [...formData.downloadable_files, ...uploaded] }) 
-                      }catch(err){ 
-                        console.error(err); 
-                        alert('Не удалось загрузить файлы') 
-                      } finally { 
-                        setUploadingFiles(false); 
-                        if(filesInputRef.current) filesInputRef.current.value='' 
-                      } 
-                    }} />
-                    {uploadingFiles && <div className="mt-2 text-sm text-gray-500">Загрузка...</div>}
-                  </div>
-                  {formData.downloadable_files.length > 0 && (
-                    <div className="mt-3 space-y-2">
-                      {formData.downloadable_files.map((file, idx) => (
-                        <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border">
-                          <div className="flex items-center gap-3">
-                            <span className="text-2xl">📄</span>
-                            <span className="text-sm font-medium">{file.name}</span>
-                          </div>
-                          <button type="button" className="text-red-600 hover:text-red-800 text-sm" onClick={() => setFormData({ ...formData, downloadable_files: formData.downloadable_files.filter((_,i)=>i!==idx) })}>× Удалить</button>
+                {/* Видео товара */}
+                <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-6 pb-3 border-b border-gray-200">
+                    Видео товара
+                  </h3>
+                  <div className="space-y-6">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Видео кухни
+                      </label>
+                      <div
+                        className={`w-full border-2 ${isDraggingSchemes ? 'border-blue-500 bg-blue-50' : 'border-dashed border-gray-300'} rounded-lg p-5 text-center transition-colors`}
+                        onDragOver={(e) => { e.preventDefault(); setIsDraggingSchemes(true) }}
+                        onDragLeave={() => setIsDraggingSchemes(false)}
+                        onDrop={async (e) => {
+                          e.preventDefault(); setIsDraggingSchemes(false);
+                          const files = Array.from(e.dataTransfer.files || [])
+                          if (files.length === 0) return
+                          try { 
+                            setUploadingGallery(true)
+                            const urls = await uploadVideoFiles(files)
+                            setFormData({ ...formData, videos: [...formData.videos, ...urls] })
+                          } catch(err: any){ 
+                            console.error(err)
+                            alert(err?.message || 'Не удалось загрузить видео')
+                          } finally { 
+                            setUploadingGallery(false) 
+                          }
+                        }}
+                      >
+                        <p className="mb-2 text-sm text-gray-600">Перетащите видео (mp4/mov) или</p>
+                        <button type="button" className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium" onClick={() => document.getElementById('videoInputHidden')?.click()} disabled={uploadingGallery}>
+                          Выбрать файлы
+                        </button>
+                        <input id="videoInputHidden" type="file" accept="video/*" multiple className="hidden" onChange={async (e)=>{ 
+                          const files = Array.from(e.target.files||[])
+                          if(files.length===0) return
+                          try{ 
+                            setUploadingGallery(true)
+                            const urls = await uploadVideoFiles(files)
+                            setFormData({ ...formData, videos: [...formData.videos, ...urls] })
+                          } catch(err: any) { 
+                            console.error(err)
+                            alert(err?.message || 'Не удалось загрузить видео')
+                          } finally { 
+                            setUploadingGallery(false)
+                            ;(e.target as HTMLInputElement).value=''
+                          }
+                        }} />
+                        {uploadingGallery && <div className="mt-2 text-sm text-gray-500">Загрузка...</div>}
+                      </div>
+                      {formData.videos.length > 0 && (
+                        <div className="mt-4 grid grid-cols-2 md:grid-cols-3 gap-3">
+                          {formData.videos.map((url, idx) => (
+                            <div key={idx} className="relative">
+                              <video src={url} className="w-full rounded-lg" controls muted />
+                              <button type="button" className="absolute -top-2 -right-2 bg-white rounded-full border w-6 h-6 text-xs hover:bg-red-50 transition-colors flex items-center justify-center" onClick={() => setFormData({ ...formData, videos: formData.videos.filter((_,i)=>i!==idx) })}>×</button>
+                            </div>
+                          ))}
                         </div>
-                      ))}
+                      )}
                     </div>
-                  )}
-                </div>
-
-                {/* Видео товара: drag & drop + выбор файлов */}
-                <div className="mb-6">
-                  <label className="block mb-2 font-semibold">Видео кухни (Drag & Drop или выбрать файлы)</label>
-                  <div
-                    className={`w-full border-2 ${isDraggingSchemes ? 'border-blue-500 bg-blue-50' : 'border-dashed border-gray-300'} rounded-lg p-5 text-center transition-colors`}
-                    onDragOver={(e) => { e.preventDefault(); setIsDraggingSchemes(true) }}
-                    onDragLeave={() => setIsDraggingSchemes(false)}
-                    onDrop={async (e) => {
-                      e.preventDefault(); setIsDraggingSchemes(false);
-                      const files = Array.from(e.dataTransfer.files || [])
-                      if (files.length === 0) return
-                      try { 
-                        setUploadingGallery(true)
-                        const urls = await uploadVideoFiles(files)
-                        setFormData({ ...formData, videos: [...formData.videos, ...urls] })
-                      } catch(err: any){ 
-                        console.error(err)
-                        alert(err?.message || 'Не удалось загрузить видео')
-                      } finally { 
-                        setUploadingGallery(false) 
-                      }
-                    }}
-                  >
-                    <p className="mb-2">Перетащите видео (mp4/mov) или</p>
-                    <button type="button" className="px-4 py-2 border rounded-lg hover:bg-gray-50" onClick={() => document.getElementById('videoInputHidden')?.click()} disabled={uploadingGallery}>
-                      Выбрать файлы
-                    </button>
-                    <input id="videoInputHidden" type="file" accept="video/*" multiple className="hidden" onChange={async (e)=>{ 
-                      const files = Array.from(e.target.files||[])
-                      if(files.length===0) return
-                      try{ 
-                        setUploadingGallery(true)
-                        const urls = await uploadVideoFiles(files)
-                        setFormData({ ...formData, videos: [...formData.videos, ...urls] })
-                      } catch(err: any) { 
-                        console.error(err)
-                        alert(err?.message || 'Не удалось загрузить видео')
-                      } finally { 
-                        setUploadingGallery(false)
-                        ;(e.target as HTMLInputElement).value=''
-                      }
-                    }} />
-                    {uploadingGallery && <div className="mt-2 text-sm text-gray-500">Загрузка...</div>}
                   </div>
-                  {formData.videos.length > 0 && (
-                    <div className="mt-3 grid grid-cols-2 md:grid-cols-3 gap-3">
-                      {formData.videos.map((url, idx) => (
-                        <div key={idx} className="relative">
-                          <video src={url} className="w-full rounded" controls muted />
-                          <button type="button" className="absolute -top-2 -right-2 bg-white rounded-full border w-6 h-6 text-xs" onClick={() => setFormData({ ...formData, videos: formData.videos.filter((_,i)=>i!==idx) })}>×</button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
                 </div>
 
                 {/* Варианты цветов: Drag & Drop (иконки/свотчи) + ручной ввод */}
@@ -2029,31 +2326,55 @@ export default function AdminProductsPage() {
                   </div>
                 </div>
 
-                {/* Кнопки действий - закреплены внизу */}
-                <div className="sticky bottom-0 bg-white border-t py-4 mt-6">
-                  <div className="flex flex-col sm:flex-row gap-3 justify-end">
-                    <button
-                      type="button"
+              </form>
+
+              {/* Фиксированная панель с кнопками */}
+              <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-20">
+                <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+                  <div className="flex items-center justify-between">
+                    <button 
+                      type="button" 
                       onClick={() => setShowModal(false)}
-                      className="px-6 py-3 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors font-semibold"
+                      className="px-6 py-2.5 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium"
                       disabled={uploading}
                     >
                       Отмена
                     </button>
-                    <button 
-                      type="submit" 
-                      className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold disabled:opacity-50"
-                      disabled={uploading}
-                    >
-                      {uploading ? 'Сохранение...' : 'Сохранить'}
-                    </button>
+                    <div className="flex items-center gap-3">
+                      {uploading && (
+                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                          <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                          <span>Сохранение...</span>
+                        </div>
+                      )}
+                      <button 
+                        type="submit" 
+                        form="product-form"
+                        className="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 shadow-sm"
+                        disabled={uploading}
+                      >
+                        {uploading ? (
+                          <>
+                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                            <span>Сохранение...</span>
+                          </>
+                        ) : (
+                          <>
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                            <span>Сохранить товар</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </form>
+              </div>
             </div>
           </div>
         )}
-      </div>
+      </main>
     </div>
   )
 }
