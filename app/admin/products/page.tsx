@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import Navbar from '@/components/Navbar'
+import Link from 'next/link'
 
 interface Product {
   id: number
@@ -10,6 +11,7 @@ interface Product {
   description: string | null
   price: number
   original_price?: number | null
+  sku?: string | null
   image_url: string
   images?: string[] | null
   colors?: string[] | null
@@ -86,6 +88,7 @@ export default function AdminProductsPage() {
     description: '',
     price: '',
     original_price: '',
+    sku: '',
     image_url: '',
     images: [] as string[],
     colors: [] as any,
@@ -230,6 +233,7 @@ export default function AdminProductsPage() {
       description: '',
       price: '',
       original_price: '',
+      sku: '',
       image_url: '',
       images: [],
       colors: [],
@@ -273,6 +277,7 @@ export default function AdminProductsPage() {
       description: product.description || '',
       price: product.price.toString(),
       original_price: (product.original_price || '').toString(),
+      sku: (product.sku || '').toString(),
       image_url: product.image_url,
       images: (product.images as any) || [],
       colors: Array.isArray(product.colors) && product.colors.length > 0
@@ -534,6 +539,7 @@ export default function AdminProductsPage() {
         description: formData.description || null,
         price: parseFloat(formData.price),
         original_price: formData.original_price ? parseFloat(formData.original_price) : null,
+        sku: formData.sku || null,
         image_url: imageUrl,
         images: formData.images,
         colors: Array.isArray(formData.colors) ? formData.colors : [],
@@ -617,9 +623,17 @@ export default function AdminProductsPage() {
       <div className="admin-container">
         <div className="admin-header">
           <h1 className="text-3xl font-bold">Управление товарами</h1>
-          <button onClick={openAddModal} className="btn btn-primary">
-            + Добавить товар
-          </button>
+          <div className="flex gap-3">
+            <Link
+              href="/admin/stock"
+              className="btn btn-secondary"
+            >
+              📦 Остатки
+            </Link>
+            <button onClick={openAddModal} className="btn btn-primary">
+              + Добавить товар
+            </button>
+          </div>
         </div>
 
         <div className="admin-table-container">
@@ -628,6 +642,7 @@ export default function AdminProductsPage() {
               <tr>
                 <th>ID</th>
                 <th>Название</th>
+                <th>Артикул (SKU)</th>
                 <th>Цена</th>
                 <th>Категория</th>
                 <th>Изображение</th>
@@ -639,6 +654,7 @@ export default function AdminProductsPage() {
                 <tr key={product.id}>
                   <td>{product.id}</td>
                   <td>{product.name}</td>
+                  <td>{product.sku || <span className="text-gray-400">—</span>}</td>
                   <td>{product.price} ₽</td>
                   <td>{product.category_id}</td>
                   <td>
@@ -738,6 +754,20 @@ export default function AdminProductsPage() {
                     onChange={(e) => setFormData({ ...formData, original_price: e.target.value })}
                     placeholder="Оставьте пустым, если старая цена не нужна"
                   />
+                </div>
+
+                <div className="mb-4">
+                  <label className="block mb-2 font-semibold">Артикул (SKU)</label>
+                  <input
+                    type="text"
+                    className="w-full px-3 py-2 border rounded-lg"
+                    value={formData.sku}
+                    onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
+                    placeholder="Например: 15938 или ART-001"
+                  />
+                  <p className="text-sm text-gray-500 mt-1">
+                    Артикул используется для синхронизации остатков с поставщиками (например, Woodville)
+                  </p>
                 </div>
 
                 <div className="mb-4">
@@ -1988,7 +2018,11 @@ export default function AdminProductsPage() {
                             setFormData({ ...formData, related_products: next })
                           }}
                         />
-                        <img src={p.image_url} className="w-10 h-10 rounded object-cover" />
+                        {p.image_url ? (
+                          <img src={p.image_url} className="w-10 h-10 rounded object-cover" alt={p.name} />
+                        ) : (
+                          <div className="w-10 h-10 rounded bg-gray-100 flex items-center justify-center text-xs text-gray-400">нет фото</div>
+                        )}
                         <span className="text-sm line-clamp-1">{p.name}</span>
                       </label>
                     ))}

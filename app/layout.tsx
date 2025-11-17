@@ -7,6 +7,7 @@ import { Suspense } from 'react'
 import BootLoader from '@/components/BootLoader'
 import AppShell from '@/components/AppShell'
 import TBankWidgetWrapper from '@/components/TBankWidgetWrapper'
+import DolyameSnippet from '@/components/DolyameSnippet'
 
 export const metadata: Metadata = {
   title: 'ARTECO - Интернет-магазин',
@@ -60,6 +61,8 @@ export default function RootLayout({
         <link rel="apple-touch-icon" sizes="1024x1024" href="/favicon-1024x1024.png" />
       </head>
       <body className="overflow-x-hidden">
+        {/* Сниппет Долями - загружается в начале body согласно документации */}
+        <DolyameSnippet />
         {/* Прелоадер до гидрации (виден и на жёстком обновлении, и на мобилках) */}
         <div id="arteco-boot-loader" className="fixed inset-0 z-[1000] bg-white grid place-items-center">
           <div className="flex flex-col items-center gap-4">

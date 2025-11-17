@@ -58,6 +58,8 @@ export default function CartPage() {
   const [errors, setErrors] = useState<{name?: boolean; phone?: boolean; privacy?: boolean; delivery?: boolean}>({})
   const [showFillModal, setShowFillModal] = useState(false)
   const [moduleImages, setModuleImages] = useState<Record<number, string>>({})
+  const [productSpecs, setProductSpecs] = useState<Record<number, { width?: string; height?: string; depth?: string; color?: string }>>({})
+  const [productColors, setProductColors] = useState<Record<number, string[]>>({})
 
   function toggleAcceptAll() {
     const next = !acceptAll
@@ -123,6 +125,84 @@ export default function CartPage() {
       }
     }
     loadSuggestions()
+  }, [items])
+
+  // Загружаем характеристики товаров из корзины
+  useEffect(() => {
+    async function loadProductSpecs() {
+      try {
+        const productIds = Array.from(new Set(items.map(i => i.id)))
+        if (productIds.length === 0) { setProductSpecs({}); return }
+        
+        const { data: products, error } = await supabase
+          .from('products')
+          .select('id, specs, colors')
+          .in('id', productIds)
+        
+        if (error) throw error
+        
+        const specsMap: Record<number, { width?: string; height?: string; depth?: string; color?: string }> = {}
+        const colorsMap: Record<number, string[]> = {}
+        
+        products?.forEach((p: any) => {
+          const specs: any = {}
+          
+          // Ищем width, height, depth в specs.custom
+          if (p.specs?.custom && Array.isArray(p.specs.custom)) {
+            p.specs.custom.forEach((item: { label?: string; value?: string }) => {
+              const label = (item.label || '').toLowerCase()
+              const value = item.value || ''
+              
+              if (label.includes('ширина') || label.includes('width')) {
+                specs.width = value
+              } else if (label.includes('высота') || label.includes('height')) {
+                specs.height = value
+              } else if (label.includes('глубина') || label.includes('depth')) {
+                specs.depth = value
+              }
+            })
+          }
+          
+          // Также проверяем прямые поля в specs (если они есть)
+          if (p.specs?.width) specs.width = String(p.specs.width)
+          if (p.specs?.height) specs.height = String(p.specs.height)
+          if (p.specs?.depth) specs.depth = String(p.specs.depth)
+          
+          // Сохраняем цвета товара
+          if (p.colors && Array.isArray(p.colors) && p.colors.length > 0) {
+            const colorValues = p.colors.map((c: any) => {
+              if (typeof c === 'object' && c !== null) {
+                return (c as any).value || ''
+              }
+              return String(c)
+            }).filter(Boolean)
+            if (colorValues.length > 0) {
+              colorsMap[p.id] = colorValues
+            }
+          }
+          
+          // Цвет берем из выбранного цвета в корзине или из первого цвета товара
+          const cartItem = items.find(i => i.id === p.id)
+          if (cartItem?.color) {
+            specs.color = cartItem.color
+          } else if (p.colors && Array.isArray(p.colors) && p.colors.length > 0) {
+            const firstColor = p.colors[0]
+            specs.color = typeof firstColor === 'object' && firstColor !== null ? (firstColor as any).value : String(firstColor)
+          }
+          
+          if (Object.keys(specs).length > 0) {
+            specsMap[p.id] = specs
+          }
+        })
+        
+        setProductSpecs(specsMap)
+        setProductColors(colorsMap)
+      } catch (e) {
+        console.error('Error loading product specs:', e)
+      }
+    }
+    
+    loadProductSpecs()
   }, [items])
 
   // Загружаем профиль пользователя при загрузке страницы
@@ -228,6 +308,108 @@ export default function CartPage() {
     }
   }
 
+  async function startDolyamePayment() {
+    // Проверки формы
+    if (placing) return
+    const nextErrors = {
+      name: !contact.name,
+      phone: !contact.phone,
+      privacy: !consents.privacy,
+      delivery: !deliveryType,
+    }
+    setErrors(nextErrors)
+    if (nextErrors.name || nextErrors.phone || nextErrors.privacy || nextErrors.delivery) {
+      setShowFillModal(true)
+      return
+    }
+
+    try {
+      setPlacing(true)
+      const userId = null
+
+      // Сначала создаем заказ
+      const payload = {
+        user_id: userId,
+        contact,
+        items: items.map(it => ({ id: it.id, name: it.name, qty: it.qty, price: it.price, color: it.color || null, options: it.options || null })),
+        total,
+        delivery: { type: deliveryType, address: address || null, needAssembly, needUtilization },
+        payment: { method: 'dolyame' },
+      }
+      
+      const orderResp = await fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+      
+      const orderData = await orderResp.json()
+      if (!orderResp.ok || !orderData?.success) {
+        throw new Error(orderData?.error || 'Order creation failed')
+      }
+      
+      const orderId = orderData.id
+
+      // Создаем заявку в Долями
+      const paymentPayload = {
+        amount: total,
+        orderId: orderId,
+        items: items.map(it => ({ 
+          id: it.id,
+          name: it.name, 
+          qty: it.qty, 
+          price: it.price 
+        })),
+        customer: {
+          name: contact.name,
+          phone: contact.phone,
+          email: contact.email || null,
+        },
+      }
+      
+      console.log('Creating Dolyame payment:', paymentPayload)
+      
+      const paymentResp = await fetch('/api/payments/dolyame/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(paymentPayload),
+      })
+      
+      let paymentData: any
+      try {
+        paymentData = await paymentResp.json()
+      } catch (jsonError: any) {
+        console.error('JSON parse error:', jsonError)
+        const text = await paymentResp.text()
+        console.error('Response text:', text)
+        throw new Error(`Ошибка ответа сервера: ${text.substring(0, 100)}`)
+      }
+      
+      console.log('Payment response:', { status: paymentResp.status, data: paymentData })
+      
+      if (!paymentResp.ok || !paymentData?.ok) {
+        console.error('=== Payment Creation Failed ===')
+        console.error('Status:', paymentResp.status)
+        console.error('Response data:', paymentData)
+        console.error('Error code:', paymentData?.errorCode)
+        console.error('Error message:', paymentData?.error)
+        const errorMessage = paymentData?.error || paymentData?.message || 'Не удалось создать платеж'
+        const errorCode = paymentData?.errorCode ? ` (Код ошибки: ${paymentData.errorCode})` : ''
+        throw new Error(`${errorMessage}${errorCode}`)
+      }
+
+      // Перенаправляем пользователя на страницу оплаты Долями
+      if (paymentData.paymentUrl) {
+        window.location.href = paymentData.paymentUrl
+      } else {
+        throw new Error('Payment URL not received')
+      }
+    } catch (e: any) {
+      alert(e?.message || 'Не удалось создать платеж')
+      setPlacing(false)
+    }
+  }
+
   async function startTBankPayment() {
     // Проверки формы
     if (placing) return
@@ -254,7 +436,7 @@ export default function CartPage() {
         items: items.map(it => ({ id: it.id, name: it.name, qty: it.qty, price: it.price, color: it.color || null, options: it.options || null })),
         total,
         delivery: { type: deliveryType, address: address || null, needAssembly, needUtilization },
-        payment: { method: 'card' },
+        payment: { method: paymentMethod === 'sberpay' ? 'sberpay' : 'card' },
       }
       
       const orderResp = await fetch('/api/orders', {
@@ -518,14 +700,57 @@ export default function CartPage() {
               return (
                 <div key={key} className="bg-white border rounded-xl p-4 flex flex-col gap-3">
                   <div className="flex items-start gap-4">
-                    <img src={it.image_url || '/placeholder.jpg'} alt={it.name} className="w-24 h-24 rounded object-cover" />
+                    <Link href={`/product/${it.id}`} className="flex-shrink-0">
+                      <img src={it.image_url || '/placeholder.jpg'} alt={it.name} className="w-24 h-24 rounded object-cover cursor-pointer hover:opacity-80 transition-opacity" />
+                    </Link>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-3">
-                        <div className="font-medium line-clamp-2">{it.name}</div>
+                        <Link href={`/product/${it.id}`} className="font-medium line-clamp-2 hover:text-blue-600 transition-colors cursor-pointer">
+                          {it.name}
+                        </Link>
                         {/* Цена справа на одном уровне с названием */}
                         <div className="text-right font-semibold whitespace-nowrap">{(it.price * it.qty).toLocaleString('ru-RU')} ₽</div>
                       </div>
-                    {it.color && <div className="text-xs text-gray-500 mt-0.5">Цвет: {it.color}</div>}
+                    {/* Характеристики: Ширина, Высота, Глубина */}
+                    {(productSpecs[it.id]?.width || productSpecs[it.id]?.height || productSpecs[it.id]?.depth) && (
+                      <div className="text-xs text-gray-500 mt-0.5 space-y-0.5">
+                        {productSpecs[it.id]?.width && <div>Ширина: {productSpecs[it.id].width}</div>}
+                        {productSpecs[it.id]?.height && <div>Высота: {productSpecs[it.id].height}</div>}
+                        {productSpecs[it.id]?.depth && <div>Глубина: {productSpecs[it.id].depth}</div>}
+                      </div>
+                    )}
+                    {/* Свотчи цветов (как в карточке товара) */}
+                    {productColors[it.id] && productColors[it.id].length > 0 && (
+                      <div className="mt-2">
+                        <div className="text-xs text-gray-500 mb-1.5">Цвет:</div>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          {productColors[it.id].map((colorValue, idx) => {
+                            const isImageUrl = typeof colorValue === 'string' && (colorValue.startsWith('http') || colorValue.startsWith('/'))
+                            const selectedColor = productSpecs[it.id]?.color || it.color
+                            const isSelected = colorValue === selectedColor
+                            
+                            return (
+                              <div key={idx} className="flex items-center gap-1.5">
+                                {isImageUrl ? (
+                                  <div className={`w-8 h-8 rounded-full border-2 ${isSelected ? 'border-black ring-2 ring-black/30' : 'border-gray-300'} overflow-hidden flex-shrink-0`}>
+                                    <img src={colorValue} alt={`Цвет ${idx + 1}`} className="w-full h-full object-cover" />
+                                  </div>
+                                ) : (
+                                  <div
+                                    className={`w-8 h-8 rounded-full border-2 ${isSelected ? 'border-black ring-2 ring-black/30' : 'border-gray-300'}`}
+                                    style={{ background: colorValue || '#ccc' }}
+                                    title={colorValue || 'Цвет'}
+                                  />
+                                )}
+                                {isSelected && (
+                                  <span className="text-xs text-gray-700">{colorValue}</span>
+                                )}
+                              </div>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    )}
                     {/* Опции */}
                     {it.options && (
                       <div className="mt-1 space-y-0.5 text-xs text-gray-500">
@@ -755,6 +980,10 @@ export default function CartPage() {
                   <input type="radio" name="pay" checked={paymentMethod==='installment'} onChange={()=>setPaymentMethod('installment')} />
                   <span>В рассрочку</span>
                 </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input type="radio" name="pay" checked={paymentMethod==='dolyame'} onChange={()=>setPaymentMethod('dolyame')} />
+                  <span>Оплата частями с Долями</span>
+                </label>
               </div>
             </section>
 
@@ -774,13 +1003,21 @@ export default function CartPage() {
               >
                 {ypLoading ? 'Открываем Yandex Pay…' : 'Оплатить через Yandex Pay'}
               </button>
-            ) : paymentMethod === 'card' ? (
+            ) : paymentMethod === 'card' || paymentMethod === 'sberpay' ? (
               <button
                 onClick={startTBankPayment}
                 disabled={placing}
                 className="block w-full text-center py-3 rounded-full bg-black text-white font-semibold disabled:opacity-60"
               >
-                {placing ? 'Создаём платёж…' : 'Оплатить картой онлайн'}
+                {placing ? 'Создаём платёж…' : paymentMethod === 'sberpay' ? 'Оплатить через SberPay' : 'Оплатить картой онлайн'}
+              </button>
+            ) : paymentMethod === 'dolyame' ? (
+              <button
+                onClick={startDolyamePayment}
+                disabled={placing}
+                className="block w-full text-center py-3 rounded-full bg-black text-white font-semibold disabled:opacity-60"
+              >
+                {placing ? 'Создаём заявку…' : 'Оплатить частями с Долями'}
               </button>
             ) : (
               <button onClick={placeOrder} disabled={placing} className="block w-full text-center py-3 rounded-full bg-black text-white font-semibold disabled:opacity-60">

@@ -34,6 +34,7 @@ export default function AdminHomePage() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {card('/admin/products', 'Товары', 'Список товаров и управление')}
+        {card('/admin/stock', 'Остатки', 'Синхронизация остатков с Woodville')}
         {card('/admin/categories', 'Категории', 'Структура каталога')}
         {card('/admin/banners', 'Баннеры', 'Промо и визуальные блоки')}
         {card('/admin/modules', 'Модули кухонь', 'Создание, редактирование и импорт модулей')}

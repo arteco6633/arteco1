@@ -17,6 +17,7 @@ interface Product {
   description: string | null
   price: number
   original_price?: number | null
+  stock_quantity?: number | null
   image_url: string
   images?: string[] | null
   colors?: string[] | null
@@ -670,6 +671,34 @@ export default function ProductPage() {
                 <span>{finalPrice.toLocaleString('ru-RU')} ₽</span>
               </div>
 
+              {/* Информация об остатках */}
+              {product.stock_quantity !== undefined && product.stock_quantity !== null && (
+                <div className="mt-3 mb-4">
+                  {product.stock_quantity >= 9999 ? (
+                    <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-[50px] bg-green-50 border border-green-200">
+                      <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                      <span className="text-green-700 font-semibold">В наличии: Много</span>
+                    </div>
+                  ) : product.stock_quantity > 0 ? (
+                    <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-[50px] bg-blue-50 border border-blue-200">
+                      <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                      <span className="text-blue-700 font-semibold">В наличии: {product.stock_quantity} шт.</span>
+                    </div>
+                  ) : (
+                    <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-[50px] bg-red-50 border border-red-200">
+                      <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                      <span className="text-red-700 font-semibold">Нет в наличии</span>
+                    </div>
+                  )}
+                </div>
+              )}
+
               <div className="flex gap-2 mb-4 md:mb-0">
               {product.is_new && (
                 <span className="bg-green-500 text-white px-3 py-1 rounded-full text-sm font-semibold">
@@ -1097,8 +1126,36 @@ export default function ProductPage() {
 
             {/* Sticky блок с названием и ценой на мобильных (над кнопками) */}
             <div className="md:hidden sticky bottom-[140px] z-10 bg-white pt-4 pb-2 -mx-4 px-4">
+              {/* Информация об остатках на мобильных - над названием */}
+              {product.stock_quantity !== undefined && product.stock_quantity !== null && (
+                <div className="mb-3">
+                  {product.stock_quantity >= 9999 ? (
+                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[50px] bg-green-50 border border-green-200">
+                      <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                      <span className="text-green-700 font-semibold text-sm">В наличии: Много</span>
+                    </div>
+                  ) : product.stock_quantity > 0 ? (
+                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[50px] bg-blue-50 border border-blue-200">
+                      <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                      <span className="text-blue-700 font-semibold text-sm">В наличии: {product.stock_quantity} шт.</span>
+                    </div>
+                  ) : (
+                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[50px] bg-red-50 border border-red-200">
+                      <svg className="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                      <span className="text-red-700 font-semibold text-sm">Нет в наличии</span>
+                    </div>
+                  )}
+                </div>
+              )}
+              
               <h1 className="text-2xl font-bold mb-1 leading-tight">{product.name}</h1>
-              <div className="text-3xl font-bold text-black">
+              <div className="text-3xl font-bold text-black mb-2">
                 {(product as any).original_price && (
                   <span className="text-gray-400 line-through mr-2 text-2xl font-normal">
                     {(product as any).original_price.toLocaleString('ru-RU')} ₽
