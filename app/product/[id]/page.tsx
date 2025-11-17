@@ -487,7 +487,7 @@ export default function ProductPage() {
               <div className="flex-1 relative">
                 <div
                   ref={leftMainImageRef}
-                  className="rounded-lg overflow-hidden shadow-lg relative aspect-square group"
+                  className="rounded-lg overflow-hidden shadow-lg relative aspect-[4/3] md:aspect-square group max-h-[70vh] md:max-h-none"
                   style={{ 
                     // Блокируем вертикальную прокрутку при горизонтальном свайпе
                     touchAction: (product.images && product.images.length > 1) ? 'pan-x' : 'auto',
