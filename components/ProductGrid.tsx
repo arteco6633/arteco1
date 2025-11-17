@@ -64,6 +64,7 @@ function Card({ product, onAdd, priority = false }: { product: Product; onAdd?: 
                 src?.endsWith('.png') ? 'object-contain object-center bg-white' : 'object-cover'
               }`}
               priority={priority}
+              unoptimized={true}
             />
           )
         })()}
