@@ -174,7 +174,11 @@ export default function ProductPage() {
   // Нативные обработчики touch событий для главного фото (чтобы избежать ошибок passive event listeners)
   useEffect(() => {
     const imageElement = leftMainImageRef.current
-    if (!imageElement || !product?.images || product.images.length <= 1) return
+    if (!imageElement || !product) return
+    
+    // Получаем массив изображений (может быть пустым или с одним элементом)
+    const images = (product.images && product.images.length > 0) ? product.images : (product.image_url ? [product.image_url] : [])
+    if (images.length <= 1) return
 
     const handleTouchStart = (e: TouchEvent) => {
       touchStartX.current = e.touches[0].clientX
@@ -267,7 +271,7 @@ export default function ProductPage() {
       imageElement.removeEventListener('touchmove', handleTouchMove)
       imageElement.removeEventListener('touchend', handleTouchEnd)
     }
-  }, [product?.images, activeImageIdx])
+  }, [product, activeImageIdx])
 
   useEffect(() => {
     const loadRelated = async () => {
