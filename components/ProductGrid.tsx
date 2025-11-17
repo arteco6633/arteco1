@@ -53,7 +53,14 @@ function Card({ product, onAdd, priority = false }: { product: Product; onAdd?: 
       {/* Обёртка для изображения с клипом только картинки, не тени */}
       <div className="relative rounded-t-xl overflow-hidden h-60 sm:h-72 bg-gray-50 flex items-center justify-center">
         {(() => {
-          const src = (product.images && product.images.length > 0) ? product.images[0] : (product.image_url || '/placeholder.jpg')
+          const src = (product.images && product.images.length > 0) ? product.images[0] : product.image_url
+          if (!src) {
+            return (
+              <div className="w-full h-full flex items-center justify-center text-gray-400 text-sm">
+                Нет фото
+              </div>
+            )
+          }
           return (
             <Image
               src={src}

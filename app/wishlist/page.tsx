@@ -191,11 +191,17 @@ export default function WishlistPage() {
                 <div key={product.id} className="bg-white rounded-xl shadow-md border border-gray-100 hover:shadow-lg transition-shadow">
                   <Link href={`/product/${product.id}`} className="block">
                     <div className="relative rounded-t-xl overflow-hidden aspect-square">
-                      <img
-                        src={product.image_url || '/placeholder.jpg'}
-                        alt={product.name}
-                        className="w-full h-full object-cover"
-                      />
+                      {product.image_url ? (
+                        <img
+                          src={product.image_url}
+                          alt={product.name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-400">
+                          Нет фото
+                        </div>
+                      )}
                       {discount > 0 && (
                         <span className="absolute top-3 left-3 bg-red-500 text-white px-2.5 py-1 rounded-full text-[10px] font-bold">
                           -{discount}%

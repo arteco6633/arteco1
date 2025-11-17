@@ -633,7 +633,7 @@ export default function ProductPage() {
                       transform: `translateX(-${activeImageIdx * 100}%)`
                     }}
                   >
-                    {(product.images && product.images.length > 0 ? product.images : [product.image_url || '/placeholder.jpg']).map((imgUrl, idx) => {
+                    {(product.images && product.images.length > 0 ? product.images : (product.image_url ? [product.image_url] : [])).map((imgUrl, idx) => {
                       // Первое изображение всегда имеет priority для LCP оптимизации
                       const isFirstImage = idx === 0
                       return (
