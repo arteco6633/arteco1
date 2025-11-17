@@ -10,6 +10,7 @@ interface Product {
   sku: string | null
   stock_quantity: number | null
   price: number
+  cost_price: number | null // Себестоимость (цена поставщика)
   image_url: string | null
   updated_at: string
 }
@@ -82,7 +83,7 @@ export default function AdminStockPage() {
       setLoading(true)
       const { data, error } = await supabase
         .from('products')
-        .select('id, name, sku, stock_quantity, price, image_url, updated_at')
+        .select('id, name, sku, stock_quantity, price, cost_price, image_url, updated_at')
         .order('updated_at', { ascending: false })
 
       if (error) throw error
@@ -96,7 +97,7 @@ export default function AdminStockPage() {
   }
 
   async function handleSyncStock() {
-    if (!confirm('Запустить синхронизацию остатков с Woodville? Это может занять некоторое время.')) {
+    if (!confirm('Запустить синхронизацию остатков и цен с Woodville? Это может занять некоторое время.')) {
       return
     }
 
@@ -235,7 +236,7 @@ export default function AdminStockPage() {
               </Link>
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">Управление остатками</h1>
-                <p className="text-sm text-gray-600">Синхронизация остатков товаров с Woodville</p>
+                <p className="text-sm text-gray-600">Синхронизация остатков и цен товаров с Woodville</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
@@ -327,7 +328,7 @@ export default function AdminStockPage() {
         </div>
 
         {/* Статистика */}
-        <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-6">
           <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
             <div className="text-sm text-gray-600 mb-1">Всего товаров</div>
             <div className="text-3xl font-bold text-gray-900">{stats.total}</div>
@@ -343,6 +344,16 @@ export default function AdminStockPage() {
           <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
             <div className="text-sm text-gray-600 mb-1">Мало остатков</div>
             <div className="text-3xl font-bold text-yellow-600">{stats.lowStock}</div>
+          </div>
+          <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
+            <div className="text-sm text-gray-600 mb-1">С себестоимостью</div>
+            <div className="text-3xl font-bold text-blue-600">{stats.withCostPrice}</div>
+          </div>
+          <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
+            <div className="text-sm text-gray-600 mb-1">Средняя маржа</div>
+            <div className="text-3xl font-bold text-green-600">
+              {stats.avgMargin > 0 ? `+${stats.avgMargin.toLocaleString('ru-RU')}` : stats.avgMargin.toLocaleString('ru-RU')} ₽
+            </div>
           </div>
         </div>
 
@@ -389,7 +400,9 @@ export default function AdminStockPage() {
                   <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Название</th>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Артикул (SKU)</th>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Остаток</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Цена</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Цена продажи</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Себестоимость</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Маржа</th>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Обновлено</th>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Действия</th>
                 </tr>
@@ -397,7 +410,7 @@ export default function AdminStockPage() {
               <tbody className="bg-white divide-y divide-gray-200">
                 {filteredProducts.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="px-6 py-12 text-center text-gray-500">
+                    <td colSpan={10} className="px-6 py-12 text-center text-gray-500">
                       {searchQuery ? 'Товары не найдены' : 'Нет товаров для отображения'}
                     </td>
                   </tr>
@@ -431,7 +444,35 @@ export default function AdminStockPage() {
                           {formatStock(product.stock_quantity)}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{product.price.toLocaleString('ru-RU')} ₽</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">
+                        {product.price.toLocaleString('ru-RU')} ₽
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                        {product.cost_price ? (
+                          <span className="text-gray-700">{product.cost_price.toLocaleString('ru-RU')} ₽</span>
+                        ) : (
+                          <span className="text-gray-400">—</span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                        {product.cost_price ? (() => {
+                          const margin = product.price - product.cost_price
+                          const marginPercent = ((margin / product.cost_price) * 100).toFixed(1)
+                          const isPositive = margin >= 0
+                          return (
+                            <div className="flex flex-col">
+                              <span className={isPositive ? 'text-green-600 font-medium' : 'text-red-600 font-medium'}>
+                                {isPositive ? '+' : ''}{margin.toLocaleString('ru-RU')} ₽
+                              </span>
+                              <span className={`text-xs ${isPositive ? 'text-green-500' : 'text-red-500'}`}>
+                                {isPositive ? '+' : ''}{marginPercent}%
+                              </span>
+                            </div>
+                          )
+                        })() : (
+                          <span className="text-gray-400">—</span>
+                        )}
+                      </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                         {product.updated_at
                           ? new Date(product.updated_at).toLocaleString('ru-RU')

@@ -6,6 +6,7 @@ interface WoodvilleStock {
   moscow: string | number | null // "Много" или число
   ufa: string | number | null // "Много", число или "Нет в наличии"
   sku: string | null
+  price: number | null // Цена товара (себестоимость)
 }
 
 /**
@@ -97,10 +98,14 @@ function parseStockFromHtml(html: string, sku: string): WoodvilleStock {
     ufaStock = parseStockValue(ufaMatch[1].trim())
   }
   
+  // Пытаемся найти цену на странице поиска (если есть)
+  const price = parsePriceFromHtml(html)
+  
   return {
     moscow: moscowStock,
     ufa: ufaStock,
     sku,
+    price,
   }
 }
 
@@ -185,15 +190,63 @@ async function parseWoodvilleProductPage(productUrl: string, sku: string): Promi
       }
     }
     
+    // Парсим цену товара
+    const price = parsePriceFromHtml(html)
+    
     return {
       moscow: moscowStock,
       ufa: ufaStock,
       sku,
+      price,
     }
   } catch (error: any) {
     console.error(`Error parsing Woodville product page ${productUrl}:`, error.message)
     return null
   }
+}
+
+/**
+ * Парсит цену из HTML страницы Woodville
+ * Ищет различные форматы цен: "12 500 ₽", "12500 руб", "12,500", и т.д.
+ */
+function parsePriceFromHtml(html: string): number | null {
+  // Различные паттерны для поиска цены
+  const pricePatterns = [
+    // "12 500 ₽" или "12 500 руб"
+    /(?:цена|price|стоимость)[:\s]*([\d\s]+)\s*(?:₽|руб|рублей|р\.)/i,
+    // "12 500 ₽" в тегах
+    /<[^>]*>[\d\s]+<\/[^>]*>\s*(?:₽|руб)/i,
+    // Цена в data-атрибутах или специальных классах
+    /(?:data-price|data-cost|class="[^"]*price[^"]*")[=:]\s*"?([\d\s,]+)"?/i,
+    // Просто число с пробелами и символом рубля
+    /([\d\s]{4,})\s*(?:₽|руб)/i,
+    // Цена в формате "12,500" или "12 500"
+    /(?:цена|price)[:\s]*([\d\s,]+)/i,
+  ]
+  
+  for (const pattern of pricePatterns) {
+    const match = html.match(pattern)
+    if (match && match[1]) {
+      // Извлекаем число из строки (убираем пробелы и запятые)
+      const priceStr = match[1].replace(/[\s,]/g, '')
+      const price = parseFloat(priceStr)
+      if (!isNaN(price) && price > 0) {
+        return Math.round(price * 100) / 100 // Округляем до 2 знаков
+      }
+    }
+  }
+  
+  // Если не нашли через паттерны, ищем просто большие числа (вероятно цена)
+  const numberMatches = html.match(/(\d{3,})/g)
+  if (numberMatches && numberMatches.length > 0) {
+    // Берем первое большое число (обычно это цена)
+    const possiblePrice = parseInt(numberMatches[0], 10)
+    if (possiblePrice > 100 && possiblePrice < 10000000) {
+      return possiblePrice
+    }
+  }
+  
+  return null
 }
 
 /**

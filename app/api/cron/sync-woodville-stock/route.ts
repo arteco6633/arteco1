@@ -81,15 +81,23 @@ export async function GET(req: Request) {
         // Используем остатки со склада Москва (основной склад)
         const stockQuantity = convertWoodvilleStockToQuantity(stockInfo.moscow)
         
-        console.log(`SKU ${product.sku}: Moscow=${stockInfo.moscow}, Ufa=${stockInfo.ufa}, Quantity=${stockQuantity}`)
+        console.log(`SKU ${product.sku}: Moscow=${stockInfo.moscow}, Ufa=${stockInfo.ufa}, Quantity=${stockQuantity}, Price=${stockInfo.price || 'N/A'}`)
 
-        // Обновляем stock_quantity в базе данных
+        // Подготавливаем данные для обновления
+        const updateData: any = {
+          stock_quantity: stockQuantity,
+          updated_at: new Date().toISOString(),
+        }
+        
+        // Если получили цену, сохраняем её как себестоимость
+        if (stockInfo.price !== null && stockInfo.price !== undefined && stockInfo.price > 0) {
+          updateData.cost_price = stockInfo.price
+        }
+
+        // Обновляем stock_quantity и cost_price в базе данных
         const { error: updateError } = await supabase
           .from('products')
-          .update({ 
-            stock_quantity: stockQuantity,
-            updated_at: new Date().toISOString(),
-          })
+          .update(updateData)
           .eq('id', product.id)
 
         if (updateError) {
