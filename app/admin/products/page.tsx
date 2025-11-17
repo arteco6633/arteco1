@@ -570,7 +570,21 @@ export default function AdminProductsPage() {
 
       // Загружаем изображение, если оно выбрано
       if (selectedImageFile) {
-        imageUrl = await uploadImage(selectedImageFile)
+        try {
+          imageUrl = await uploadImage(selectedImageFile)
+          console.log('✓ Изображение загружено:', imageUrl)
+        } catch (error) {
+          console.error('Ошибка загрузки изображения:', error)
+          alert('Ошибка при загрузке изображения. Попробуйте еще раз.')
+          setUploading(false)
+          return
+        }
+      } else if (!editingProduct && !formData.image_url) {
+        // Для нового товара без изображения показываем предупреждение
+        if (!confirm('Вы не выбрали изображение для товара. Продолжить без изображения?')) {
+          setUploading(false)
+          return
+        }
       }
 
       const productData = {
@@ -621,6 +635,12 @@ export default function AdminProductsPage() {
       setShowModal(false)
       setSelectedImageFile(null)
       setImagePreview('')
+      setEditingProduct(null)
+      // Сбрасываем input файла, чтобы можно было выбрать тот же файл снова
+      const imageInput = document.getElementById('main-product-image-input') as HTMLInputElement
+      if (imageInput) {
+        imageInput.value = ''
+      }
       loadData()
     } catch (error) {
       console.error('Ошибка сохранения:', error)
@@ -1111,17 +1131,32 @@ export default function AdminProductsPage() {
                             <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                             </svg>
-                            <span className="text-sm font-medium">Выбрать файл</span>
+                            <span className="text-sm font-medium">
+                              {selectedImageFile ? 'Изменить файл' : 'Выбрать файл'}
+                            </span>
                             <input
                               type="file"
                               accept="image/*"
                               className="hidden"
                               onChange={handleImageSelect}
+                              id="main-product-image-input"
                             />
                           </label>
-                          <p className="text-xs text-gray-500 mt-2">
-                            Рекомендуемый размер: 800x800px. Форматы: JPG, PNG, WebP
-                          </p>
+                          {selectedImageFile && (
+                            <p className="text-xs text-green-600 mt-2 font-medium">
+                              ✓ Выбрано новое изображение: {selectedImageFile.name}
+                            </p>
+                          )}
+                          {!selectedImageFile && formData.image_url && (
+                            <p className="text-xs text-gray-500 mt-2">
+                              Текущее изображение будет сохранено. Выберите новое, чтобы заменить.
+                            </p>
+                          )}
+                          {!selectedImageFile && !formData.image_url && (
+                            <p className="text-xs text-gray-500 mt-2">
+                              Рекомендуемый размер: 800x800px. Форматы: JPG, PNG, WebP
+                            </p>
+                          )}
                         </div>
                       </div>
                     </div>
