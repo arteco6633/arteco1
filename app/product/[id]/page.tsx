@@ -173,103 +173,118 @@ export default function ProductPage() {
 
   // Нативные обработчики touch событий для главного фото (чтобы избежать ошибок passive event listeners)
   useEffect(() => {
-    const imageElement = leftMainImageRef.current
-    if (!imageElement || !product) return
+    if (!product) return
     
     // Получаем массив изображений (может быть пустым или с одним элементом)
     const images = (product.images && product.images.length > 0) ? product.images : (product.image_url ? [product.image_url] : [])
     if (images.length <= 1) return
 
-    const handleTouchStart = (e: TouchEvent) => {
-      touchStartX.current = e.touches[0].clientX
-      touchStartY.current = e.touches[0].clientY
-      touchStartTime.current = Date.now()
-      isHorizontalSwipeRef.current = false
-    }
-
-    const handleTouchMove = (e: TouchEvent) => {
-      const startX = touchStartX.current
-      const startY = touchStartY.current
-      if (startX == null || startY == null) return
-      
-      const touch = e.touches[0]
-      const diffX = Math.abs(touch.clientX - startX)
-      const diffY = Math.abs(touch.clientY - startY)
-      
-      // Определяем направление на раннем этапе (первые 5-10px движения)
-      // Более строгое условие: горизонтальное движение должно быть в 2.5 раза больше вертикального
-      if (diffX > 5 && diffX > diffY * 2.5) {
-        // Устанавливаем флаг горизонтального свайпа
-        if (!isHorizontalSwipeRef.current) {
-          isHorizontalSwipeRef.current = true
-        }
-        // Блокируем вертикальную прокрутку только при горизонтальном свайпе
-        // Проверяем, можно ли отменить событие перед вызовом preventDefault()
-        if (e.cancelable) {
-          e.preventDefault()
-        }
-      } else if (diffY > 5 && diffY > diffX * 1.5) {
-        // Если это явно вертикальный свайп, разрешаем прокрутку страницы
-        isHorizontalSwipeRef.current = false
-      }
-    }
-
-    const handleTouchEnd = (e: TouchEvent) => {
-      const startX = touchStartX.current
-      const startY = touchStartY.current
-      const startTime = touchStartTime.current
-      const isHorizontal = isHorizontalSwipeRef.current
-      
-      if (startX == null || startY == null || startTime == null) {
-        isHorizontalSwipeRef.current = false
+    // Используем requestAnimationFrame для гарантии, что элемент отрендерился в DOM
+    const setupHandlers = () => {
+      const imageElement = leftMainImageRef.current
+      if (!imageElement) {
+        // Если элемент еще не готов, пробуем еще раз через небольшую задержку
+        requestAnimationFrame(setupHandlers)
         return
       }
-      
-      const dx = e.changedTouches[0].clientX - startX
-      const dy = e.changedTouches[0].clientY - startY
-      const duration = Date.now() - startTime
-      
-      // Определяем минимальное расстояние (меньше для быстрых свайпов)
-      const minDistance = duration < 300 ? 25 : 40
-      const minVelocity = 0.25
-      const distance = Math.abs(dx)
-      const velocity = distance / Math.max(duration, 1)
-      
-      // Учитываем только горизонтальные свайпы (если флаг установлен или движение горизонтальное)
-      const isDefinitelyHorizontal = isHorizontal || (Math.abs(dx) > Math.abs(dy) * 1.5)
-      
-      if (isDefinitelyHorizontal && (distance > minDistance || velocity > minVelocity)) {
-        // Получаем актуальный массив изображений
-        const images = (product?.images && product.images.length > 0) ? product.images : (product?.image_url ? [product.image_url] : [])
-        if (images.length <= 1) return
+
+      const handleTouchStart = (e: TouchEvent) => {
+        touchStartX.current = e.touches[0].clientX
+        touchStartY.current = e.touches[0].clientY
+        touchStartTime.current = Date.now()
+        isHorizontalSwipeRef.current = false
+      }
+
+      const handleTouchMove = (e: TouchEvent) => {
+        const startX = touchStartX.current
+        const startY = touchStartY.current
+        if (startX == null || startY == null) return
         
-        if (dx < 0) {
-          // Свайп влево - следующее изображение (бесконечный цикл)
-          const nextIdx = activeImageIdx === images.length - 1 ? 0 : activeImageIdx + 1
-          setActiveImageIdx(nextIdx)
-        } else if (dx > 0) {
-          // Свайп вправо - предыдущее изображение (бесконечный цикл)
-          const prevIdx = activeImageIdx === 0 ? images.length - 1 : activeImageIdx - 1
-          setActiveImageIdx(prevIdx)
+        const touch = e.touches[0]
+        const diffX = Math.abs(touch.clientX - startX)
+        const diffY = Math.abs(touch.clientY - startY)
+        
+        // Определяем направление на раннем этапе (первые 5-10px движения)
+        // Более строгое условие: горизонтальное движение должно быть в 2.5 раза больше вертикального
+        if (diffX > 5 && diffX > diffY * 2.5) {
+          // Устанавливаем флаг горизонтального свайпа
+          if (!isHorizontalSwipeRef.current) {
+            isHorizontalSwipeRef.current = true
+          }
+          // Блокируем вертикальную прокрутку только при горизонтальном свайпе
+          // Проверяем, можно ли отменить событие перед вызовом preventDefault()
+          if (e.cancelable) {
+            e.preventDefault()
+          }
+        } else if (diffY > 5 && diffY > diffX * 1.5) {
+          // Если это явно вертикальный свайп, разрешаем прокрутку страницы
+          isHorizontalSwipeRef.current = false
         }
       }
-      
-      // Сбрасываем состояние
-      touchStartX.current = null
-      touchStartY.current = null
-      touchStartTime.current = null
-      isHorizontalSwipeRef.current = false
+
+      const handleTouchEnd = (e: TouchEvent) => {
+        const startX = touchStartX.current
+        const startY = touchStartY.current
+        const startTime = touchStartTime.current
+        const isHorizontal = isHorizontalSwipeRef.current
+        
+        if (startX == null || startY == null || startTime == null) {
+          isHorizontalSwipeRef.current = false
+          return
+        }
+        
+        const dx = e.changedTouches[0].clientX - startX
+        const dy = e.changedTouches[0].clientY - startY
+        const duration = Date.now() - startTime
+        
+        // Определяем минимальное расстояние (меньше для быстрых свайпов)
+        const minDistance = duration < 300 ? 25 : 40
+        const minVelocity = 0.25
+        const distance = Math.abs(dx)
+        const velocity = distance / Math.max(duration, 1)
+        
+        // Учитываем только горизонтальные свайпы (если флаг установлен или движение горизонтальное)
+        const isDefinitelyHorizontal = isHorizontal || (Math.abs(dx) > Math.abs(dy) * 1.5)
+        
+        if (isDefinitelyHorizontal && (distance > minDistance || velocity > minVelocity)) {
+          // Получаем актуальный массив изображений
+          const currentImages = (product?.images && product.images.length > 0) ? product.images : (product?.image_url ? [product.image_url] : [])
+          if (currentImages.length <= 1) return
+          
+          if (dx < 0) {
+            // Свайп влево - следующее изображение (бесконечный цикл)
+            const nextIdx = activeImageIdx === currentImages.length - 1 ? 0 : activeImageIdx + 1
+            setActiveImageIdx(nextIdx)
+          } else if (dx > 0) {
+            // Свайп вправо - предыдущее изображение (бесконечный цикл)
+            const prevIdx = activeImageIdx === 0 ? currentImages.length - 1 : activeImageIdx - 1
+            setActiveImageIdx(prevIdx)
+          }
+        }
+        
+        // Сбрасываем состояние
+        touchStartX.current = null
+        touchStartY.current = null
+        touchStartTime.current = null
+        isHorizontalSwipeRef.current = false
+      }
+
+      // Добавляем обработчики с { passive: false } для возможности вызова preventDefault()
+      imageElement.addEventListener('touchstart', handleTouchStart, { passive: true })
+      imageElement.addEventListener('touchmove', handleTouchMove, { passive: false })
+      imageElement.addEventListener('touchend', handleTouchEnd, { passive: true })
+
+      return () => {
+        imageElement.removeEventListener('touchstart', handleTouchStart)
+        imageElement.removeEventListener('touchmove', handleTouchMove)
+        imageElement.removeEventListener('touchend', handleTouchEnd)
+      }
     }
 
-    // Добавляем обработчики с { passive: false } для возможности вызова preventDefault()
-    imageElement.addEventListener('touchstart', handleTouchStart, { passive: true })
-    imageElement.addEventListener('touchmove', handleTouchMove, { passive: false })
-    imageElement.addEventListener('touchend', handleTouchEnd, { passive: true })
-
+    const cleanup = setupHandlers()
+    
     return () => {
-      imageElement.removeEventListener('touchstart', handleTouchStart)
-      imageElement.removeEventListener('touchmove', handleTouchMove)
-      imageElement.removeEventListener('touchend', handleTouchEnd)
+      if (cleanup) cleanup()
     }
   }, [product, activeImageIdx])
 
