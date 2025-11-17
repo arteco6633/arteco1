@@ -180,12 +180,24 @@ export default function ProductPage() {
     if (images.length <= 1) return
 
     // Используем requestAnimationFrame для гарантии, что элемент отрендерился в DOM
-    const setupHandlers = () => {
+    let attempts = 0
+    const maxAttempts = 10
+    
+    const setupHandlers = (): (() => void) | null => {
       const imageElement = leftMainImageRef.current
       if (!imageElement) {
-        // Если элемент еще не готов, пробуем еще раз через небольшую задержку
-        requestAnimationFrame(setupHandlers)
-        return
+        attempts++
+        if (attempts < maxAttempts) {
+          // Если элемент еще не готов, пробуем еще раз через небольшую задержку
+          requestAnimationFrame(() => {
+            const cleanup = setupHandlers()
+            if (cleanup) {
+              // Сохраняем cleanup функцию для последующего вызова
+              return cleanup
+            }
+          })
+        }
+        return null
       }
 
       const handleTouchStart = (e: TouchEvent) => {
