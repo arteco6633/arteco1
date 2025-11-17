@@ -219,6 +219,16 @@ export default function AdminStockPage() {
     withSku: products.filter((p) => p.sku).length,
     inStock: products.filter((p) => (p.stock_quantity || 0) > 0).length,
     lowStock: products.filter((p) => (p.stock_quantity || 0) < 10 && (p.stock_quantity || 0) > 0).length,
+    withCostPrice: products.filter((p) => p.cost_price !== null && p.cost_price !== undefined).length,
+    avgMargin: (() => {
+      const productsWithCost = products.filter((p) => p.cost_price !== null && p.cost_price !== undefined && p.cost_price > 0)
+      if (productsWithCost.length === 0) return 0
+      const totalMargin = productsWithCost.reduce((sum, p) => {
+        const margin = p.price - (p.cost_price || 0)
+        return sum + margin
+      }, 0)
+      return Math.round(totalMargin / productsWithCost.length)
+    })(),
   }
 
   return (
