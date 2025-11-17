@@ -12,7 +12,8 @@ export default function DolyameSnippet() {
     const siteId = process.env.NEXT_PUBLIC_DOLYAME_SITE_ID
     
     if (!siteId) {
-      console.warn('Dolyame Site ID not configured. Skipping snippet load.')
+      // Не показываем предупреждение, если Dolyame не настроен (это опционально)
+      console.debug('Dolyame Site ID not configured. Skipping snippet load.')
       return
     }
 

@@ -25,7 +25,6 @@ export default function YandexPaySdk() {
     // Проверяем, если SDK уже загружен
     if (typeof window !== 'undefined' && window.YaPay) {
       setIsLoaded(true)
-      console.log('✓ Yandex Pay SDK already available')
       window.dispatchEvent(new Event('yandex-pay-sdk-loaded'))
     }
   }, [])
@@ -34,7 +33,6 @@ export default function YandexPaySdk() {
   const checkSdkAvailability = () => {
     if (typeof window !== 'undefined' && window.YaPay) {
       setIsLoaded(true)
-      console.log('✓ Yandex Pay SDK is available')
       window.dispatchEvent(new Event('yandex-pay-sdk-loaded'))
       return true
     }
@@ -46,24 +44,6 @@ export default function YandexPaySdk() {
       src={SDK_URL}
       strategy="afterInteractive"
       onLoad={() => {
-        console.log('✓ Yandex Pay SDK script loaded from:', SDK_URL)
-        
-        // Проверяем статус загрузки скрипта
-        const scripts = document.querySelectorAll('script[src*="pay.yandex.ru"]')
-        console.log('Found Yandex Pay scripts in DOM:', scripts.length)
-        scripts.forEach((script: any, idx: number) => {
-          const src = script.getAttribute('src')
-          const complete = script.complete
-          const readyState = script.readyState
-          console.log(`Script ${idx + 1}:`, {
-            src,
-            complete,
-            readyState,
-            onload: typeof script.onload,
-            onerror: typeof script.onerror
-          })
-        })
-        
         // Проверяем доступность SDK сразу после загрузки
         if (checkSdkAvailability()) {
           return
@@ -82,29 +62,13 @@ export default function YandexPaySdk() {
           if (attempt < delays.length) {
             setTimeout(checkWithDelay, delays[attempt] - (delays[attempt - 1] || 0))
           } else {
-            console.warn('⚠️ Yandex Pay SDK script loaded but YaPay object not found after multiple attempts')
-            console.warn('SDK URL:', SDK_URL)
-            console.warn('Current domain:', window.location.hostname)
-            console.warn('Protocol:', window.location.protocol)
-            console.warn('This may indicate:')
-            console.warn('1. Domain not whitelisted in Yandex Pay console')
-            console.warn('2. CORS restrictions')
-            console.warn('3. Browser extensions blocking script execution')
-            console.warn('4. Issues on Yandex Pay server side')
-            console.warn('5. Script loaded but failed to execute')
+            // Только на production показываем предупреждение
+            const isLocalhost = typeof window !== 'undefined' && 
+              (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
             
-            // Проверяем, есть ли ошибки в консоли
-            console.warn('Please check Network tab for:', SDK_URL)
-            console.warn('Look for:')
-            console.warn('- Status code (should be 200)')
-            console.warn('- CORS headers')
-            console.warn('- Response content')
-            
-            // Пробуем проверить глобальные объекты
-            console.log('Checking global objects:')
-            console.log('- window.YaPay:', typeof window.YaPay)
-            console.log('- window.YandexPay:', typeof (window as any).YandexPay)
-            console.log('- window.pay:', typeof (window as any).pay)
+            if (!isLocalhost) {
+              console.debug('Yandex Pay SDK script loaded but YaPay object not found. This may indicate domain whitelist or CORS issues.')
+            }
           }
         }
 
@@ -114,27 +78,25 @@ export default function YandexPaySdk() {
         const isLocalhost = typeof window !== 'undefined' && 
           (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
         
-        console.error('✗ Failed to load Yandex Pay SDK')
-        console.error('SDK URL:', SDK_URL)
-        console.error('Error:', e)
-        
         if (isLocalhost) {
-          console.warn('⚠️ Yandex Pay SDK cannot load on localhost (HTTP) due to CORS')
-          console.warn('This is expected behavior. SDK requires HTTPS.')
-          console.warn('The SDK will work correctly on production domain with HTTPS.')
+          // На localhost это ожидаемое поведение, не показываем как ошибку
+          console.debug('ℹ️ Yandex Pay SDK cannot load on localhost (HTTP) - this is expected. SDK requires HTTPS and will work on production.')
         } else {
-          console.error('⚠️ Production domain error - check:')
-          console.error('1. Internet connection')
-          console.error('2. Browser console (F12) for details')
-          console.error('3. Network tab - is the script loading?')
-          console.error('4. Yandex Pay server status')
+          // На production показываем как предупреждение, а не ошибку
+          console.warn('⚠️ Failed to load Yandex Pay SDK')
+          console.warn('SDK URL:', SDK_URL)
+          console.warn('Please check:')
+          console.warn('1. Domain whitelist in Yandex Pay console')
+          console.warn('2. Network tab for script loading status')
+          console.warn('3. CORS configuration')
         }
         
         // Отправляем событие об ошибке для обработки в cart/page.tsx
         window.dispatchEvent(new CustomEvent('yandex-pay-sdk-error', { detail: { error: e, url: SDK_URL } }))
       }}
       onReady={() => {
-        console.log('Yandex Pay SDK script ready (onReady callback)')
+        // SDK готов, проверяем доступность
+        checkSdkAvailability()
       }}
     />
   )
