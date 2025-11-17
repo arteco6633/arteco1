@@ -459,7 +459,7 @@ export default function ProductPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8">
           {/* Галерея изображений — миниатюры слева, большое фото справа */}
-          <div className="order-first md:order-none">
+          <div className="order-first md:order-none w-full">
             <div className="flex gap-3">
               {/* Миниатюры слева от главного фото */}
               {product.images && product.images.length > 1 && (
@@ -484,10 +484,10 @@ export default function ProductPage() {
               )}
               
               {/* Главное фото с кнопками навигации */}
-              <div className="flex-1 relative">
+              <div className="w-full md:flex-1 relative">
                 <div
                   ref={leftMainImageRef}
-                  className="rounded-lg overflow-hidden shadow-lg relative aspect-[3/4] md:aspect-square group max-h-[400px] md:max-h-none"
+                  className="rounded-lg overflow-hidden shadow-lg relative w-full aspect-square max-h-[70vw] md:aspect-square md:max-h-none group"
                   style={{ 
                     // Блокируем вертикальную прокрутку при горизонтальном свайпе
                     touchAction: (product.images && product.images.length > 1) ? 'pan-x' : 'auto',
