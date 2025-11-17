@@ -489,9 +489,8 @@ export default function ProductPage() {
                   ref={leftMainImageRef}
                   className="rounded-lg overflow-hidden shadow-lg relative w-full aspect-square max-h-[90vw] md:aspect-square md:max-h-none group"
                   style={{ 
-                    // Блокируем вертикальную прокрутку при горизонтальном свайпе
-                    touchAction: (product.images && product.images.length > 1) ? 'pan-x' : 'auto',
-                    overscrollBehaviorY: (product.images && product.images.length > 1) ? 'none' : 'auto',
+                    // Разрешаем и горизонтальную, и вертикальную прокрутку
+                    touchAction: 'pan-x pan-y',
                     WebkitTouchCallout: 'none',
                     WebkitUserSelect: 'none',
                     userSelect: 'none',
@@ -521,9 +520,10 @@ export default function ProductPage() {
                       if (!isHorizontalSwipeRef.current) {
                         isHorizontalSwipeRef.current = true
                       }
-                      // Не используем preventDefault() - CSS touch-action уже блокирует вертикальную прокрутку
+                      // Блокируем вертикальную прокрутку только при горизонтальном свайпе
+                      e.preventDefault()
                     } else if (diffY > 10 && diffY > diffX * 1.5) {
-                      // Если это явно вертикальный свайп, сбрасываем флаг
+                      // Если это явно вертикальный свайп, разрешаем прокрутку страницы
                       isHorizontalSwipeRef.current = false
                     }
                   }}
