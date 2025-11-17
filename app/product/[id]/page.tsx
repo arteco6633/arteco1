@@ -235,6 +235,8 @@ export default function ProductPage() {
       const isDefinitelyHorizontal = isHorizontal || (Math.abs(dx) > Math.abs(dy) * 1.5)
       
       if (isDefinitelyHorizontal && (distance > minDistance || velocity > minVelocity)) {
+        if (!product?.images || product.images.length <= 1) return
+        
         if (dx < 0) {
           // Свайп влево - следующее изображение (бесконечный цикл)
           const nextIdx = activeImageIdx === product.images.length - 1 ? 0 : activeImageIdx + 1
@@ -599,29 +601,33 @@ export default function ProductPage() {
                       transform: `translateX(-${activeImageIdx * 100}%)`
                     }}
                   >
-                    {(product.images && product.images.length > 0 ? product.images : [product.image_url || '/placeholder.jpg']).map((imgUrl, idx) => (
-                      <div key={idx} className="relative w-full h-full flex-shrink-0 flex items-center justify-center bg-white">
-                        {!loadedImages[idx] && (
-                          <div className="absolute inset-0 bg-gray-100 animate-pulse" />
-                        )}
-                        <Image
-                          src={imgUrl}
-                          alt={`${product.name} - фото ${idx + 1}`}
-                          fill
-                          sizes="(min-width: 1280px) 700px, (min-width: 768px) 50vw, 100vw"
-                          quality={95}
-                          priority={idx === 0}
-                          className={`object-contain object-center transition-opacity duration-300 ${loadedImages[idx] ? 'opacity-100' : 'opacity-0'}`}
-                          unoptimized={true}
-                          onLoad={() => {
-                            setLoadedImages((prev) => ({ ...prev, [idx]: true }))
-                            if (idx === 0 && leftMainImageRef.current) {
-                              setSyncedRightHeight(leftMainImageRef.current.offsetHeight || 0)
-                            }
-                          }}
-                        />
-                      </div>
-                    ))}
+                    {(product.images && product.images.length > 0 ? product.images : [product.image_url || '/placeholder.jpg']).map((imgUrl, idx) => {
+                      // Первое изображение всегда имеет priority для LCP оптимизации
+                      const isFirstImage = idx === 0
+                      return (
+                        <div key={idx} className="relative w-full h-full flex-shrink-0 flex items-center justify-center bg-white">
+                          {!loadedImages[idx] && (
+                            <div className="absolute inset-0 bg-gray-100 animate-pulse" />
+                          )}
+                          <Image
+                            src={imgUrl}
+                            alt={`${product.name} - фото ${idx + 1}`}
+                            fill
+                            sizes="(min-width: 1280px) 700px, (min-width: 768px) 50vw, 100vw"
+                            quality={95}
+                            priority={isFirstImage}
+                            className={`object-contain object-center transition-opacity duration-300 ${loadedImages[idx] ? 'opacity-100' : 'opacity-0'}`}
+                            unoptimized={true}
+                            onLoad={() => {
+                              setLoadedImages((prev) => ({ ...prev, [idx]: true }))
+                              if (isFirstImage && leftMainImageRef.current) {
+                                setSyncedRightHeight(leftMainImageRef.current.offsetHeight || 0)
+                              }
+                            }}
+                          />
+                        </div>
+                      )
+                    })}
                   </div>
                   
                   {/* Точки пагинации */}
