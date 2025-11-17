@@ -20,6 +20,9 @@ const nextConfig = {
       { protocol: 'https', hostname: 'images.unsplash.com', pathname: '/**' },
     ].filter(Boolean),
     formats: ['image/avif', 'image/webp'],
+    // Отключаем оптимизацию для внешних изображений, чтобы избежать ошибок 402
+    // На Vercel Image Optimization API может требовать платную подписку
+    unoptimized: false,
   },
 }
 
