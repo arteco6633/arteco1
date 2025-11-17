@@ -36,22 +36,55 @@ export default function CartPage() {
   const [paymentMethod, setPaymentMethod] = useState<string>('cod')
   const [ypLoading, setYpLoading] = useState(false)
 
-  // Lazy‑загрузка Web SDK Yandex Pay
-  function loadYandexPaySdk(): Promise<void> {
+  // Проверка доступности Яндекс Pay SDK (загружается через Next.js Script в layout)
+  function waitForYandexPaySdk(): Promise<void> {
     return new Promise((resolve, reject) => {
-      if (typeof window !== 'undefined' && (window as any).YaPay) return resolve()
-      const id = 'yandex-pay-sdk'
-      if (document.getElementById(id)) {
-        ;(document.getElementById(id) as HTMLScriptElement).addEventListener('load', () => resolve())
-        return
+      // Проверяем, если SDK уже загружен
+      if (typeof window !== 'undefined' && (window as any).YaPay) {
+        console.log('Yandex Pay SDK already available')
+        return resolve()
       }
-      const s = document.createElement('script')
-      s.id = id
-      s.src = 'https://pay.yandex.ru/sdk/pay.js'
-      s.async = true
-      s.onload = () => resolve()
-      s.onerror = () => reject(new Error('SDK load error'))
-      document.head.appendChild(s)
+
+      // Слушаем событие загрузки SDK
+      const onSdkLoaded = () => {
+        if (typeof window !== 'undefined' && (window as any).YaPay) {
+          clearTimeout(timeout)
+          window.removeEventListener('yandex-pay-sdk-loaded', onSdkLoaded)
+          console.log('✓ Yandex Pay SDK loaded via event')
+          resolve()
+        }
+      }
+      window.addEventListener('yandex-pay-sdk-loaded', onSdkLoaded)
+
+      // Ждём загрузки SDK (максимум 15 секунд)
+      const timeout = setTimeout(() => {
+        window.removeEventListener('yandex-pay-sdk-loaded', onSdkLoaded)
+        // Последняя проверка перед ошибкой
+        if (typeof window !== 'undefined' && (window as any).YaPay) {
+          console.log('✓ Yandex Pay SDK found on final check')
+          resolve()
+        } else {
+          const isLocalhost = typeof window !== 'undefined' && 
+            (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+          
+          if (isLocalhost) {
+            reject(new Error('⚠️ Яндекс Pay SDK требует HTTPS!\n\nНа localhost (HTTP) SDK не может загрузиться из-за CORS.\n\nРешения:\n1. Используйте ngrok для создания HTTPS туннеля\n2. Тестируйте на production домене (после деплоя)\n3. SDK будет работать на HTTPS домене\n\nЭто нормальное поведение - SDK требует безопасное соединение.'))
+          } else {
+            reject(new Error('SDK load timeout: Яндекс Pay SDK не загрузился за 15 секунд.\n\nВозможные причины:\n1. Проблемы с интернет-соединением\n2. Блокировка скрипта антивирусом/расширениями браузера\n3. Проблемы на стороне сервера Яндекс Pay\n\nПроверьте вкладку Network в DevTools, загружается ли https://pay.yandex.ru/sdk/v1/pay.js'))
+          }
+        }
+      }, 15000)
+
+      // Проверяем каждые 200мс (более частое обновление)
+      const checkInterval = setInterval(() => {
+        if (typeof window !== 'undefined' && (window as any).YaPay) {
+          clearInterval(checkInterval)
+          clearTimeout(timeout)
+          window.removeEventListener('yandex-pay-sdk-loaded', onSdkLoaded)
+          console.log('✓ Yandex Pay SDK is now available')
+          resolve()
+        }
+      }, 200)
     })
   }
   const [placing, setPlacing] = useState(false)
@@ -552,11 +585,26 @@ export default function CartPage() {
       const data = await resp.json()
       if (!resp.ok || !data?.ok) throw new Error(data?.error || 'yandex create failed')
 
-      // 2) Инициализируем Web SDK Яндекс Пэй
-      await loadYandexPaySdk()
+      // 2) Ждём загрузки Web SDK Яндекс Пэй (загружается через Next.js Script в layout)
+      try {
+        await waitForYandexPaySdk()
+      } catch (sdkError: any) {
+        console.error('Failed to wait for Yandex Pay SDK:', sdkError)
+        alert(`Ошибка загрузки Яндекс Pay: ${sdkError.message || 'SDK не загрузился'}\n\nПроверьте:\n1. Подключение к интернету\n2. Консоль браузера (F12) для подробностей\n3. Убедитесь, что SDK загружается через компонент YandexPaySdk`)
+        setYpLoading(false)
+        return
+      }
+
       const ya: any = (window as any).YaPay
 
-      if (ya && typeof ya.createCheckout === 'function') {
+      if (!ya) {
+        console.error('YaPay object not found after SDK load')
+        alert('Яндекс Pay SDK загружен, но объект YaPay не найден. Проверьте консоль браузера.')
+        setYpLoading(false)
+        return
+      }
+
+      if (typeof ya.createCheckout === 'function') {
         // Сбор корзины для SDK v2 (формат v2)
         const paymentItems = items.map((it) => ({
           label: it.name,

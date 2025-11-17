@@ -8,6 +8,7 @@ import BootLoader from '@/components/BootLoader'
 import AppShell from '@/components/AppShell'
 import TBankWidgetWrapper from '@/components/TBankWidgetWrapper'
 import DolyameSnippet from '@/components/DolyameSnippet'
+import YandexPaySdk from '@/components/YandexPaySdk'
 
 export const metadata: Metadata = {
   title: 'ARTECO - Интернет-магазин',
@@ -83,6 +84,8 @@ export default function RootLayout({
         </Providers>
         {/* T-Bank Payment Widget */}
         <TBankWidgetWrapper />
+        {/* Яндекс Pay SDK */}
+        <YandexPaySdk />
       </body>
     </html>
   )
