@@ -489,10 +489,9 @@ export default function ProductPage() {
                   ref={leftMainImageRef}
                   className="rounded-lg overflow-hidden shadow-lg relative aspect-square group"
                   style={{ 
-                    // Используем pan-y для разрешения только вертикальной прокрутки
-                    // pinch-zoom для масштабирования
-                    // none для блокировки горизонтальной прокрутки страницы
-                    touchAction: (product.images && product.images.length > 1) ? 'pan-y pinch-zoom' : 'auto',
+                    // Блокируем вертикальную прокрутку при горизонтальном свайпе
+                    touchAction: (product.images && product.images.length > 1) ? 'pan-x' : 'auto',
+                    overscrollBehaviorY: (product.images && product.images.length > 1) ? 'none' : 'auto',
                     WebkitTouchCallout: 'none',
                     WebkitUserSelect: 'none',
                     userSelect: 'none',
@@ -522,8 +521,8 @@ export default function ProductPage() {
                       if (!isHorizontalSwipeRef.current) {
                         isHorizontalSwipeRef.current = true
                       }
-                      // Не используем preventDefault() - вместо этого полагаемся на CSS touch-action
-                      // CSS touch-action: pan-y pinch-zoom уже настроен, что блокирует горизонтальную прокрутку страницы
+                      // Блокируем вертикальную прокрутку при горизонтальном свайпе
+                      e.preventDefault()
                     } else if (diffY > 10 && diffY > diffX * 1.5) {
                       // Если это явно вертикальный свайп, сбрасываем флаг
                       isHorizontalSwipeRef.current = false
@@ -658,12 +657,54 @@ export default function ProductPage() {
 
                 {/* Миниатюры под главным фото на мобильных */}
                     {product.images && product.images.length > 1 && (
-                  <div className="mt-3 md:hidden grid grid-cols-4 gap-2">
-                    {product.images.slice(0,10).map((url, idx) => (
-                      <button key={idx} type="button" onClick={() => setActiveImageIdx(idx)} className={`rounded overflow-hidden ring-2 ${activeImageIdx===idx ? 'ring-black' : 'ring-transparent'}`}>
-                        <Image src={url} alt={`Фото ${idx+1}`} width={200} height={200} quality={85} className="w-full h-16 object-cover" unoptimized={true} />
-                      </button>
-                    ))}
+                  <div 
+                    className="mt-3 md:hidden overflow-x-auto scrollbar-hide snap-x snap-mandatory"
+                    style={{
+                      touchAction: 'pan-x',
+                      overscrollBehaviorX: 'contain',
+                      overscrollBehaviorY: 'none',
+                      WebkitOverflowScrolling: 'touch',
+                      scrollSnapType: 'x mandatory'
+                    }}
+                    onTouchStart={(e) => {
+                      // Предотвращаем вертикальную прокрутку при горизонтальном свайпе
+                      const touch = e.touches[0]
+                      const startX = touch.clientX
+                      const startY = touch.clientY
+                      
+                      const handleMove = (moveEvent: TouchEvent) => {
+                        const moveTouch = moveEvent.touches[0]
+                        const diffX = Math.abs(moveTouch.clientX - startX)
+                        const diffY = Math.abs(moveTouch.clientY - startY)
+                        
+                        // Если горизонтальное движение больше вертикального, блокируем вертикальную прокрутку
+                        if (diffX > diffY && diffX > 10) {
+                          moveEvent.preventDefault()
+                        }
+                      }
+                      
+                      const handleEnd = () => {
+                        document.removeEventListener('touchmove', handleMove)
+                        document.removeEventListener('touchend', handleEnd)
+                      }
+                      
+                      document.addEventListener('touchmove', handleMove, { passive: false })
+                      document.addEventListener('touchend', handleEnd)
+                    }}
+                  >
+                    <div className="flex gap-2" style={{ minWidth: 'max-content' }}>
+                      {product.images.slice(0,10).map((url, idx) => (
+                        <button 
+                          key={idx} 
+                          type="button" 
+                          onClick={() => setActiveImageIdx(idx)} 
+                          className={`rounded overflow-hidden ring-2 flex-shrink-0 snap-start ${activeImageIdx===idx ? 'ring-black' : 'ring-transparent'}`}
+                          style={{ width: 'calc((100vw - 2rem - 0.5rem) / 4)', minWidth: 'calc((100vw - 2rem - 0.5rem) / 4)' }}
+                        >
+                          <Image src={url} alt={`Фото ${idx+1}`} width={200} height={200} quality={85} className="w-full h-16 object-cover" unoptimized={true} />
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>
