@@ -1498,19 +1498,23 @@ export default function ProductPage() {
                 WebkitOverflowScrolling: 'touch'
               }}
             >
-              <div className="flex gap-4 md:gap-6" style={{ minWidth: 'max-content' }}>
+              <div className="flex gap-4 md:gap-6">
                 {product.interior_images.map((url, idx) => (
                   <div 
                     key={idx} 
                     className="relative flex-shrink-0 rounded-xl overflow-hidden bg-gray-100"
-                    style={{ width: 'calc((100vw - 2rem - 2rem) / 3)', minWidth: '280px', maxWidth: '400px' }}
+                    style={{ 
+                      width: 'calc((100vw - 2rem - 1rem) / 3)',
+                      minWidth: '280px',
+                      maxWidth: 'calc((100% - 2rem) / 3)'
+                    }}
                   >
                     <div className="relative aspect-[4/3]">
                       <Image
                         src={url}
                         alt={`${product.name} в интерьере ${idx + 1}`}
                         fill
-                        sizes="(max-width: 640px) 280px, (max-width: 1024px) 320px, 400px"
+                        sizes="(max-width: 640px) 280px, (max-width: 1024px) calc((100vw - 2rem) / 3), calc((100vw - 2rem) / 3)"
                         className="object-cover"
                         unoptimized={true}
                       />
