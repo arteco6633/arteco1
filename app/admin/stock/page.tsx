@@ -237,7 +237,7 @@ export default function AdminStockPage() {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
       {/* Хедер */}
       <header className="bg-white border-b border-gray-200 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="w-full px-2 sm:px-3 lg:px-4">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-4">
               <Link
@@ -281,7 +281,7 @@ export default function AdminStockPage() {
       </header>
 
       {/* Основной контент */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="w-full px-2 sm:px-3 lg:px-4 py-8">
         {/* Результат синхронизации */}
         {syncResult && (
           <div
@@ -404,12 +404,12 @@ export default function AdminStockPage() {
         {/* Таблица товаров */}
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[1400px]">
+            <table className="w-full">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
                   <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">ID</th>
                   <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Фото</th>
-                  <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider min-w-[200px]">Название</th>
+                  <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Название</th>
                   <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">SKU</th>
                   <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Остаток</th>
                   <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Цена</th>
@@ -446,7 +446,7 @@ export default function AdminStockPage() {
                             </div>
                           )}
                         </td>
-                        <td className="px-3 py-3 text-xs font-medium text-gray-900 max-w-[200px] truncate" title={product.name}>
+                        <td className="px-3 py-3 text-xs font-medium text-gray-900 truncate" title={product.name}>
                           {product.name}
                         </td>
                         <td className="px-3 py-3 whitespace-nowrap text-xs">
