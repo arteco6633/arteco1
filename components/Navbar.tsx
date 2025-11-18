@@ -148,7 +148,7 @@ export default function Navbar() {
           <div className="absolute left-1/2 -translate-x-1/2 xl:static xl:translate-x-0">
             <Link href="/" className="flex items-center gap-2 text-2xl font-bold text-black select-none">
               {/* Логотип ARTECO */}
-              <div className="relative w-10 h-10 sm:w-12 sm:h-12 flex-shrink-0">
+              <div className="relative w-12 h-12 sm:w-14 sm:h-14 md:w-10 md:h-10 flex-shrink-0">
                 <Image
                   src="/arteco-logo-header.png"
                   alt="ARTECO Logo"
@@ -159,9 +159,9 @@ export default function Navbar() {
                   sizes="(max-width: 640px) 40px, 48px"
                 />
               </div>
-              <span>ART</span>
+              <span className="hidden md:inline">ART</span>
               {/* Буква E стилизована как гамбургер-иконка с морфом X ↔︎ ≡ при появлении хэдера */}
-              <span aria-hidden className="relative w-5 h-4 mx-0.5">
+              <span aria-hidden className="relative w-5 h-4 mx-0.5 hidden md:inline-block">
                 <span
                   className={`absolute left-0 right-0 h-[2px] bg-black rounded origin-center transition-all duration-1000 ease-in-out ${isCross ? 'top-1/2 -translate-y-1/2 rotate-45' : 'top-0 rotate-0'}`}
                 />
@@ -172,7 +172,7 @@ export default function Navbar() {
                   className={`absolute left-0 right-0 h-[2px] bg-black rounded origin-center transition-all duration-1000 ease-in-out ${isCross ? 'top-1/2 -translate-y-1/2 -rotate-45' : 'bottom-0 rotate-0'}`}
                 />
               </span>
-              <span>CO</span>
+              <span className="hidden md:inline">CO</span>
             </Link>
           </div>
 
@@ -267,7 +267,7 @@ export default function Navbar() {
           </div>
 
           {/* Иконки справа */}
-          <div className="flex items-center gap-4 relative">
+          <div className="flex items-center gap-3 md:gap-4 relative">
             {/* Вход/профиль скрыт на мобайле */}
             <button
               className="hidden md:inline-flex p-2 hover:bg-gray-100 rounded-lg transition-colors"
