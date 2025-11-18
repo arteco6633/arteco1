@@ -148,11 +148,17 @@ export default function Navbar() {
           <div className="absolute left-1/2 -translate-x-1/2 xl:static xl:translate-x-0">
             <Link href="/" className="flex items-center gap-2 text-2xl font-bold text-black select-none">
               {/* Логотип ARTECO */}
-              <img
-                src="/arteco-logo-header.png"
-                alt="ARTECO Logo"
-                className="w-10 h-10 sm:w-12 sm:h-12 object-contain flex-shrink-0"
-              />
+              <div className="relative w-10 h-10 sm:w-12 sm:h-12 flex-shrink-0">
+                <Image
+                  src="/arteco-logo-header.png"
+                  alt="ARTECO Logo"
+                  fill
+                  className="object-contain"
+                  priority
+                  unoptimized
+                  sizes="(max-width: 640px) 40px, 48px"
+                />
+              </div>
               <span>ART</span>
               {/* Буква E стилизована как гамбургер-иконка с морфом X ↔︎ ≡ при появлении хэдера */}
               <span aria-hidden className="relative w-5 h-4 mx-0.5">
