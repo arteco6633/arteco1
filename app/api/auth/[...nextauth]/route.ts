@@ -1,4 +1,4 @@
-import NextAuth from 'next-auth'
+import NextAuth, { type NextAuthOptions } from 'next-auth'
 import YandexProvider from 'next-auth/providers/yandex'
 import Credentials from 'next-auth/providers/credentials'
 import { createClient } from '@supabase/supabase-js'
@@ -11,7 +11,7 @@ const supabaseAdmin = supabaseUrl && serviceRoleKey ? createClient(
   serviceRoleKey
 ) : null
 
-const authOptions = {
+const authOptions: NextAuthOptions = {
   providers: [
     YandexProvider({
       clientId: process.env.YANDEX_CLIENT_ID || '',
@@ -67,17 +67,17 @@ const authOptions = {
   },
   debug: process.env.NODE_ENV === 'development',
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user }: { token: any; user?: any }) {
       if (user) {
         token.phone = (user as any).phone || token.phone
       }
       return token
     },
-    async session({ session, token }) {
+    async session({ session, token }: { session: any; token: any }) {
       (session as any).phone = (token as any).phone
       return session
     },
-    async signIn({ user, account, profile }) {
+    async signIn({ user, account, profile }: { user: any; account?: any; profile?: any }) {
       if (!supabaseAdmin) {
         console.warn('[nextauth] Supabase admin client not initialized, skipping profile sync')
         return true
