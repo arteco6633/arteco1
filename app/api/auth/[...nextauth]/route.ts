@@ -3,28 +3,19 @@ import YandexProvider from 'next-auth/providers/yandex'
 import Credentials from 'next-auth/providers/credentials'
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-if (!supabaseUrl) {
-  console.error('[nextauth] Missing NEXT_PUBLIC_SUPABASE_URL env')
-  throw new Error('Supabase URL is not configured')
-}
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://zijajicude.beget.app'
+const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
 
-const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-if (!serviceRoleKey) {
-  console.error('[nextauth] Missing SUPABASE_SERVICE_ROLE_KEY env')
-  throw new Error('Supabase service role key is not configured')
-}
-
-const supabaseAdmin = createClient(
+const supabaseAdmin = supabaseUrl && serviceRoleKey ? createClient(
   supabaseUrl,
   serviceRoleKey
-)
+) : null
 
-const handler = NextAuth({
+const authOptions = {
   providers: [
     YandexProvider({
-      clientId: process.env.YANDEX_CLIENT_ID!,
-      clientSecret: process.env.YANDEX_CLIENT_SECRET!,
+      clientId: process.env.YANDEX_CLIENT_ID || '',
+      clientSecret: process.env.YANDEX_CLIENT_SECRET || '',
     }),
     Credentials({
       name: 'phone',
@@ -33,34 +24,48 @@ const handler = NextAuth({
         code: { label: 'code', type: 'text' },
       },
       async authorize(creds) {
+        if (!supabaseAdmin) {
+          console.error('[nextauth] Supabase admin client not initialized')
+          return null
+        }
+        
         const phone = (creds?.phone as string || '').replace(/\D/g,'')
         const norm = phone.startsWith('7') ? `+7${phone.slice(1)}` : (phone.startsWith('8') ? `+7${phone.slice(1)}` : `+${phone}`)
         const code = (creds?.code as string || '').trim()
 
-        const { data: otp } = await supabaseAdmin
-          .from('otp_codes')
-          .select('*')
-          .eq('phone', norm)
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .maybeSingle()
+        try {
+          const { data: otp } = await supabaseAdmin
+            .from('otp_codes')
+            .select('*')
+            .eq('phone', norm)
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle()
 
-        if (!otp) return null
-        const notExpired = new Date(otp.expires_at).getTime() > Date.now()
-        if (!notExpired || otp.code !== code) return null
+          if (!otp) return null
+          const notExpired = new Date(otp.expires_at).getTime() > Date.now()
+          if (!notExpired || otp.code !== code) return null
 
-        // upsert user
-        const { data: userRow } = await supabaseAdmin
-          .from('users_local')
-          .upsert({ phone: norm }, { onConflict: 'phone' })
-          .select('*')
-          .maybeSingle()
+          // upsert user
+          const { data: userRow } = await supabaseAdmin
+            .from('users_local')
+            .upsert({ phone: norm }, { onConflict: 'phone' })
+            .select('*')
+            .maybeSingle()
 
-        return { id: userRow?.id || norm, name: userRow?.name || norm, phone: norm } as any
+          return { id: userRow?.id || norm, name: userRow?.name || norm, phone: norm } as any
+        } catch (error) {
+          console.error('[nextauth] Authorize error:', error)
+          return null
+        }
       }
     })
   ],
-  secret: process.env.NEXTAUTH_SECRET,
+  secret: process.env.NEXTAUTH_SECRET || 'fallback-secret-key-change-in-production',
+  pages: {
+    signIn: '/',
+  },
+  debug: process.env.NODE_ENV === 'development',
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
@@ -73,6 +78,10 @@ const handler = NextAuth({
       return session
     },
     async signIn({ user, account, profile }) {
+      if (!supabaseAdmin) {
+        console.warn('[nextauth] Supabase admin client not initialized, skipping profile sync')
+        return true
+      }
       try {
         // Синхронизируем профиль в Supabase (простая upsert в таблицу profiles)
         await supabaseAdmin.from('oauth_profiles').upsert({
@@ -89,7 +98,9 @@ const handler = NextAuth({
       return true
     },
   },
-})
+}
+
+const handler = NextAuth(authOptions)
 
 export { handler as GET, handler as POST }
 

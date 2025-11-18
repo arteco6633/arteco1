@@ -355,7 +355,7 @@ export default function CategoryPage() {
               >
                 <div className="relative z-10 p-0 md:px-3 md:pt-3 md:pb-3">
                   <div
-                    className="relative overflow-hidden rounded-xl aspect-[4/5] md:aspect-[4/3]"
+                    className="relative overflow-hidden rounded-xl aspect-[4/5] md:aspect-[4/3] bg-gray-100"
                     style={{ 
                       // Используем pan-y для разрешения только вертикальной прокрутки
                       // pinch-zoom для масштабирования

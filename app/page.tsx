@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Image from 'next/image'
 import GameModal from '@/components/GameModal'
 import { supabase } from '@/lib/supabase'
 import HeroBanners from '@/components/HeroBanners'
@@ -180,18 +181,46 @@ export default function HomePage() {
             <div className="max-w-[1680px] 2xl:max-w-none mx-auto px-1 md:px-2 xl:px-4 2xl:px-6 max-w-full">
               <div className="grid grid-cols-10 gap-4 w-full max-w-full">
                 {/* Большой банер - 7 колонок (70%) */}
-                <div ref={firstBannerRef} className={`relative h-[440px] sm:h-[520px] md:h-[600px] col-span-10 md:col-span-7 overflow-hidden rounded-[15px] group reveal-on-scroll ${firstBannerInView ? 'in-view' : ''} max-w-full`}>
-                  <img
-                    src={topBanner.image_url}
-                    alt={topBanner.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                <div 
+                  ref={firstBannerRef} 
+                  className={`relative h-[320px] xs:h-[380px] sm:h-[480px] md:h-[560px] lg:h-[600px] col-span-10 md:col-span-7 overflow-hidden rounded-[15px] group reveal-on-scroll ${firstBannerInView ? 'in-view' : ''} max-w-full bg-gray-100`}
+                >
+                  {/* Изображение с правильным масштабированием */}
+                  <div className="absolute inset-0 w-full h-full">
+                    <Image
+                      src={topBanner.image_url}
+                      alt={topBanner.title}
+                      fill
+                      sizes="(max-width: 640px) 100vw, (max-width: 768px) 100vw, (max-width: 1024px) 70vw, (max-width: 1280px) 70vw, 70vw"
+                      className="w-full h-full object-cover"
+                      style={{ 
+                        objectFit: 'cover',
+                        objectPosition: 'center center',
+                        width: '100%',
+                        height: '100%'
+                      }}
+                      priority
+                      unoptimized={true}
+                    />
+                  </div>
+                  {/* Fallback через background-image */}
+                  <div 
+                    className="absolute inset-0 w-full h-full"
+                    style={{
+                      backgroundImage: `url(${topBanner.image_url})`,
+                      backgroundSize: 'cover',
+                      backgroundPosition: 'center center',
+                      backgroundRepeat: 'no-repeat',
+                      width: '100%',
+                      height: '100%'
+                    }}
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent flex flex-col justify-end p-6 sm:p-8">
-                    <h3 className="text-white text-2xl sm:text-3xl font-bold mb-3">
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent flex flex-col justify-end p-4 xs:p-5 sm:p-6 md:p-8 z-10">
+                    <h3 className="text-white text-xl xs:text-2xl sm:text-3xl md:text-3xl font-bold mb-2 sm:mb-3">
                       {topBanner.title}
                     </h3>
                     {topBanner.description && (
-                      <p className="text-white/90 text-sm sm:text-base mb-5">
+                      <p className="text-white/90 text-xs xs:text-sm sm:text-base mb-4 sm:mb-5">
                         {topBanner.description}
                       </p>
                     )}
@@ -199,9 +228,9 @@ export default function HomePage() {
                       <div className="group">
                         <a
                           href={topBanner.link_url || (topBanner.title?.toLowerCase().includes('семейная') ? '/family-price' : '/catalog')}
-                          className="inline-flex items-center gap-2 bg-white text-black font-semibold text-sm sm:text-base px-4 py-2 rounded-full shadow-md hover:shadow-lg transition-all duration-300 cursor-pointer hover:scale-[1.03]"
+                          className="inline-flex items-center gap-2 bg-white text-black font-semibold text-xs xs:text-sm sm:text-base px-3 xs:px-4 py-1.5 xs:py-2 rounded-full shadow-md hover:shadow-lg transition-all duration-300 cursor-pointer hover:scale-[1.03]"
                         >
-                          <span className="text-lg -translate-x-1 opacity-70 transition-all duration-300 group-hover:translate-x-0 group-hover:opacity-100">→</span>
+                          <span className="text-base xs:text-lg -translate-x-1 opacity-70 transition-all duration-300 group-hover:translate-x-0 group-hover:opacity-100">→</span>
                           <span>{topBanner.button_text || 'Перейти'}</span>
                         </a>
                       </div>
@@ -212,20 +241,20 @@ export default function HomePage() {
                 {/* Кнопка каталога - 3 колонки (30%) */}
                 <a
                   href="/catalog"
-                  className="h-[340px] sm:h-[420px] md:h-[600px] col-span-10 md:col-span-3 flex flex-col justify-between text-black hover:opacity-90 transition-opacity py-8 px-8 md:px-12 rounded-[15px] max-w-full contain-inline"
+                  className="h-[320px] xs:h-[380px] sm:h-[480px] md:h-[560px] lg:h-[600px] col-span-10 md:col-span-3 flex flex-col justify-between text-black hover:opacity-90 transition-opacity py-6 xs:py-7 sm:py-8 px-6 xs:px-7 sm:px-8 md:px-12 rounded-[15px] max-w-full contain-inline"
                   style={{ backgroundColor: '#F7A8C2' }}
                 >
                   <div className="flex-1 flex items-center justify-center">
-                    <div className="flex items-center gap-3 md:gap-4 group">
-                      <h2 className="text-2xl sm:text-2xl md:text-2xl font-semibold leading-tight tracking-tight group-hover:translate-x-2 transition-all duration-300">
+                    <div className="flex items-center gap-2 xs:gap-3 sm:gap-3 md:gap-4 group">
+                      <h2 className="text-xl xs:text-2xl sm:text-2xl md:text-2xl font-semibold leading-tight tracking-tight group-hover:translate-x-2 transition-all duration-300">
                          За покупками
                        </h2>
-                      <div className="w-14 h-14 sm:w-16 sm:h-16 md:w-14 md:h-14 bg-black rounded-full flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-300">
-                        <span className="text-white text-xl md:text-xl">→</span>
+                      <div className="w-12 h-12 xs:w-14 xs:h-14 sm:w-16 sm:h-16 md:w-14 md:h-14 bg-black rounded-full flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-300">
+                        <span className="text-white text-lg xs:text-xl md:text-xl">→</span>
                       </div>
                     </div>
                   </div>
-                  <div className="text-sm text-gray-700">
+                  <div className="text-xs xs:text-sm text-gray-700">
                     <p>Магазин: ARTECO.ru</p>
                   </div>
                 </a>
@@ -240,13 +269,44 @@ export default function HomePage() {
             <div className="max-w-[1680px] 2xl:max-w-none mx-auto px-1 md:px-2 xl:px-4 2xl:px-6 max-w-full">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-full">
                 {middleBanners.map((banner) => (
-                  <div key={banner.id} className="relative h-[360px] sm:h-[420px] md:h-[500px] overflow-hidden rounded-[15px] group max-w-full">
-                    <img
-                      src={banner.image_url}
-                      alt={banner.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  <div 
+                    key={banner.id} 
+                    className="relative h-[360px] sm:h-[420px] md:h-[500px] overflow-hidden rounded-[15px] group max-w-full bg-gray-100"
+                  >
+                    {/* Изображение с правильным масштабированием */}
+                    <div className="absolute inset-0 w-full h-full z-0">
+                      <Image
+                        src={banner.image_url}
+                        alt={banner.title}
+                        fill
+                        sizes="(max-width: 768px) 100vw, 50vw"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        style={{ 
+                          objectFit: 'cover',
+                          objectPosition: 'center center',
+                          width: '100%',
+                          height: '100%'
+                        }}
+                        unoptimized={true}
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement
+                          target.style.display = 'none'
+                        }}
+                      />
+                    </div>
+                    {/* Fallback через background-image */}
+                    <div 
+                      className="absolute inset-0 w-full h-full z-0"
+                      style={{
+                        backgroundImage: `url(${banner.image_url})`,
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center center',
+                        backgroundRepeat: 'no-repeat',
+                        width: '100%',
+                        height: '100%'
+                      }}
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent flex flex-col justify-end p-6 sm:p-8">
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent flex flex-col justify-end p-6 sm:p-8 z-10">
                       <h3 className="text-white text-2xl sm:text-3xl font-bold mb-3">
                         {banner.title}
                       </h3>
@@ -353,13 +413,44 @@ export default function HomePage() {
             <div className="max-w-[1680px] 2xl:max-w-none mx-auto px-1 md:px-2 xl:px-4 2xl:px-6 max-w-full">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-full">
                 {middleBanners2.map((banner) => (
-                  <div key={banner.id} className="relative h-[360px] sm:h-[420px] md:h-[500px] overflow-hidden rounded-[15px] group max-w-full">
-                    <img
-                      src={banner.image_url}
-                      alt={banner.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  <div 
+                    key={banner.id} 
+                    className="relative h-[360px] sm:h-[420px] md:h-[500px] overflow-hidden rounded-[15px] group max-w-full bg-gray-100"
+                  >
+                    {/* Изображение с правильным масштабированием */}
+                    <div className="absolute inset-0 w-full h-full z-0">
+                      <Image
+                        src={banner.image_url}
+                        alt={banner.title}
+                        fill
+                        sizes="(max-width: 768px) 100vw, 50vw"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        style={{ 
+                          objectFit: 'cover',
+                          objectPosition: 'center center',
+                          width: '100%',
+                          height: '100%'
+                        }}
+                        unoptimized={true}
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement
+                          target.style.display = 'none'
+                        }}
+                      />
+                    </div>
+                    {/* Fallback через background-image */}
+                    <div 
+                      className="absolute inset-0 w-full h-full z-0"
+                      style={{
+                        backgroundImage: `url(${banner.image_url})`,
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center center',
+                        backgroundRepeat: 'no-repeat',
+                        width: '100%',
+                        height: '100%'
+                      }}
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent flex flex-col justify-end p-6 sm:p-8">
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent flex flex-col justify-end p-6 sm:p-8 z-10">
                       <h3 className="text-white text-2xl sm:text-3xl font-bold mb-3">
                         {banner.title}
                       </h3>

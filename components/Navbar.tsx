@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { supabase } from '@/lib/supabase'
 import { useSession, signOut } from 'next-auth/react'
 import AuthModal from '@/components/AuthModal'
@@ -145,7 +146,13 @@ export default function Navbar() {
         <div className="relative h-20 flex items-center justify-between">
           {/* Лого: абсолютный центр на мобайле, обычный поток на десктопе */}
           <div className="absolute left-1/2 -translate-x-1/2 xl:static xl:translate-x-0">
-            <Link href="/" className="flex items-center gap-1 text-2xl font-bold text-black select-none">
+            <Link href="/" className="flex items-center gap-2 text-2xl font-bold text-black select-none">
+              {/* Логотип ARTECO */}
+              <img
+                src="/arteco-logo-header.png"
+                alt="ARTECO Logo"
+                className="w-10 h-10 sm:w-12 sm:h-12 object-contain flex-shrink-0"
+              />
               <span>ART</span>
               {/* Буква E стилизована как гамбургер-иконка с морфом X ↔︎ ≡ при появлении хэдера */}
               <span aria-hidden className="relative w-5 h-4 mx-0.5">
@@ -210,7 +217,7 @@ export default function Navbar() {
           </div>
 
           {/* Поисковая строка (десктоп) */}
-          <div className="hidden lg:flex flex-1 max-w-xl mx-6">
+          <div className="hidden lg:flex flex-1 max-w-md xl:max-w-lg mx-4">
             <div className="relative w-full">
               <input
                 type="text"
@@ -218,10 +225,10 @@ export default function Navbar() {
                 onChange={(e) => { setSearchQuery(e.target.value); setSearchOpen(true) }}
                 onFocus={() => setSearchOpen(true)}
                 placeholder="Поиск по товарам..."
-                className="w-full px-4 py-2 border border-gray-300 rounded-[50px] focus:outline-none focus:border-gray-400"
+                className="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-[50px] focus:outline-none focus:border-gray-400"
               />
-              <button className="absolute right-3 top-1/2 -translate-y-1/2">
-                <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <button className="absolute right-2.5 top-1/2 -translate-y-1/2">
+                <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
               </button>
