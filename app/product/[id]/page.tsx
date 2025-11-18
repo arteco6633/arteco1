@@ -113,24 +113,15 @@ export default function ProductPage() {
       return sum + (m ? m.price * (qty || 0) : 0)
     }, 0)
 
-    // Определяем, относится ли товар к кухонной категории (по имени/слагу)
-    const slug = (category?.slug?.toLowerCase() || '')
-    const name = (category?.name?.toLowerCase() || '')
-    // Категории, где базовая цена заменяется ценой модулей при их добавлении: кухни, шкафы/стеллажи
-    const isModularCategory =
-      slug.includes('kitchen') || slug.includes('kuhn') || name.includes('кух') ||
-      slug.includes('shkaf') || slug.includes('wardrobe') || slug.includes('closet') ||
-      name.includes('шкаф') || name.includes('стеллаж')
-
     const hasModules = modulesSum > 0
 
     // Базовая цена:
-    // - для всех товаров: показываем базовую цену
-    // - для кухонь: как только пользователь начинает добавлять модули, базовая цена не учитывается
-    const base = (!isModularCategory || !hasModules) ? (Number(product.price) || 0) : 0
+    // - если пользователь добавил модули через конструктор, базовая цена не учитывается
+    // - цена считается только за выбранные модули
+    const base = hasModules ? 0 : (Number(product.price) || 0)
 
     return base + hinge + drawer + lighting + modulesSum
-  }, [product, category?.slug, category?.name, selectedHingeIdx, selectedDrawerIdx, selectedLightingIdx, selectedModules, modules])
+  }, [product, selectedHingeIdx, selectedDrawerIdx, selectedLightingIdx, selectedModules, modules])
   const [openFilling, setOpenFilling] = useState(true)
   const [openHinge, setOpenHinge] = useState(false)
   const [openDrawer, setOpenDrawer] = useState(false)
