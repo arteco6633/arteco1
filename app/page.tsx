@@ -577,31 +577,34 @@ export default function HomePage() {
                         href="/catalog"
                         className="hidden lg:flex lg:col-span-2 lg:col-start-3 relative rounded-[18px] text-white items-center justify-center min-h-[300px] shadow-xl transition-all group px-10 overflow-hidden"
                       >
-                        {/* Градиентный современный фон */}
-                        <div className="absolute inset-0 bg-gradient-to-br from-[#0b2e6b] via-[#123b85] to-[#1a49a4]" />
+                        {/* Светло-голубой градиентный фон */}
+                        <div className="absolute inset-0 bg-[#e0f2fe]" />
                         {/* Неоновая аура по краям */}
-                        <div className="absolute -inset-1 rounded-[22px] bg-[conic-gradient(from_180deg,rgba(255,255,255,.25),rgba(120,180,255,.55),rgba(255,255,255,.25))] opacity-40 blur-2xl" />
+                        <div className="absolute -inset-1 rounded-[22px] bg-[conic-gradient(from_180deg,rgba(255,255,255,.3),rgba(224,242,254,.5),rgba(255,255,255,.3))] opacity-25 blur-2xl" />
                         {/* Тонкий бликовый градиент сверху-слева */}
-                        <div className="pointer-events-none absolute -top-24 -left-24 h-64 w-64 rounded-full bg-white/10 blur-3xl group-hover:opacity-70 opacity-40 transition-opacity duration-500" />
+                        <div className="pointer-events-none absolute -top-24 -left-24 h-64 w-64 rounded-full bg-sky-100/30 blur-3xl group-hover:opacity-50 opacity-25 transition-opacity duration-500" />
                         {/* Лёгкая сетка-узор */}
-                        <div className="absolute inset-0 opacity-[0.06] [background-image:radial-gradient(circle,#fff_1px,transparent_1px)] [background-size:16px_16px]" />
+                        <div className="absolute inset-0 opacity-[0.03] [background-image:radial-gradient(circle,#000_1px,transparent_1px)] [background-size:16px_16px]" />
 
                         <div className="relative flex items-center justify-center gap-4 group-hover:translate-x-2 transition-transform duration-300">
-                          <h2 className="text-2xl font-semibold leading-tight drop-shadow-[0_1px_0_rgba(0,0,0,0.3)]">
+                          <h2 className="text-2xl font-semibold leading-tight text-black/80">
                             Перейти в каталог
                           </h2>
-                          <div className="w-14 h-14 bg-white rounded-full flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-300 shadow-lg">
-                            <span className="text-black text-xl">→</span>
+                          <div className="w-14 h-14 bg-black rounded-full flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-300 shadow-lg">
+                            <span className="text-[#e0f2fe] text-xl">→</span>
                           </div>
                         </div>
                       </a>
                     )}
                   />
                   {/* Кнопка на мобилке под всеми карточками */}
-                  <a href="/catalog" className="lg:hidden mt-4 block w-full rounded-[16px] text-white text-center py-5 font-semibold shadow-lg transition-all relative overflow-hidden">
-                    <span className="absolute inset-0 bg-gradient-to-br from-[#0b2e6b] via-[#123b85] to-[#1a49a4]" />
-                    <span className="absolute -inset-1 rounded-[20px] bg-[conic-gradient(from_180deg,rgba(255,255,255,.25),rgba(120,180,255,.55),rgba(255,255,255,.25))] opacity-30 blur-xl" />
-                    <span className="relative">Перейти в каталог</span>
+                  <a href="/catalog" className="lg:hidden mt-4 block w-full rounded-[16px] text-black text-center py-5 font-semibold shadow-lg transition-all relative overflow-hidden animate-pulse md:animate-none hover:scale-[1.02] active:scale-[0.98]">
+                    <span className="absolute inset-0 bg-[#e0f2fe]" />
+                    <span className="absolute -inset-1 rounded-[20px] bg-[conic-gradient(from_180deg,rgba(255,255,255,.3),rgba(224,242,254,.5),rgba(255,255,255,.3))] opacity-25 blur-xl" />
+                    <span className="relative flex items-center justify-center gap-2">
+                      Перейти в каталог
+                      <span className="inline-block animate-arrow-right">→</span>
+                    </span>
                   </a>
                 </div>
               )}

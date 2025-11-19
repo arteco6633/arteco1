@@ -534,6 +534,19 @@ body {
   }
 }
 
+@keyframes arrowRight {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(4px);
+  }
+}
+
+.animate-arrow-right {
+  animation: arrowRight 1s ease-in-out infinite;
+}
+
 @keyframes subtleShimmer {
   0%, 100% {
     opacity: 0.03;

@@ -13,10 +13,12 @@ const nextConfig = {
   outputFileTracingRoot: path.resolve(__dirname),
   images: {
     remotePatterns: [
+      // Основной хост Supabase из переменной окружения
       supabaseHost
         ? { protocol: 'https', hostname: supabaseHost, pathname: '/storage/**' }
         : null,
-      { protocol: 'https', hostname: 'zjiajicude.beget.app', pathname: '/storage/**' },
+      // Резервный хост Supabase (локальная разработка / env по умолчанию)
+      { protocol: 'https', hostname: 'zijajicude.beget.app', pathname: '/storage/**' },
       { protocol: 'https', hostname: 'images.unsplash.com', pathname: '/**' },
     ].filter(Boolean),
     formats: ['image/avif', 'image/webp'],
