@@ -17,8 +17,9 @@ const nextConfig = {
       supabaseHost
         ? { protocol: 'https', hostname: supabaseHost, pathname: '/storage/**' }
         : null,
-      // Резервный хост Supabase (локальная разработка / env по умолчанию)
+      // Резервные хосты Supabase
       { protocol: 'https', hostname: 'zijajicude.beget.app', pathname: '/storage/**' },
+      { protocol: 'https', hostname: 'zijajicude.beget.app', pathname: '/**' },
       { protocol: 'https', hostname: 'images.unsplash.com', pathname: '/**' },
     ].filter(Boolean),
     formats: ['image/avif', 'image/webp'],
@@ -27,6 +28,9 @@ const nextConfig = {
     unoptimized: false,
     // Настройка качеств изображений для Next.js 16
     qualities: [75, 85, 90, 95, 100],
+    // Разрешаем загрузку изображений с любых HTTPS источников в режиме разработки
+    dangerouslyAllowSVG: true,
+    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
   },
 }
 

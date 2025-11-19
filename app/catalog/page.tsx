@@ -24,12 +24,26 @@ export default function CatalogPage() {
 
   async function loadCategories() {
     try {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('categories')
         .select('*')
         .eq('is_active', true)
         .order('position', { ascending: true, nullsFirst: false })
         .order('name', { ascending: true })
+      
+      if (error) {
+        console.error('Ошибка загрузки категорий:', error)
+      }
+      
+      if (data) {
+        console.log('Загружено категорий:', data.length)
+        // Логируем URL изображений для отладки
+        data.forEach(cat => {
+          if (cat.image_url) {
+            console.log(`Категория "${cat.name}":`, cat.image_url)
+          }
+        })
+      }
       
       setCategories(data || [])
     } catch (error) {
@@ -64,14 +78,28 @@ export default function CatalogPage() {
             >
               <div className="w-full aspect-[4/3] min-h-[200px] md:min-h-[240px] overflow-hidden bg-gray-100 relative rounded-2xl rounded-b-none">
                 {category.image_url ? (
-                  <Image
-                    src={category.image_url}
-                    alt={category.name}
-                    fill
-                    sizes="(max-width: 640px) 50vw, (min-width: 1024px) 33vw, 33vw"
-                    className="object-cover"
-                    quality={90}
-                  />
+                  <>
+                    <Image
+                      src={category.image_url}
+                      alt={category.name}
+                      fill
+                      sizes="(max-width: 640px) 50vw, (min-width: 1024px) 33vw, 33vw"
+                      className="object-cover"
+                      quality={90}
+                      unoptimized={category.image_url?.startsWith('http')}
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement
+                        target.style.display = 'none'
+                        if (target.parentElement) {
+                          const fallback = target.parentElement.querySelector('.image-fallback') as HTMLElement
+                          if (fallback) fallback.style.display = 'flex'
+                        }
+                      }}
+                    />
+                    <div className="image-fallback absolute inset-0 w-full h-full flex items-center justify-center text-4xl bg-gray-100" style={{ display: 'none' }}>
+                      📦
+                    </div>
+                  </>
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-4xl">📦</div>
                 )}
