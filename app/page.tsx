@@ -1,6 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef, useCallback, type TouchEvent, type SyntheticEvent } from 'react'
+import { createPortal } from 'react-dom'
 import Image from 'next/image'
 import GameModal from '@/components/GameModal'
 import { supabase } from '@/lib/supabase'
@@ -57,6 +58,23 @@ interface Category {
   image_url: string | null
 }
 
+interface Interior {
+  id: number
+  title: string
+  subtitle?: string | null
+  description?: string | null
+  cover_image: string
+  cover_preview?: string | null
+  gallery_images?: string[] | null
+  gallery_previews?: string[] | null
+  video_urls?: string[] | null
+  document_files?: { url: string; name?: string | null }[] | null
+  location?: string | null
+  area?: string | null
+  style?: string | null
+  created_at?: string
+}
+
 export default function HomePage() {
   const NEW_PRODUCTS_LIMIT = 8
   const [gameOpen, setGameOpen] = useState(false)
@@ -74,8 +92,36 @@ export default function HomePage() {
   const firstBannerRef = useState<HTMLElement | null>(null)[0] as any
   const firstBannerInView = useInView({ current: firstBannerRef } as any, '0px')
 
+  // Интерьеры клиентов
+  const [interiors, setInteriors] = useState<Interior[]>([])
+  const [interiorsLoading, setInteriorsLoading] = useState(true)
+  const [activeInteriorIndex, setActiveInteriorIndex] = useState<number | null>(null)
+  const [activeMediaIndex, setActiveMediaIndex] = useState(0)
+  const [displayedMediaIndex, setDisplayedMediaIndex] = useState(0)
+  const [isMediaEntering, setIsMediaEntering] = useState(true)
+  const [isMounted, setIsMounted] = useState(false)
+  const isMountedRef = useRef(true)
+  const [activeVideoIndex, setActiveVideoIndex] = useState(0)
+  const [thumbnailOffset, setThumbnailOffset] = useState(0)
+  const MAX_VISIBLE_THUMBS = 5
+  const touchStartXRef = useRef<number | null>(null)
+  const touchCurrentXRef = useRef<number | null>(null)
+  const mediaTransitionTimeoutRef = useRef<number | null>(null)
+  const [isVideoPortrait, setIsVideoPortrait] = useState(false)
+  const [isVideoModalOpen, setIsVideoModalOpen] = useState(false)
+  const [videoModalSwipeOffset, setVideoModalSwipeOffset] = useState(0)
+  const [isVideoModalDragging, setIsVideoModalDragging] = useState(false)
+  const [isVideoMuted, setIsVideoMuted] = useState(true)
+  const videoModalTouchStartRef = useRef<number | null>(null)
+  const videoModalTouchCurrentRef = useRef<number | null>(null)
+
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
+
   useEffect(() => {
     loadData()
+    loadInteriors()
   }, [])
 
   useEffect(() => {
@@ -133,6 +179,384 @@ export default function HomePage() {
       setLoading(false)
     }
   }
+
+  async function loadInteriors() {
+    try {
+      setInteriorsLoading(true)
+      const { data, error } = await supabase
+        .from('client_interiors')
+        .select('*')
+        .order('created_at', { ascending: false })
+
+      if (error) throw error
+      setInteriors(data || [])
+    } catch (error) {
+      console.error('Ошибка загрузки интерьеров клиентов:', error)
+      setInteriors([])
+    } finally {
+      setInteriorsLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    return () => {
+      if (typeof window !== 'undefined') {
+        if (mediaTransitionTimeoutRef.current !== null) {
+          window.clearTimeout(mediaTransitionTimeoutRef.current)
+        }
+      }
+    }
+  }, [])
+
+  const activeInterior = activeInteriorIndex !== null && activeInteriorIndex >= 0 && activeInteriorIndex < interiors.length 
+    ? interiors[activeInteriorIndex] 
+    : null
+  type InteriorMediaItem = { type: 'image' | 'video'; url: string; preview?: string | null }
+  const activeInteriorMedia = activeInterior
+    ? [
+        activeInterior.cover_image
+          ? { type: 'image' as const, url: activeInterior.cover_image, preview: activeInterior.cover_preview ?? null }
+          : null,
+        ...(activeInterior.gallery_images?.map((url, index) => ({
+          type: 'image' as const,
+          url,
+          preview: activeInterior.gallery_previews?.[index] ?? null,
+        })) ?? []),
+      ].filter(Boolean) as InteriorMediaItem[]
+    : []
+  const imageMedia = activeInteriorMedia.filter((media) => media.type === 'image')
+  const videoMedia: InteriorMediaItem[] = activeInterior?.video_urls?.map((url) => ({ type: 'video', url })) ?? []
+  const isGalleryModalOpen = activeInteriorIndex !== null
+  const activeMediaItem = imageMedia[displayedMediaIndex] ?? null
+  const maxThumbnailOffset = Math.max(0, imageMedia.length - MAX_VISIBLE_THUMBS)
+  const visibleThumbnails = imageMedia.slice(thumbnailOffset, thumbnailOffset + MAX_VISIBLE_THUMBS)
+
+  useEffect(() => {
+    if (activeMediaIndex >= imageMedia.length) {
+      setActiveMediaIndex(0)
+    }
+  }, [activeMediaIndex, imageMedia.length])
+
+  useEffect(() => {
+    if (activeMediaIndex < thumbnailOffset) {
+      setThumbnailOffset(activeMediaIndex)
+    } else if (activeMediaIndex >= thumbnailOffset + MAX_VISIBLE_THUMBS) {
+      setThumbnailOffset(Math.min(activeMediaIndex - MAX_VISIBLE_THUMBS + 1, maxThumbnailOffset))
+    }
+  }, [activeMediaIndex, thumbnailOffset, MAX_VISIBLE_THUMBS, maxThumbnailOffset])
+
+  useEffect(() => {
+    if (activeVideoIndex >= videoMedia.length) {
+      setActiveVideoIndex(0)
+    }
+  }, [activeVideoIndex, videoMedia.length])
+
+  useEffect(() => {
+    setIsVideoPortrait(false)
+  }, [activeVideoIndex, videoMedia.length, activeInterior?.id])
+
+  useEffect(() => {
+    setVideoModalSwipeOffset(0)
+  }, [activeVideoIndex])
+
+  useEffect(() => {
+    if (!isGalleryModalOpen) {
+      if (typeof window !== 'undefined' && mediaTransitionTimeoutRef.current !== null) {
+        window.clearTimeout(mediaTransitionTimeoutRef.current)
+        mediaTransitionTimeoutRef.current = null
+      }
+      setDisplayedMediaIndex(activeMediaIndex)
+      setIsMediaEntering(true)
+      return
+    }
+
+    if (typeof window === 'undefined') {
+      setDisplayedMediaIndex(activeMediaIndex)
+      setIsMediaEntering(true)
+      return
+    }
+
+    setIsMediaEntering(false)
+    const timeoutId = window.setTimeout(() => {
+      setDisplayedMediaIndex(activeMediaIndex)
+      setIsMediaEntering(true)
+      mediaTransitionTimeoutRef.current = null
+    }, 180)
+
+    mediaTransitionTimeoutRef.current = timeoutId
+
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.clearTimeout(timeoutId)
+      }
+      if (mediaTransitionTimeoutRef.current === timeoutId) {
+        mediaTransitionTimeoutRef.current = null
+      }
+    }
+  }, [activeMediaIndex, isGalleryModalOpen])
+
+  function openInterior(index: number) {
+    setActiveInteriorIndex(index)
+    setActiveMediaIndex(0)
+    setDisplayedMediaIndex(0)
+    setIsMediaEntering(true)
+    setActiveVideoIndex(0)
+    setThumbnailOffset(0)
+    touchStartXRef.current = null
+    touchCurrentXRef.current = null
+    setIsVideoModalOpen(false)
+    setVideoModalSwipeOffset(0)
+  }
+
+  function closeInterior() {
+    if (activeInteriorIndex === null) {
+      return
+    }
+
+    if (typeof window !== 'undefined' && mediaTransitionTimeoutRef.current !== null) {
+      window.clearTimeout(mediaTransitionTimeoutRef.current)
+      mediaTransitionTimeoutRef.current = null
+    }
+
+    setActiveInteriorIndex(null)
+    setActiveMediaIndex(0)
+    setDisplayedMediaIndex(0)
+    setIsMediaEntering(true)
+    setActiveVideoIndex(0)
+    setThumbnailOffset(0)
+    touchStartXRef.current = null
+    touchCurrentXRef.current = null
+    setIsVideoModalOpen(false)
+    setVideoModalSwipeOffset(0)
+    setIsVideoModalDragging(false)
+  }
+
+  function showNextMedia() {
+    if (imageMedia.length <= 1) return
+    setActiveMediaIndex((prev) => (prev + 1) % imageMedia.length)
+  }
+
+  function showPrevMedia() {
+    if (imageMedia.length <= 1) return
+    setActiveMediaIndex((prev) => (prev - 1 + imageMedia.length) % imageMedia.length)
+  }
+
+  function selectMedia(index: number) {
+    if (index < 0 || index >= imageMedia.length) return
+    setActiveMediaIndex(index)
+  }
+
+  function shiftThumbnails(direction: 'up' | 'down') {
+    if (direction === 'up') {
+      setThumbnailOffset((prev) => Math.max(0, prev - 1))
+    } else {
+      setThumbnailOffset((prev) => Math.min(maxThumbnailOffset, prev + 1))
+    }
+  }
+
+  useEffect(() => {
+    if (!isGalleryModalOpen) return
+
+    const originalOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault()
+        closeInterior()
+        return
+      }
+      if (event.key === 'ArrowRight' && imageMedia.length > 1) {
+        event.preventDefault()
+        setActiveMediaIndex((prev) => (prev + 1) % imageMedia.length)
+      }
+      if (event.key === 'ArrowLeft' && imageMedia.length > 1) {
+        event.preventDefault()
+        setActiveMediaIndex((prev) => (prev - 1 + imageMedia.length) % imageMedia.length)
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+
+    return () => {
+      document.body.style.overflow = originalOverflow
+      window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [isGalleryModalOpen, imageMedia.length])
+
+  function handleTouchStart(e: TouchEvent<HTMLDivElement>) {
+    if (imageMedia.length <= 1) return
+    if (e.touches.length > 1) return
+    touchStartXRef.current = e.touches[0].clientX
+    touchCurrentXRef.current = null
+  }
+
+  function handleTouchMove(e: TouchEvent<HTMLDivElement>) {
+    if (imageMedia.length <= 1) return
+    if (e.touches.length > 1) return
+    touchCurrentXRef.current = e.touches[0].clientX
+  }
+
+  function handleTouchEnd() {
+    if (imageMedia.length <= 1) return
+    const start = touchStartXRef.current
+    const current = touchCurrentXRef.current
+    if (start === null || current === null) {
+      touchStartXRef.current = null
+      touchCurrentXRef.current = null
+      return
+    }
+    const delta = current - start
+    if (Math.abs(delta) > 50) {
+      if (delta > 0) {
+        showPrevMedia()
+      } else {
+        showNextMedia()
+      }
+    }
+    touchStartXRef.current = null
+    touchCurrentXRef.current = null
+  }
+
+  const showNextVideo = useCallback(() => {
+    if (videoMedia.length === 0) return
+    setActiveVideoIndex((prev) => (prev + 1) % videoMedia.length)
+  }, [videoMedia.length])
+
+  const showPrevVideo = useCallback(() => {
+    if (videoMedia.length === 0) return
+    setActiveVideoIndex((prev) => (prev - 1 + videoMedia.length) % videoMedia.length)
+  }, [videoMedia.length])
+
+  const openVideoModal = useCallback(
+    (initialIndex?: number) => {
+      if (videoMedia.length === 0) return
+      if (typeof initialIndex === 'number' && !Number.isNaN(initialIndex)) {
+        const safeIndex = Math.min(Math.max(Math.floor(initialIndex), 0), videoMedia.length - 1)
+        setActiveVideoIndex(safeIndex)
+      }
+      setIsVideoMuted(true)
+      setIsVideoModalOpen(true)
+      setVideoModalSwipeOffset(0)
+      setIsVideoModalDragging(false)
+    },
+    [videoMedia.length]
+  )
+
+  const closeVideoModal = useCallback(() => {
+    setIsVideoModalOpen(false)
+    setVideoModalSwipeOffset(0)
+    setIsVideoModalDragging(false)
+    videoModalTouchStartRef.current = null
+    videoModalTouchCurrentRef.current = null
+  }, [])
+
+  const toggleVideoMute = useCallback(() => {
+    setIsVideoMuted((prev) => !prev)
+  }, [])
+
+  const handleVideoModalTouchStart = useCallback((e: TouchEvent<HTMLDivElement>) => {
+    if (videoMedia.length <= 1) return
+    if (e.touches.length > 1) return
+    const firstTouch = e.touches[0]
+    videoModalTouchStartRef.current = firstTouch.clientY
+    videoModalTouchCurrentRef.current = firstTouch.clientY
+    setIsVideoModalDragging(true)
+    setVideoModalSwipeOffset(0)
+    if (e.cancelable) {
+      e.preventDefault()
+    }
+    e.stopPropagation()
+  }, [videoMedia.length])
+
+  const handleVideoModalTouchMove = useCallback((e: TouchEvent<HTMLDivElement>) => {
+    if (videoMedia.length <= 1) return
+    if (e.touches.length > 1) return
+    const currentY = e.touches[0].clientY
+    videoModalTouchCurrentRef.current = currentY
+    const start = videoModalTouchStartRef.current
+    if (start === null) return
+    const delta = currentY - start
+    setVideoModalSwipeOffset(delta)
+    if (e.cancelable) {
+      e.preventDefault()
+    }
+    e.stopPropagation()
+  }, [videoMedia.length])
+
+  const handleVideoModalTouchEnd = useCallback(() => {
+    const start = videoModalTouchStartRef.current
+    const current = videoModalTouchCurrentRef.current
+    videoModalTouchStartRef.current = null
+    videoModalTouchCurrentRef.current = null
+
+    if (start === null || current === null) {
+      setVideoModalSwipeOffset(0)
+      setIsVideoModalDragging(false)
+      return
+    }
+
+    const delta = current - start
+
+    if (Math.abs(delta) > 80 && videoMedia.length > 1) {
+      if (delta < 0) {
+        showNextVideo()
+      } else {
+        showPrevVideo()
+      }
+    }
+
+    setVideoModalSwipeOffset(0)
+    setIsVideoModalDragging(false)
+  }, [showNextVideo, showPrevVideo, videoMedia.length])
+
+  useEffect(() => {
+    if (!isVideoModalOpen) {
+      setVideoModalSwipeOffset(0)
+      setIsVideoModalDragging(false)
+      return
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault()
+        closeVideoModal()
+        return
+      }
+      if (videoMedia.length <= 1) {
+        return
+      }
+      if (event.key === 'ArrowUp') {
+        event.preventDefault()
+        showPrevVideo()
+      }
+      if (event.key === 'ArrowDown') {
+        event.preventDefault()
+        showNextVideo()
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [closeVideoModal, isVideoModalOpen, showNextVideo, showPrevVideo, videoMedia.length])
+
+  useEffect(() => {
+    if (!isVideoModalOpen) {
+      return
+    }
+    const originalBodyOverflow = document.body.style.overflow
+    const originalHtmlOverflow = document.documentElement.style.overflow
+    document.body.style.overflow = 'hidden'
+    document.documentElement.style.overflow = 'hidden'
+
+    return () => {
+      document.body.style.overflow = originalBodyOverflow
+      document.documentElement.style.overflow = originalHtmlOverflow
+    }
+  }, [isVideoModalOpen])
 
   if (loading) {
     return (
@@ -611,6 +1035,317 @@ export default function HomePage() {
             </div>
           </section>
         )}
+
+        {/* Arteco - реальные интерьеры */}
+        <section className="py-8 bg-white">
+          <div className="max-w-[1680px] 2xl:max-w-none mx-auto px-0 sm:px-6 md:px-8 lg:px-12 xl:px-16 2xl:px-20">
+            <div className="text-center mb-8 sm:mb-10 md:mb-12 px-4 sm:px-0">
+              <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-black mb-4 tracking-tight">
+                Arteco - реальные интерьеры
+              </h2>
+              <p className="text-sm sm:text-base text-gray-600 max-w-xl mx-auto font-light">
+                Вдохновитесь реальными интерьерами, созданных с любовью
+              </p>
+            </div>
+
+            {interiorsLoading ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 px-4 sm:px-0">
+                {Array.from({ length: 6 }).map((_, index) => (
+                  <div
+                    key={index}
+                    className="relative aspect-[4/3] overflow-hidden rounded-[30px] border border-gray-200/70 bg-gradient-to-br from-gray-100 via-gray-50 to-white animate-pulse"
+                  >
+                    <div className="absolute inset-4 rounded-[26px] border border-dashed border-gray-200" />
+                  </div>
+                ))}
+              </div>
+            ) : interiors.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 px-4 sm:px-0">
+                {interiors.map((interior, index) => (
+                  <button
+                    type="button"
+                    key={interior.id}
+                    onClick={() => openInterior(index)}
+                    className="group relative aspect-[4/3] overflow-hidden rounded-[30px] border border-gray-200 bg-gray-50 text-left transition-all duration-500 hover:-translate-y-1 hover:border-gray-300 hover:shadow-[0_32px_90px_-45px_rgba(15,23,42,0.55)] focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-4"
+                  >
+                    {interior.cover_image ? (
+                      <Image
+                        src={interior.cover_image}
+                        alt={interior.title}
+                        fill
+                        className="object-cover transition-transform duration-500 group-hover:scale-105"
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                        unoptimized={interior.cover_image?.includes('unsplash.com') || false}
+                        priority={index < 3}
+                      />
+                    ) : (
+                      <div className="flex h-full items-center justify-center bg-gray-100 text-sm text-gray-400">
+                        Изображение готовится
+                      </div>
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent opacity-60 transition-opacity duration-500 group-hover:opacity-80" />
+                    <div className="absolute top-5 left-5 px-3 py-1 rounded-full bg-white/85 text-[10px] sm:text-xs tracking-[0.4em] text-gray-700 shadow-sm">
+                      {String(index + 1).padStart(2, '0')}
+                    </div>
+                    {(interior.video_urls?.length || interior.document_files?.length) && (
+                      <div className="absolute top-5 right-5 flex items-center gap-2 text-[10px] font-medium uppercase tracking-[0.25em] text-white/80">
+                        {interior.video_urls?.length ? (
+                          <span className="flex items-center gap-1 rounded-full bg-white/15 px-3 py-1 backdrop-blur">
+                            <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M8 5v14l11-7-11-7z" />
+                            </svg>
+                            {interior.video_urls.length}
+                          </span>
+                        ) : null}
+                        {interior.document_files?.length ? (
+                          <span className="flex items-center gap-1 rounded-full bg-white/15 px-3 py-1 backdrop-blur">
+                            <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M7 7h4.5a2.5 2.5 0 012.5 2.5V21" />
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M7 7v12a2 2 0 002 2h8" />
+                            </svg>
+                            {interior.document_files.length}
+                          </span>
+                        ) : null}
+                      </div>
+                    )}
+                    <div className="absolute inset-x-0 bottom-0 p-5 sm:p-6">
+                      <div className="text-xs uppercase tracking-[0.35em] text-white/70 mb-2">
+                        Квартира · Проект
+                      </div>
+                      <div className="text-lg sm:text-xl font-light text-white leading-tight line-clamp-2">
+                        {interior.title}
+                      </div>
+                      {(interior.location || interior.subtitle) && (
+                        <div className="mt-2 text-[11px] sm:text-xs text-white/70 tracking-wide">
+                          {interior.location || interior.subtitle}
+                        </div>
+                      )}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <div className="rounded-3xl border border-dashed border-gray-300 bg-white/60 py-16 px-6 text-center text-sm sm:text-base text-gray-500">
+                Добавьте реальные интерьеры через админ-панель, чтобы вдохновлять клиентов.
+              </div>
+            )}
+          </div>
+        </section>
+
+        {/* Модальные окна для интерьеров */}
+        {isGalleryModalOpen && activeInterior && isMounted && typeof window !== 'undefined' && document.body
+          ? createPortal(
+            <div className="fixed inset-0 z-[80] flex items-center justify-center px-0 py-4 sm:px-4 sm:py-6">
+              <button
+                type="button"
+                aria-label="Закрыть просмотр интерьера"
+                className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+                onClick={closeInterior}
+              />
+              <div className="relative z-10 w-full h-full max-h-none overflow-hidden rounded-none sm:rounded-[32px] bg-white shadow-[0_40px_140px_-60px_rgba(15,23,42,0.65)]">
+                <div className="border-b border-gray-100">
+                  <div className="mx-auto flex w-full max-w-[1340px] items-center justify-between px-4 py-4 sm:px-6 lg:px-8 xl:px-12 2xl:max-w-[1560px]">
+                    <div>
+                      <div className="text-[11px] uppercase tracking-[0.35em] text-gray-400 mb-1">Проект</div>
+                      <h3 className="text-xl sm:text-2xl font-light text-gray-900 leading-tight">{activeInterior.title}</h3>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={closeInterior}
+                      className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-700 shadow-sm transition-colors hover:bg-gray-50"
+                      aria-label="Закрыть"
+                    >
+                      <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+
+                <div className="h-[calc(100vh-120px)] overflow-y-auto">
+                  <div
+                    className="mx-auto w-full max-w-[1340px] space-y-8 px-4 pt-4 pb-20 sm:px-6 sm:pt-8 sm:pb-20 lg:px-8 xl:px-12 2xl:max-w-[1560px]"
+                    style={{ paddingBottom: 'calc(4rem + env(safe-area-inset-bottom, 0px))' }}
+                  >
+                    <div>
+                      <div className="lg:flex lg:items-start lg:gap-6 xl:gap-8 2xl:gap-12">
+                        {imageMedia.length > 1 && (
+                          <div className="hidden lg:flex lg:w-[150px] lg:flex-col lg:gap-3 lg:pr-0 xl:w-[180px] xl:pr-2 2xl:w-[200px] 2xl:pr-4">
+                            <button
+                              type="button"
+                              disabled={thumbnailOffset === 0}
+                              onClick={() => shiftThumbnails('up')}
+                              className={`h-8 w-36 rounded-full border text-xs uppercase tracking-[0.2em] transition ${
+                                thumbnailOffset === 0
+                                  ? 'cursor-not-allowed border-gray-200 text-gray-300'
+                                  : 'border-gray-300 text-gray-500 hover:border-gray-400'
+                              }`}
+                            >
+                              ↑
+                            </button>
+                            {visibleThumbnails.map((media, idx) => {
+                              const realIndex = idx + thumbnailOffset
+                              return (
+                                <button
+                                  type="button"
+                                  key={`${media.type}-${media.url}-${realIndex}`}
+                                  onClick={() => selectMedia(realIndex)}
+                                  className={`relative h-20 w-36 overflow-hidden rounded-2xl border transition-all duration-200 ${
+                                    realIndex === activeMediaIndex
+                                      ? 'border-gray-900 ring-2 ring-gray-900/40 shadow-lg'
+                                      : 'border-transparent opacity-70 hover:opacity-100 hover:border-gray-300'
+                                  }`}
+                                >
+                                  <Image
+                                    src={media.preview || media.url}
+                                    alt={`Превью ${realIndex + 1}`}
+                                    fill
+                                    className="object-cover"
+                                    sizes="144px"
+                                    unoptimized={(media.preview || media.url)?.includes('unsplash.com') || false}
+                                  />
+                                </button>
+                              )
+                            })}
+                            <button
+                              type="button"
+                              disabled={thumbnailOffset >= maxThumbnailOffset}
+                              onClick={() => shiftThumbnails('down')}
+                              className={`h-8 w-36 rounded-full border text-xs uppercase tracking-[0.2em] transition ${
+                                thumbnailOffset >= maxThumbnailOffset
+                                  ? 'cursor-not-allowed border-gray-200 text-gray-300'
+                                  : 'border-gray-300 text-gray-500 hover:border-gray-400'
+                              }`}
+                            >
+                              ↓
+                            </button>
+                          </div>
+                        )}
+                        <div
+                          className="relative flex-1 min-w-0 h-[300px] sm:h-[380px] md:h-[460px] lg:h-[640px] xl:h-[760px] 2xl:h-[840px] overflow-hidden rounded-[28px] bg-gray-100"
+                          onTouchStart={handleTouchStart}
+                          onTouchMove={handleTouchMove}
+                          onTouchEnd={handleTouchEnd}
+                        >
+                          <div
+                            key={`${activeInterior?.id ?? 'modal'}-${displayedMediaIndex}`}
+                            className={`absolute inset-0 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+                              isMediaEntering ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-3 scale-[0.98]'
+                            }`}
+                          >
+                            {activeMediaItem ? (
+                              <div className="relative h-full w-full">
+                                <Image
+                                  key={`${activeMediaItem.url}-${displayedMediaIndex}`}
+                                  src={activeMediaItem.url}
+                                  alt={activeInterior.title}
+                                  fill
+                                  className="object-cover"
+                                  sizes="(max-width: 1024px) 100vw, 60vw"
+                                  unoptimized={activeMediaItem.url?.includes('unsplash.com') || false}
+                                />
+                              </div>
+                            ) : (
+                              <div className="flex h-full w-full items-center justify-center text-sm text-gray-400">
+                                Медиа временно недоступно
+                              </div>
+                            )}
+                          </div>
+
+                          {imageMedia.length > 1 && (
+                            <>
+                              <button
+                                type="button"
+                                onClick={showPrevMedia}
+                                aria-label="Предыдущее медиа"
+                                className="absolute left-4 top-1/2 -translate-y-1/2 flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-gray-700 shadow transition hover:bg-white"
+                              >
+                                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+                                </svg>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={showNextMedia}
+                                aria-label="Следующее медиа"
+                                className="absolute right-4 top-1/2 -translate-y-1/2 flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-gray-700 shadow transition hover:bg-white"
+                              >
+                                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                                </svg>
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      </div>
+
+                      {imageMedia.length > 1 && (
+                        <div className="mt-3 flex gap-3 overflow-x-auto pb-2 lg:hidden snap-x snap-mandatory">
+                          {imageMedia.map((media, index) => (
+                            <button
+                              type="button"
+                              key={`${media.type}-${media.url}-${index}`}
+                              onClick={() => selectMedia(index)}
+                              className={`relative h-16 w-24 flex-shrink-0 overflow-hidden rounded-2xl border transition-all duration-200 snap-start ${
+                                index === activeMediaIndex
+                                  ? 'border-gray-900 ring-2 ring-gray-900/40 shadow-lg'
+                                  : 'border-transparent opacity-70 hover:opacity-100 hover:border-gray-300'
+                              }`}
+                            >
+                              <Image
+                                src={media.preview || media.url}
+                                alt={`Превью ${index + 1}`}
+                                fill
+                                className="object-cover"
+                                sizes="(max-width: 640px) 33vw, 96px"
+                                unoptimized={(media.preview || media.url)?.includes('unsplash.com') || false}
+                              />
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex h-full flex-col gap-6 lg:gap-7 xl:gap-9">
+                      <div className="space-y-4">
+                        {activeInterior.subtitle && (
+                          <p className="text-sm text-gray-500 leading-relaxed">{activeInterior.subtitle}</p>
+                        )}
+                        {activeInterior.description && (
+                          <p className="text-sm leading-relaxed text-gray-600 whitespace-pre-line">
+                            {activeInterior.description}
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 lg:self-stretch">
+                        {activeInterior.location && (
+                          <div className="rounded-2xl border border-gray-200 bg-gray-50/70 p-4 shadow-sm">
+                            <div className="text-[10px] uppercase tracking-[0.35em] text-gray-400 mb-1">Локация</div>
+                            <div className="text-sm text-gray-700">{activeInterior.location}</div>
+                          </div>
+                        )}
+                        {activeInterior.area && (
+                          <div className="rounded-2xl border border-gray-200 bg-gray-50/70 p-4 shadow-sm">
+                            <div className="text-[10px] uppercase tracking-[0.35em] text-gray-400 mb-1">Площадь</div>
+                            <div className="text-sm text-gray-700">{activeInterior.area}</div>
+                          </div>
+                        )}
+                        {activeInterior.style && (
+                          <div className="rounded-2xl border border-gray-200 bg-gray-50/70 p-4 shadow-sm">
+                            <div className="text-[10px] uppercase tracking-[0.35em] text-gray-400 mb-1">Стиль</div>
+                            <div className="text-sm text-gray-700">{activeInterior.style}</div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>,
+            document.body
+          )
+          : null}
 
         <GameModal open={gameOpen} onClose={() => setGameOpen(false)} />
       </main>
