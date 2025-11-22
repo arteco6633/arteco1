@@ -64,6 +64,7 @@ export default function AdminInteriorsPage() {
   const [uploadingVideos, setUploadingVideos] = useState(false)
   const [uploadingDocuments, setUploadingDocuments] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
+  const [coverPreview, setCoverPreview] = useState<string>('')
   const coverInputRef = useRef<HTMLInputElement>(null)
   const galleryInputRef = useRef<HTMLInputElement>(null)
   const videoInputRef = useRef<HTMLInputElement>(null)
@@ -104,6 +105,7 @@ export default function AdminInteriorsPage() {
   function openCreateModal() {
     setForm(emptyForm)
     setActiveId(null)
+    setCoverPreview('')
     setShowModal(true)
   }
 
@@ -123,6 +125,7 @@ export default function AdminInteriorsPage() {
       sort_order: interior.sort_order != null ? interior.sort_order.toString() : '',
     })
     setActiveId(interior.id)
+    setCoverPreview('')
     setShowModal(true)
   }
 
@@ -216,13 +219,23 @@ export default function AdminInteriorsPage() {
     const file = e.target.files?.[0]
     if (!file) return
 
+    // Создаём локальное превью сразу после выбора файла
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      const previewUrl = e.target?.result as string
+      setCoverPreview(previewUrl)
+    }
+    reader.readAsDataURL(file)
+
     try {
       setUploadingCover(true)
       const url = await uploadImage(file, 'interiors')
       setForm((prev) => ({ ...prev, cover_image: url }))
+      setCoverPreview('') // Очищаем локальное превью после успешной загрузки
     } catch (error: any) {
       console.error(error)
       alert(error?.message || 'Ошибка загрузки обложки')
+      setCoverPreview('') // Очищаем превью при ошибке
     } finally {
       setUploadingCover(false)
       if (coverInputRef.current) coverInputRef.current.value = ''
@@ -388,6 +401,7 @@ export default function AdminInteriorsPage() {
       setShowModal(false)
       setForm(emptyForm)
       setActiveId(null)
+      setCoverPreview('')
       await loadInteriors()
     } catch (error: any) {
       console.error(error)
@@ -685,7 +699,10 @@ export default function AdminInteriorsPage() {
                   {activeId ? 'Редактировать интерьер' : 'Добавить интерьер'}
                 </h2>
                 <button
-                  onClick={() => setShowModal(false)}
+                  onClick={() => {
+                    setShowModal(false)
+                    setCoverPreview('')
+                  }}
                   className="flex items-center justify-center w-10 h-10 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
                   disabled={saving}
                 >
@@ -832,15 +849,15 @@ export default function AdminInteriorsPage() {
                       )}
                     </div>
                     <div className="relative aspect-[4/3] overflow-hidden rounded-xl border-2 border-dashed border-gray-300 bg-gray-50">
-                      {form.cover_image ? (
+                      {(coverPreview || form.cover_image) ? (
                         <>
                           <Image
-                            src={form.cover_image}
+                            src={coverPreview || form.cover_image}
                             alt="Обложка интерьера"
                             fill
                             className="object-cover"
                             sizes="(max-width: 1024px) 100vw, 50vw"
-                            unoptimized={form.cover_image?.includes('unsplash.com') || false}
+                            unoptimized={coverPreview ? true : (form.cover_image?.includes('unsplash.com') || false)}
                           />
                           <div className="absolute inset-0 bg-black/0 hover:bg-black/10 transition-colors flex items-center justify-center">
                             <label className="inline-flex cursor-pointer items-center rounded-lg bg-white/90 backdrop-blur-sm px-4 py-2 text-sm font-medium text-gray-700 shadow hover:bg-white transition-colors">
@@ -1062,6 +1079,7 @@ export default function AdminInteriorsPage() {
                       setShowModal(false)
                       setForm(emptyForm)
                       setActiveId(null)
+                      setCoverPreview('')
                     }}
                     className="px-6 py-3 bg-gray-100 text-gray-800 rounded-lg hover:bg-gray-200 transition-colors font-medium"
                     disabled={saving}
