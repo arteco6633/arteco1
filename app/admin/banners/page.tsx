@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import Link from 'next/link'
 // Navbar удалён для админ-панели
@@ -10,6 +10,7 @@ interface PromoBlock {
   title: string
   description: string | null
   image_url: string
+  video_url: string | null
   link_url: string | null
   button_text: string | null
   position: string
@@ -25,11 +26,14 @@ export default function AdminBannersPage() {
   const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string>('')
   const [uploading, setUploading] = useState(false)
+  const [uploadingVideo, setUploadingVideo] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
+  const videoInputRef = useRef<HTMLInputElement>(null)
   const [formData, setFormData] = useState({
     title: '',
     description: '',
     image_url: '',
+    video_url: '',
     link_url: '',
     button_text: '',
     position: 'homepage',
@@ -64,6 +68,7 @@ export default function AdminBannersPage() {
       title: '',
       description: '',
       image_url: '',
+      video_url: '',
       link_url: '',
       button_text: '',
       position: 'homepage',
@@ -81,6 +86,7 @@ export default function AdminBannersPage() {
       title: banner.title,
       description: banner.description || '',
       image_url: banner.image_url,
+      video_url: banner.video_url || '',
       link_url: banner.link_url || '',
       button_text: banner.button_text || '',
       position: banner.position,
@@ -108,6 +114,43 @@ export default function AdminBannersPage() {
       .getPublicUrl(filePath)
 
     return data.publicUrl
+  }
+
+  async function uploadVideo(file: File): Promise<string> {
+    const fileExt = file.name.split('.').pop()
+    const fileName = `banners/videos/${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`
+    const filePath = fileName
+
+    const { error: uploadError } = await supabase.storage
+      .from('product')
+      .upload(filePath, file, { cacheControl: '3600', upsert: false })
+
+    if (uploadError) {
+      throw uploadError
+    }
+
+    const { data } = supabase.storage
+      .from('product')
+      .getPublicUrl(filePath)
+
+    return data.publicUrl
+  }
+
+  async function handleVideoSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    try {
+      setUploadingVideo(true)
+      const url = await uploadVideo(file)
+      setFormData((prev) => ({ ...prev, video_url: url }))
+    } catch (error: any) {
+      console.error(error)
+      alert(error?.message || 'Ошибка загрузки видео')
+    } finally {
+      setUploadingVideo(false)
+      if (videoInputRef.current) videoInputRef.current.value = ''
+    }
   }
 
   function handleImageSelect(e: React.ChangeEvent<HTMLInputElement>) {
@@ -138,6 +181,7 @@ export default function AdminBannersPage() {
         title: formData.title,
         description: formData.description || null,
         image_url: imageUrl,
+        video_url: formData.video_url || null,
         link_url: formData.link_url || null,
         button_text: formData.button_text || null,
         position: formData.position,
@@ -563,6 +607,75 @@ export default function AdminBannersPage() {
                           src={imagePreview || formData.image_url}
                           alt="Превью баннера"
                           className="max-w-full h-auto max-h-96 object-contain rounded-lg border-2 border-gray-200"
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Видео баннера (опционально) */}
+              <div className="bg-white rounded-xl border border-gray-200 p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-6 pb-3 border-b border-gray-200">
+                  Видео баннера (опционально)
+                </h3>
+                <div className="space-y-5">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Загрузить видео
+                    </label>
+                    <div className="flex items-center gap-4">
+                      <label className="flex items-center justify-center px-6 py-3 bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-100 hover:border-gray-400 transition-colors">
+                        <input
+                          ref={videoInputRef}
+                          type="file"
+                          accept="video/mp4,video/webm,video/ogg"
+                          className="hidden"
+                          onChange={handleVideoSelect}
+                        />
+                        <span className="text-sm font-medium text-gray-700">
+                          {uploadingVideo ? 'Загрузка...' : 'Выбрать видео'}
+                        </span>
+                      </label>
+                      {uploadingVideo && (
+                        <span className="text-sm text-gray-600 flex items-center gap-2">
+                          <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          Загрузка...
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Или введите URL видео
+                    </label>
+                    <input
+                      type="text"
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      value={formData.video_url}
+                      onChange={(e) => setFormData({ ...formData, video_url: e.target.value })}
+                      placeholder="https://example.com/video.mp4"
+                    />
+                    <p className="mt-1 text-xs text-gray-500">
+                      Если указано видео, оно будет автоматически воспроизводиться вместо изображения
+                    </p>
+                  </div>
+
+                  {formData.video_url && (
+                    <div className="mt-4">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Превью видео
+                      </label>
+                      <div className="relative inline-block max-w-full">
+                        <video
+                          src={formData.video_url}
+                          controls
+                          className="max-w-full h-auto max-h-96 rounded-lg border-2 border-gray-200"
+                          preload="metadata"
                         />
                       </div>
                     </div>

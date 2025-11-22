@@ -43,6 +43,7 @@ interface Banner {
   title: string
   description: string
   image_url: string
+  video_url?: string | null
   link_url: string
   button_text: string
   position: string
@@ -613,36 +614,56 @@ export default function HomePage() {
                   ref={firstBannerRef} 
                   className={`relative h-[320px] xs:h-[380px] sm:h-[480px] md:h-[560px] lg:h-[600px] col-span-10 md:col-span-7 overflow-hidden rounded-[15px] group reveal-on-scroll ${firstBannerInView ? 'in-view' : ''} max-w-full bg-gray-100`}
                 >
-                  {/* Изображение с правильным масштабированием */}
-                  <div className="absolute inset-0 w-full h-full">
-                    <Image
-                      src={topBanner.image_url}
-                      alt={topBanner.title}
-                      fill
-                      sizes="(max-width: 640px) 100vw, (max-width: 768px) 100vw, (max-width: 1024px) 70vw, (max-width: 1280px) 70vw, 70vw"
-                      className="w-full h-full object-cover"
+                  {/* Видео с автоматическим запуском, если есть */}
+                  {topBanner.video_url ? (
+                    <video
+                      src={topBanner.video_url}
+                      autoPlay
+                      loop
+                      muted
+                      playsInline
+                      className="absolute inset-0 w-full h-full object-cover"
                       style={{ 
                         objectFit: 'cover',
                         objectPosition: 'center center',
                         width: '100%',
                         height: '100%'
                       }}
-                      priority
-                      unoptimized={true}
                     />
-                  </div>
-                  {/* Fallback через background-image */}
-                  <div 
-                    className="absolute inset-0 w-full h-full"
-                    style={{
-                      backgroundImage: `url(${topBanner.image_url})`,
-                      backgroundSize: 'cover',
-                      backgroundPosition: 'center center',
-                      backgroundRepeat: 'no-repeat',
-                      width: '100%',
-                      height: '100%'
-                    }}
-                  />
+                  ) : (
+                    <>
+                      {/* Изображение с правильным масштабированием */}
+                      <div className="absolute inset-0 w-full h-full">
+                        <Image
+                          src={topBanner.image_url}
+                          alt={topBanner.title}
+                          fill
+                          sizes="(max-width: 640px) 100vw, (max-width: 768px) 100vw, (max-width: 1024px) 70vw, (max-width: 1280px) 70vw, 70vw"
+                          className="w-full h-full object-cover"
+                          style={{ 
+                            objectFit: 'cover',
+                            objectPosition: 'center center',
+                            width: '100%',
+                            height: '100%'
+                          }}
+                          priority
+                          unoptimized={true}
+                        />
+                      </div>
+                      {/* Fallback через background-image */}
+                      <div 
+                        className="absolute inset-0 w-full h-full"
+                        style={{
+                          backgroundImage: `url(${topBanner.image_url})`,
+                          backgroundSize: 'cover',
+                          backgroundPosition: 'center center',
+                          backgroundRepeat: 'no-repeat',
+                          width: '100%',
+                          height: '100%'
+                        }}
+                      />
+                    </>
+                  )}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent flex flex-col justify-end p-4 xs:p-5 sm:p-6 md:p-8 z-10">
                     <h3 className="text-white text-xl xs:text-2xl sm:text-3xl md:text-3xl font-bold mb-2 sm:mb-3">
                       {topBanner.title}
@@ -701,39 +722,59 @@ export default function HomePage() {
                     key={banner.id} 
                     className="relative h-[360px] sm:h-[420px] md:h-[500px] overflow-hidden rounded-[15px] group max-w-full bg-gray-100"
                   >
-                    {/* Изображение с правильным масштабированием */}
-                    <div className="absolute inset-0 w-full h-full z-0">
-                      <Image
-                        src={banner.image_url}
-                        alt={banner.title}
-                        fill
-                        sizes="(max-width: 768px) 100vw, 50vw"
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    {/* Видео с автоматическим запуском, если есть */}
+                    {banner.video_url ? (
+                      <video
+                        src={banner.video_url}
+                        autoPlay
+                        loop
+                        muted
+                        playsInline
+                        className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 z-0"
                         style={{ 
                           objectFit: 'cover',
                           objectPosition: 'center center',
                           width: '100%',
                           height: '100%'
                         }}
-                        unoptimized={true}
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement
-                          target.style.display = 'none'
-                        }}
                       />
-                    </div>
-                    {/* Fallback через background-image */}
-                    <div 
-                      className="absolute inset-0 w-full h-full z-0"
-                      style={{
-                        backgroundImage: `url(${banner.image_url})`,
-                        backgroundSize: 'cover',
-                        backgroundPosition: 'center center',
-                        backgroundRepeat: 'no-repeat',
-                        width: '100%',
-                        height: '100%'
-                      }}
-                    />
+                    ) : (
+                      <>
+                        {/* Изображение с правильным масштабированием */}
+                        <div className="absolute inset-0 w-full h-full z-0">
+                          <Image
+                            src={banner.image_url}
+                            alt={banner.title}
+                            fill
+                            sizes="(max-width: 768px) 100vw, 50vw"
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            style={{ 
+                              objectFit: 'cover',
+                              objectPosition: 'center center',
+                              width: '100%',
+                              height: '100%'
+                            }}
+                            unoptimized={true}
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement
+                              target.style.display = 'none'
+                            }}
+                          />
+                        </div>
+                        {/* Fallback через background-image */}
+                        <div 
+                          className="absolute inset-0 w-full h-full z-0"
+                          style={{
+                            backgroundImage: `url(${banner.image_url})`,
+                            backgroundSize: 'cover',
+                            backgroundPosition: 'center center',
+                            backgroundRepeat: 'no-repeat',
+                            width: '100%',
+                            height: '100%'
+                          }}
+                        />
+                      </>
+                    )}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent flex flex-col justify-end p-6 sm:p-8 z-10">
                       <h3 className="text-white text-2xl sm:text-3xl font-bold mb-3">
                         {banner.title}
@@ -845,39 +886,59 @@ export default function HomePage() {
                     key={banner.id} 
                     className="relative h-[360px] sm:h-[420px] md:h-[500px] overflow-hidden rounded-[15px] group max-w-full bg-gray-100"
                   >
-                    {/* Изображение с правильным масштабированием */}
-                    <div className="absolute inset-0 w-full h-full z-0">
-                      <Image
-                        src={banner.image_url}
-                        alt={banner.title}
-                        fill
-                        sizes="(max-width: 768px) 100vw, 50vw"
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    {/* Видео с автоматическим запуском, если есть */}
+                    {banner.video_url ? (
+                      <video
+                        src={banner.video_url}
+                        autoPlay
+                        loop
+                        muted
+                        playsInline
+                        className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 z-0"
                         style={{ 
                           objectFit: 'cover',
                           objectPosition: 'center center',
                           width: '100%',
                           height: '100%'
                         }}
-                        unoptimized={true}
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement
-                          target.style.display = 'none'
-                        }}
                       />
-                    </div>
-                    {/* Fallback через background-image */}
-                    <div 
-                      className="absolute inset-0 w-full h-full z-0"
-                      style={{
-                        backgroundImage: `url(${banner.image_url})`,
-                        backgroundSize: 'cover',
-                        backgroundPosition: 'center center',
-                        backgroundRepeat: 'no-repeat',
-                        width: '100%',
-                        height: '100%'
-                      }}
-                    />
+                    ) : (
+                      <>
+                        {/* Изображение с правильным масштабированием */}
+                        <div className="absolute inset-0 w-full h-full z-0">
+                          <Image
+                            src={banner.image_url}
+                            alt={banner.title}
+                            fill
+                            sizes="(max-width: 768px) 100vw, 50vw"
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            style={{ 
+                              objectFit: 'cover',
+                              objectPosition: 'center center',
+                              width: '100%',
+                              height: '100%'
+                            }}
+                            unoptimized={true}
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement
+                              target.style.display = 'none'
+                            }}
+                          />
+                        </div>
+                        {/* Fallback через background-image */}
+                        <div 
+                          className="absolute inset-0 w-full h-full z-0"
+                          style={{
+                            backgroundImage: `url(${banner.image_url})`,
+                            backgroundSize: 'cover',
+                            backgroundPosition: 'center center',
+                            backgroundRepeat: 'no-repeat',
+                            width: '100%',
+                            height: '100%'
+                          }}
+                        />
+                      </>
+                    )}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent flex flex-col justify-end p-6 sm:p-8 z-10">
                       <h3 className="text-white text-2xl sm:text-3xl font-bold mb-3">
                         {banner.title}
