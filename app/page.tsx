@@ -189,6 +189,10 @@ export default function HomePage() {
         .order('created_at', { ascending: false })
 
       if (error) throw error
+      console.log('Загружено интерьеров:', data?.length || 0)
+      if (data && data.length > 0) {
+        console.log('Пример URL обложки:', data[0]?.cover_image)
+      }
       setInteriors(data || [])
     } catch (error) {
       console.error('Ошибка загрузки интерьеров клиентов:', error)
@@ -1038,8 +1042,8 @@ export default function HomePage() {
 
         {/* Arteco - реальные интерьеры */}
         <section className="py-8 bg-white">
-          <div className="max-w-[1680px] 2xl:max-w-none mx-auto px-0 sm:px-6 md:px-8 lg:px-12 xl:px-16 2xl:px-20">
-            <div className="text-center mb-8 sm:mb-10 md:mb-12 px-4 sm:px-0">
+          <div className="max-w-[1680px] 2xl:max-w-none mx-auto px-1 md:px-2 xl:px-4 2xl:px-6 max-w-full">
+            <div className="text-center mb-8 sm:mb-10 md:mb-12">
               <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-black mb-4 tracking-tight">
                 Arteco - реальные интерьеры
               </h2>
@@ -1049,24 +1053,24 @@ export default function HomePage() {
             </div>
 
             {interiorsLoading ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 px-4 sm:px-0">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                 {Array.from({ length: 6 }).map((_, index) => (
                   <div
                     key={index}
-                    className="relative aspect-[4/3] overflow-hidden rounded-[30px] border border-gray-200/70 bg-gradient-to-br from-gray-100 via-gray-50 to-white animate-pulse"
+                    className="relative aspect-[4/3] overflow-hidden rounded-xl border border-gray-200/70 bg-gradient-to-br from-gray-100 via-gray-50 to-white animate-pulse"
                   >
-                    <div className="absolute inset-4 rounded-[26px] border border-dashed border-gray-200" />
+                    <div className="absolute inset-4 rounded-lg border border-dashed border-gray-200" />
                   </div>
                 ))}
               </div>
             ) : interiors.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 px-4 sm:px-0">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                 {interiors.map((interior, index) => (
                   <button
                     type="button"
                     key={interior.id}
                     onClick={() => openInterior(index)}
-                    className="group relative aspect-[4/3] overflow-hidden rounded-[30px] border border-gray-200 bg-gray-50 text-left transition-all duration-500 hover:-translate-y-1 hover:border-gray-300 hover:shadow-[0_32px_90px_-45px_rgba(15,23,42,0.55)] focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-4"
+                    className="group relative aspect-[4/3] overflow-hidden rounded-xl border border-gray-200 bg-gray-50 text-left transition-all duration-500 hover:-translate-y-1 hover:border-gray-300 hover:shadow-[0_32px_90px_-45px_rgba(15,23,42,0.55)] focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-4"
                   >
                     {interior.cover_image ? (
                       <Image
@@ -1075,8 +1079,12 @@ export default function HomePage() {
                         fill
                         className="object-cover transition-transform duration-500 group-hover:scale-105"
                         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                        unoptimized={interior.cover_image?.includes('unsplash.com') || false}
+                        unoptimized={true}
                         priority={index < 3}
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement
+                          target.style.display = 'none'
+                        }}
                       />
                     ) : (
                       <div className="flex h-full items-center justify-center bg-gray-100 text-sm text-gray-400">
@@ -1202,7 +1210,11 @@ export default function HomePage() {
                                     fill
                                     className="object-cover"
                                     sizes="144px"
-                                    unoptimized={(media.preview || media.url)?.includes('unsplash.com') || false}
+                                    unoptimized={true}
+                                    onError={(e) => {
+                                      const target = e.target as HTMLImageElement
+                                      target.style.display = 'none'
+                                    }}
                                   />
                                 </button>
                               )
@@ -1242,7 +1254,11 @@ export default function HomePage() {
                                   fill
                                   className="object-cover"
                                   sizes="(max-width: 1024px) 100vw, 60vw"
-                                  unoptimized={activeMediaItem.url?.includes('unsplash.com') || false}
+                                  unoptimized={true}
+                                  onError={(e) => {
+                                    const target = e.target as HTMLImageElement
+                                    target.style.display = 'none'
+                                  }}
                                 />
                               </div>
                             ) : (
@@ -1298,7 +1314,11 @@ export default function HomePage() {
                                 fill
                                 className="object-cover"
                                 sizes="(max-width: 640px) 33vw, 96px"
-                                unoptimized={(media.preview || media.url)?.includes('unsplash.com') || false}
+                                unoptimized={true}
+                                onError={(e) => {
+                                  const target = e.target as HTMLImageElement
+                                  target.style.display = 'none'
+                                }}
                               />
                             </button>
                           ))}
