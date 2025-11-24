@@ -51,7 +51,7 @@ function Card({ product, onAdd, priority = false }: { product: Product; onAdd?: 
       className="bg-white rounded-xl shadow-md transition-all duration-300 group md:hover:-translate-y-1.5 md:hover:shadow-xl md:hover:ring-1 md:hover:ring-black/10 block cursor-pointer"
     >
       {/* Обёртка для изображения с клипом только картинки, не тени */}
-      <div className="relative rounded-t-xl overflow-hidden h-60 sm:h-72 bg-gray-50 flex items-center justify-center">
+      <div className="relative rounded-t-xl overflow-hidden h-60 sm:h-72 bg-gray-100">
         {(() => {
           const src = (product.images && product.images.length > 0) ? product.images[0] : product.image_url
           if (!src) {
@@ -67,9 +67,7 @@ function Card({ product, onAdd, priority = false }: { product: Product; onAdd?: 
               alt={product.name}
               fill
               sizes="(min-width: 1280px) 25vw, (min-width: 768px) 33vw, 100vw"
-              className={`transition-transform duration-300 ease-out md:group-hover:scale-[1.01] ${
-                src?.endsWith('.png') ? 'object-contain object-center bg-white' : 'object-cover'
-              }`}
+              className="transition-transform duration-300 ease-out md:group-hover:scale-[1.01] object-cover"
               priority={priority}
               unoptimized={true}
             />

@@ -415,9 +415,7 @@ export default function CategoryPage() {
                           key={idx}
                           src={imgUrl}
                           alt={`${product.name} - фото ${idx + 1}`}
-                          className={`w-full h-full flex-shrink-0 md:group-hover:scale-[1.02] transition-transform duration-300 ${
-                            imgUrl?.endsWith('.png') ? 'object-contain bg-white object-center' : 'object-cover'
-                          }`}
+                          className="w-full h-full flex-shrink-0 md:group-hover:scale-[1.02] transition-transform duration-300 object-cover"
                           loading={idx === 0 ? "eager" : "lazy"}
                         />
                       ))}

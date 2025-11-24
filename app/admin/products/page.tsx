@@ -595,6 +595,23 @@ export default function AdminProductsPage() {
         }
       }
 
+      // Фильтруем пустые значения из массивов
+      const filteredInteriorImages = Array.isArray(formData.interior_images) 
+        ? formData.interior_images.filter((url: any) => url && typeof url === 'string' && url.trim().length > 0)
+        : []
+      
+      const filteredImages = Array.isArray(formData.images)
+        ? formData.images.filter((url: any) => url && typeof url === 'string' && url.trim().length > 0)
+        : []
+      
+      const filteredSchemes = Array.isArray(formData.schemes)
+        ? formData.schemes.filter((url: any) => url && typeof url === 'string' && url.trim().length > 0)
+        : []
+      
+      const filteredVideos = Array.isArray(formData.videos)
+        ? formData.videos.filter((url: any) => url && typeof url === 'string' && url.trim().length > 0)
+        : []
+
       const productData = {
         name: formData.name,
         description: formData.description || null,
@@ -602,17 +619,17 @@ export default function AdminProductsPage() {
         original_price: formData.original_price ? parseFloat(formData.original_price) : null,
         sku: formData.sku || null,
         image_url: imageUrl,
-        images: formData.images,
+        images: filteredImages,
         colors: Array.isArray(formData.colors) ? formData.colors : [],
         fillings: formData.fillings,
         hinges: formData.hinges,
         drawers: formData.drawers,
         lighting: formData.lighting,
         specs: formData.specs,
-        schemes: formData.schemes,
-        videos: formData.videos,
+        schemes: filteredSchemes,
+        videos: filteredVideos,
         downloadable_files: formData.downloadable_files,
-        interior_images: formData.interior_images,
+        interior_images: filteredInteriorImages,
         category_id: parseInt(formData.category_id),
         is_featured: formData.is_featured,
         is_new: formData.is_new,

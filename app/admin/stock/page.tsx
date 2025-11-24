@@ -184,7 +184,7 @@ export default function AdminStockPage() {
 
   function formatStock(quantity: number | null): string {
     if (quantity === null || quantity === 0) {
-      return 'Нет в наличии'
+      return 'Под заказ'
     }
     if (quantity >= 9999) {
       return 'Много'

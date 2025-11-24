@@ -101,6 +101,7 @@ export default function ProductPage() {
   const [selectedModules, setSelectedModules] = useState<Record<number, number>>({})
   const [previewImage, setPreviewImage] = useState<string | null>(null)
   const [interiorPreviewIdx, setInteriorPreviewIdx] = useState<number | null>(null)
+  const interiorCarouselRef = useRef<HTMLDivElement | null>(null)
   const [openModuleGroup, setOpenModuleGroup] = useState<'base' | 'wall' | 'tall' | 'other' | null>('base')
   const finalPrice = useMemo(() => {
     if (!product) return 0
@@ -341,25 +342,30 @@ export default function ProductPage() {
     setActiveSchemeIdx(0)
   }, [product?.id])
 
+  // Фильтруем пустые значения из interior_images
+  const validInteriorImages = Array.isArray(product?.interior_images) 
+    ? product.interior_images.filter((url: any) => url && typeof url === 'string' && url.trim().length > 0)
+    : []
+
   // Обработка клавиатуры для модального окна фото в интерьере
   useEffect(() => {
     if (interiorPreviewIdx === null) return
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (interiorPreviewIdx === null || !Array.isArray(product?.interior_images)) return
+      if (interiorPreviewIdx === null || validInteriorImages.length === 0) return
 
       if (e.key === 'Escape') {
         setInteriorPreviewIdx(null)
       } else if (e.key === 'ArrowLeft' && interiorPreviewIdx > 0) {
         setInteriorPreviewIdx(interiorPreviewIdx - 1)
-      } else if (e.key === 'ArrowRight' && interiorPreviewIdx < product.interior_images.length - 1) {
+      } else if (e.key === 'ArrowRight' && interiorPreviewIdx < validInteriorImages.length - 1) {
         setInteriorPreviewIdx(interiorPreviewIdx + 1)
       }
     }
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [interiorPreviewIdx, product?.interior_images])
+  }, [interiorPreviewIdx, validInteriorImages.length])
 
   const customSpecs = Array.isArray((product?.specs as any)?.custom)
     ? ((product?.specs as any)?.custom as Array<{ label?: string; value?: string }>)
@@ -606,7 +612,7 @@ export default function ProductPage() {
               <div className="w-full md:flex-1 relative">
                 <div
                   ref={leftMainImageRef}
-                  className="rounded-lg overflow-hidden shadow-lg relative w-full aspect-square max-h-[90vw] md:aspect-square md:max-h-none group"
+                  className="rounded-lg overflow-hidden shadow-lg relative w-full aspect-square max-h-[90vw] md:aspect-square md:max-h-none group bg-gray-100"
                   style={{ 
                     // Разрешаем и горизонтальную, и вертикальную прокрутку
                     touchAction: 'pan-x pan-y',
@@ -628,7 +634,7 @@ export default function ProductPage() {
                       // Первое изображение всегда имеет priority для LCP оптимизации
                       const isFirstImage = idx === 0
                       return (
-                        <div key={idx} className="relative w-full h-full flex-shrink-0 flex items-center justify-center bg-white">
+                        <div key={idx} className="relative w-full h-full flex-shrink-0 bg-gray-100">
                           {!loadedImages[idx] && (
                             <div className="absolute inset-0 bg-gray-100 animate-pulse" />
                           )}
@@ -639,7 +645,7 @@ export default function ProductPage() {
                             sizes="(min-width: 1280px) 700px, (min-width: 768px) 50vw, 100vw"
                             quality={95}
                             priority={isFirstImage}
-                            className={`object-contain object-center transition-opacity duration-300 ${loadedImages[idx] ? 'opacity-100' : 'opacity-0'}`}
+                            className={`object-cover object-center transition-opacity duration-300 ${loadedImages[idx] ? 'opacity-100' : 'opacity-0'}`}
                             unoptimized={true}
                             onLoad={() => {
                               setLoadedImages((prev) => ({ ...prev, [idx]: true }))
@@ -778,11 +784,11 @@ export default function ProductPage() {
                       <span className="text-blue-700 font-semibold">В наличии: {product.stock_quantity} шт.</span>
                     </div>
                   ) : (
-                    <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-[50px] bg-red-50 border border-red-200">
-                      <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-[50px] bg-yellow-50 border border-yellow-200">
+                      <svg className="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
-                      <span className="text-red-700 font-semibold">Нет в наличии</span>
+                      <span className="text-yellow-700 font-semibold">Под заказ</span>
                     </div>
                   )}
                 </div>
@@ -1234,11 +1240,11 @@ export default function ProductPage() {
                       <span className="text-blue-700 font-semibold text-sm">В наличии: {product.stock_quantity} шт.</span>
                     </div>
                   ) : (
-                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[50px] bg-red-50 border border-red-200">
-                      <svg className="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[50px] bg-yellow-50 border border-yellow-200">
+                      <svg className="w-4 h-4 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
-                      <span className="text-red-700 font-semibold text-sm">Нет в наличии</span>
+                      <span className="text-yellow-700 font-semibold text-sm">Под заказ</span>
                     </div>
                   )}
                 </div>
@@ -1490,28 +1496,6 @@ export default function ProductPage() {
                         </>
                       )
                     })()}
-                    {product.downloadable_files && product.downloadable_files.length > 0 && (
-                      <div className="w-full mt-4 border-t pt-4">
-                        <h3 className="text-base font-semibold mb-3">Спецификация</h3>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                          {product.downloadable_files.map((file, idx) => (
-                            <a
-                              key={idx}
-                              href={file.url}
-                              download={file.name}
-                              className="flex items-center gap-3 p-3 bg-white border rounded-lg hover:bg-gray-50 hover:shadow-md transition-all"
-                            >
-                              <span className="text-2xl">📄</span>
-                              <div className="flex-1 min-w-0">
-                                <div className="text-sm font-medium text-gray-900 truncate">{file.name}</div>
-                                <div className="text-xs text-gray-500 mt-1">Скачать файл</div>
-                              </div>
-                              <span className="text-gray-400">↓</span>
-                            </a>
-                          ))}
-                        </div>
-                      </div>
-                    )}
                   </>
                 ) : (
                   <div className="text-gray-500">Схемы отсутствуют</div>
@@ -1560,6 +1544,36 @@ export default function ProductPage() {
               {specsPanel}
            </div>
          )}
+         
+         {/* Файлы для скачивания - отображаются в любой вкладке, если есть файлы */}
+         {product.downloadable_files && product.downloadable_files.length > 0 && (
+           <div className="mt-6 md:mt-8 border-t pt-6 md:pt-8">
+             <h3 className="text-xl md:text-2xl font-bold mb-4 md:mb-6">Файлы для скачивания</h3>
+             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+               {product.downloadable_files.map((file, idx) => (
+                 <a
+                   key={idx}
+                   href={file.url}
+                   download={file.name}
+                   className="flex items-center gap-3 p-4 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 hover:shadow-md hover:border-gray-300 transition-all"
+                 >
+                   <div className="flex-shrink-0 w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center">
+                     <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                     </svg>
+                   </div>
+                   <div className="flex-1 min-w-0">
+                     <div className="text-sm font-medium text-gray-900 truncate">{file.name}</div>
+                     <div className="text-xs text-gray-500 mt-1">Скачать файл</div>
+                   </div>
+                   <svg className="w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                   </svg>
+                 </a>
+               ))}
+             </div>
+           </div>
+         )}
         </section>
 
         <KitchenQuiz isOpen={isCalcOpen} onClose={() => setIsCalcOpen(false)} imageUrl={product?.images?.[0] || (product as any)?.image_url || ''} />
@@ -1573,69 +1587,118 @@ export default function ProductPage() {
         )}
 
         {/* Фото в интерьере */}
-        {Array.isArray(product?.interior_images) && product.interior_images.length > 0 && (
-          <section className="mt-8 md:mt-12">
-            <div className="flex items-center justify-between mb-4 md:mb-6">
-              <h2 className="text-xl sm:text-2xl md:text-3xl font-bold">Фото в интерьере</h2>
-              {/* Индикатор прокрутки на мобильных */}
-              {product.interior_images.length > 3 && (
-                <div className="md:hidden flex items-center gap-1 text-sm text-gray-500">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16l-4-4m0 0l4-4m-4 4h18" />
-                  </svg>
-                  <span>Листайте</span>
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                  </svg>
-                </div>
-              )}
-            </div>
-            <div 
-              className="overflow-x-auto -mx-4 px-4 scrollbar-hide snap-x snap-mandatory"
-              style={{
-                touchAction: 'pan-x',
-                overscrollBehaviorX: 'contain',
-                overscrollBehaviorY: 'none',
-                WebkitOverflowScrolling: 'touch',
-                scrollSnapType: 'x mandatory'
-              }}
-              onTouchStart={(e) => {
-                // CSS touch-action уже настроен, дополнительная обработка не требуется
-                e.stopPropagation()
-              }}
-            >
-              <div className="flex gap-4 md:gap-6" style={{ paddingRight: product.interior_images.length > 3 ? '1rem' : '0' }}>
-                {product.interior_images.map((url, idx) => (
-                  <div 
-                    key={idx} 
-                    className="relative flex-shrink-0 rounded-xl overflow-hidden bg-gray-100 cursor-pointer transition-transform hover:scale-[1.02] snap-start w-[calc(100vw-2rem)] min-w-[calc(100vw-2rem)] max-w-[calc(100vw-2rem)] md:w-[calc((100vw-2rem-2rem)/3)] md:min-w-[280px] md:max-w-[calc((100vw-2rem-2rem)/3)]"
-                    onClick={() => setInteriorPreviewIdx(idx)}
-                  >
-                    <div className="relative aspect-[4/3]">
-                      <Image
-                        src={url}
-                        alt={`${product.name} в интерьере ${idx + 1}`}
-                        fill
-                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) calc((100vw - 2rem) / 3), calc((100vw - 2rem) / 3)"
-                        className="object-cover"
-                        unoptimized={true}
-                      />
-                    </div>
-                    {/* Индикатор номера фото на мобильных */}
-                    {Array.isArray(product.interior_images) && product.interior_images.length > 1 && (
-                      <div className="absolute bottom-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded-full md:hidden">
-                        {idx + 1} / {product.interior_images.length}
-                      </div>
-                    )}
+        {validInteriorImages.length > 0 && (() => {
+          
+          return (
+            <section className="mt-8 md:mt-12">
+              <div className="flex items-center justify-between mb-4 md:mb-6">
+                <h2 className="text-xl sm:text-2xl md:text-3xl font-bold">Фото в интерьере</h2>
+                {/* Индикатор прокрутки на мобильных */}
+                {validInteriorImages.length > 3 && (
+                  <div className="md:hidden flex items-center gap-1 text-sm text-gray-500">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16l-4-4m0 0l4-4m-4 4h18" />
+                    </svg>
+                    <span>Листайте</span>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                    </svg>
                   </div>
-                ))}
+                )}
               </div>
-            </div>
-          </section>
-        )}
+              <div className="relative">
+                {/* Контейнер для карусели */}
+                <div 
+                  ref={interiorCarouselRef}
+                  className="overflow-x-auto -mx-4 px-4 scrollbar-hide snap-x snap-mandatory"
+                  style={{
+                    touchAction: 'pan-x',
+                    overscrollBehaviorX: 'contain',
+                    overscrollBehaviorY: 'none',
+                    WebkitOverflowScrolling: 'touch',
+                    scrollSnapType: 'x mandatory'
+                  }}
+                  onTouchStart={(e) => {
+                    e.stopPropagation()
+                  }}
+                >
+                  <div 
+                    className="flex gap-4 md:gap-6"
+                    style={{ 
+                      paddingRight: validInteriorImages.length > 3 ? '1rem' : '0'
+                    }}
+                  >
+                    {validInteriorImages.map((url, idx) => (
+                      <div 
+                        key={idx} 
+                        className="relative flex-shrink-0 rounded-xl overflow-hidden bg-gray-100 cursor-pointer transition-transform hover:scale-[1.02] snap-start w-[calc(100vw-2rem)] min-w-[calc(100vw-2rem)] max-w-[calc(100vw-2rem)] md:w-[calc((100vw-2rem-2rem)/3)] md:min-w-[280px] md:max-w-[calc((100vw-2rem-2rem)/3)]"
+                        onClick={() => setInteriorPreviewIdx(idx)}
+                      >
+                        <div className="relative aspect-[4/3]">
+                          <Image
+                            src={url}
+                            alt={`${product.name} в интерьере ${idx + 1}`}
+                            fill
+                            sizes="(max-width: 640px) 100vw, (max-width: 1024px) calc((100vw - 2rem) / 3), calc((100vw - 2rem) / 3)"
+                            className="object-cover"
+                            unoptimized={true}
+                          />
+                        </div>
+                        {/* Индикатор номера фото на мобильных */}
+                        {validInteriorImages.length > 1 && (
+                          <div className="absolute bottom-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded-full md:hidden">
+                            {idx + 1} / {validInteriorImages.length}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                
+                {/* Кнопки навигации на десктопе */}
+                {isDesktop && validInteriorImages.length > 3 && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (interiorCarouselRef.current) {
+                          const container = interiorCarouselRef.current
+                          const scrollAmount = container.offsetWidth * 0.8 // прокрутка на ~80% ширины контейнера
+                          container.scrollBy({ left: -scrollAmount, behavior: 'smooth' })
+                        }
+                      }}
+                      className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 w-12 h-12 rounded-full bg-white/90 hover:bg-white shadow-lg border border-gray-200 flex items-center justify-center z-10 transition-all hover:scale-110"
+                      aria-label="Предыдущие фото"
+                    >
+                      <svg className="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                      </svg>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (interiorCarouselRef.current) {
+                          const container = interiorCarouselRef.current
+                          const scrollAmount = container.offsetWidth * 0.8 // прокрутка на ~80% ширины контейнера
+                          container.scrollBy({ left: scrollAmount, behavior: 'smooth' })
+                        }
+                      }}
+                      className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 w-12 h-12 rounded-full bg-white/90 hover:bg-white shadow-lg border border-gray-200 flex items-center justify-center z-10 transition-all hover:scale-110"
+                      aria-label="Следующие фото"
+                    >
+                      <svg className="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </button>
+                  </>
+                )}
+              </div>
+            </section>
+          )
+        })()}
 
         {/* Модальное окно для просмотра фото в интерьере */}
-        {interiorPreviewIdx !== null && Array.isArray(product?.interior_images) && product.interior_images.length > 0 && (
+        {interiorPreviewIdx !== null && validInteriorImages.length > 0 && interiorPreviewIdx >= 0 && interiorPreviewIdx < validInteriorImages.length && (
           <div 
             className="fixed inset-0 z-[100] bg-black/90 grid place-items-center p-4"
             onClick={() => setInteriorPreviewIdx(null)}
@@ -1653,7 +1716,7 @@ export default function ProductPage() {
               </button>
 
               {/* Кнопка "Назад" */}
-              {product.interior_images.length > 1 && interiorPreviewIdx > 0 && (
+              {validInteriorImages.length > 1 && interiorPreviewIdx > 0 && (
                 <button
                   onClick={(e) => {
                     e.stopPropagation()
@@ -1669,7 +1732,7 @@ export default function ProductPage() {
               )}
 
               {/* Кнопка "Вперед" */}
-              {product.interior_images.length > 1 && interiorPreviewIdx < product.interior_images.length - 1 && (
+              {validInteriorImages.length > 1 && interiorPreviewIdx < validInteriorImages.length - 1 && (
                 <button
                   onClick={(e) => {
                     e.stopPropagation()
@@ -1692,10 +1755,10 @@ export default function ProductPage() {
                   touchStartX.current = e.touches[0].clientX
                 }}
                 onTouchMove={(e) => {
-                  if (touchStartX.current === null || !Array.isArray(product?.interior_images)) return
+                  if (touchStartX.current === null) return
                   const diff = touchStartX.current - e.touches[0].clientX
                   if (Math.abs(diff) > 50) {
-                    if (diff > 0 && interiorPreviewIdx !== null && interiorPreviewIdx < product.interior_images.length - 1) {
+                    if (diff > 0 && interiorPreviewIdx !== null && interiorPreviewIdx < validInteriorImages.length - 1) {
                       setInteriorPreviewIdx(interiorPreviewIdx + 1)
                       touchStartX.current = null
                     } else if (diff < 0 && interiorPreviewIdx !== null && interiorPreviewIdx > 0) {
@@ -1710,23 +1773,23 @@ export default function ProductPage() {
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img 
-                  src={product.interior_images[interiorPreviewIdx]} 
+                  src={validInteriorImages[interiorPreviewIdx]} 
                   alt={`${product.name} в интерьере ${interiorPreviewIdx + 1}`}
                   className="max-w-full max-h-full mx-auto object-contain rounded-lg"
                 />
               </div>
 
               {/* Счетчик изображений */}
-              {product.interior_images.length > 1 && (
+              {validInteriorImages.length > 1 && (
                 <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-10 text-white/80 text-sm">
-                  {interiorPreviewIdx + 1} / {product.interior_images.length}
+                  {interiorPreviewIdx + 1} / {validInteriorImages.length}
                 </div>
               )}
 
               {/* Индикатор текущего изображения */}
-              {product.interior_images.length > 1 && (
+              {validInteriorImages.length > 1 && (
                 <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-10 flex gap-2">
-                  {product.interior_images.map((_, idx) => (
+                  {validInteriorImages.map((_, idx) => (
                     <button
                       key={idx}
                       onClick={(e) => {

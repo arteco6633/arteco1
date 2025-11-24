@@ -140,13 +140,30 @@ export default function AdminBannersPage() {
     const file = e.target.files?.[0]
     if (!file) return
 
+    // Проверяем размер файла (ограничение до 200 МБ)
+    const maxSize = 200 * 1024 * 1024 // 200 МБ
+    if (file.size > maxSize) {
+      alert('Файл слишком большой. Максимальный размер видео: 200 МБ')
+      if (videoInputRef.current) videoInputRef.current.value = ''
+      return
+    }
+
     try {
       setUploadingVideo(true)
       const url = await uploadVideo(file)
       setFormData((prev) => ({ ...prev, video_url: url }))
+      console.log('Видео успешно загружено:', url)
     } catch (error: any) {
-      console.error(error)
-      alert(error?.message || 'Ошибка загрузки видео')
+      console.error('Ошибка загрузки видео:', error)
+      let errorMessage = 'Ошибка загрузки видео'
+      
+      if (error?.message) {
+        errorMessage = error.message
+      } else if (error) {
+        errorMessage = JSON.stringify(error)
+      }
+      
+      alert(`Ошибка загрузки видео:\n${errorMessage}`)
     } finally {
       setUploadingVideo(false)
       if (videoInputRef.current) videoInputRef.current.value = ''
@@ -177,11 +194,11 @@ export default function AdminBannersPage() {
         imageUrl = await uploadImage(selectedImageFile)
       }
 
-      const bannerData = {
+      // Формируем данные для сохранения, исключая video_url, если оно пустое
+      const bannerData: any = {
         title: formData.title,
         description: formData.description || null,
         image_url: imageUrl,
-        video_url: formData.video_url || null,
         link_url: formData.link_url || null,
         button_text: formData.button_text || null,
         position: formData.position,
@@ -189,28 +206,82 @@ export default function AdminBannersPage() {
         sort_order: parseInt(formData.sort_order),
       }
 
+      // Добавляем video_url только если оно есть (если поле существует в таблице)
+      if (formData.video_url && formData.video_url.trim()) {
+        bannerData.video_url = formData.video_url.trim()
+      }
+
+      let error: any = null
+
       if (editingBanner) {
-        const { error } = await supabase
+        const result = await supabase
           .from('promo_blocks')
           .update(bannerData)
           .eq('id', editingBanner.id)
 
-        if (error) throw error
+        error = result.error
       } else {
-        const { error } = await supabase
+        const result = await supabase
           .from('promo_blocks')
           .insert(bannerData)
 
-        if (error) throw error
+        error = result.error
+      }
+
+      // Если ошибка связана с video_url (поле отсутствует в таблице), пробуем сохранить без него
+      if (error && bannerData.video_url) {
+        const errorMessage = error.message || error.toString() || ''
+        if (errorMessage.includes('video_url') || errorMessage.includes('column') || error.code === 'PGRST116') {
+          console.warn('Поле video_url отсутствует в таблице promo_blocks, сохраняем без него')
+          delete bannerData.video_url
+          
+          if (editingBanner) {
+            const retryResult = await supabase
+              .from('promo_blocks')
+              .update(bannerData)
+              .eq('id', editingBanner.id)
+            error = retryResult.error
+          } else {
+            const retryResult = await supabase
+              .from('promo_blocks')
+              .insert(bannerData)
+            error = retryResult.error
+          }
+          
+          if (!error) {
+            alert('Внимание: Баннер сохранён, но поле video_url отсутствует в базе данных. Пожалуйста, обратитесь к администратору для добавления этого поля в таблицу promo_blocks.')
+          }
+        }
+      }
+
+      if (error) {
+        console.error('Ошибка сохранения баннера:', error)
+        throw new Error(error.message || `Ошибка сохранения: ${JSON.stringify(error)}`)
       }
 
       setShowModal(false)
       setSelectedImageFile(null)
       setImagePreview('')
+      setFormData((prev) => ({ ...prev, video_url: '' }))
       loadData()
-    } catch (error) {
+    } catch (error: any) {
       console.error('Ошибка сохранения:', error)
-      alert('Ошибка при сохранении баннера')
+      let errorMessage = 'Неизвестная ошибка при сохранении баннера'
+      
+      if (error?.message) {
+        errorMessage = error.message
+      } else if (typeof error === 'string') {
+        errorMessage = error
+      } else if (error) {
+        errorMessage = JSON.stringify(error)
+      }
+      
+      // Проверяем, связана ли ошибка с video_url
+      if (errorMessage.includes('video_url') || errorMessage.includes('column') || errorMessage.includes('PGRST116')) {
+        errorMessage += '\n\nВозможно, поле video_url отсутствует в таблице promo_blocks.\nВыполните SQL скрипт setup_promo_blocks_video.sql для добавления этого поля.'
+      }
+      
+      alert(`Ошибка при сохранении баннера:\n${errorMessage}`)
     } finally {
       setUploading(false)
     }
