@@ -30,7 +30,7 @@ export default function AdminKitchenQuizPage() {
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [editingStep, setEditingStep] = useState<QuizStep | null>(null)
-  const [selectedImageFiles, setSelectedImageFiles] = useState<Record<number, File>>({})
+  const [selectedImageFiles, setSelectedImageFiles] = useState<Record<string, File>>({})
   const [uploading, setUploading] = useState(false)
   const [formData, setFormData] = useState({
     step_number: '',
