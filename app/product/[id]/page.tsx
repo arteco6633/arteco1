@@ -1749,7 +1749,7 @@ export default function ProductPage() {
         {/* Модальное окно для просмотра фото в интерьере */}
         {interiorPreviewIdx !== null && validInteriorImages.length > 0 && interiorPreviewIdx >= 0 && interiorPreviewIdx < validInteriorImages.length && (
           <div 
-            className="fixed inset-0 z-[100] bg-black/90 grid place-items-center p-4"
+            className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center p-4"
             onClick={() => setInteriorPreviewIdx(null)}
           >
             <div className="relative w-full h-full max-w-7xl max-h-[90vh] flex items-center justify-center">
@@ -1798,7 +1798,7 @@ export default function ProductPage() {
 
               {/* Изображение с поддержкой свайпов */}
               <div 
-                className="relative w-full h-full"
+                className="relative w-full h-full flex items-center justify-center"
                 onClick={(e) => e.stopPropagation()}
                 onTouchStart={(e) => {
                   touchStartX.current = e.touches[0].clientX
@@ -1824,7 +1824,7 @@ export default function ProductPage() {
                 <img 
                   src={validInteriorImages[interiorPreviewIdx]} 
                   alt={`${product.name} в интерьере ${interiorPreviewIdx + 1}`}
-                  className="max-w-full max-h-full mx-auto object-contain rounded-lg"
+                  className="max-w-full max-h-full object-contain rounded-lg"
                 />
               </div>
 
