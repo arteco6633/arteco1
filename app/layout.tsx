@@ -6,18 +6,7 @@ import { WishlistProvider } from '@/components/WishlistContext'
 import { Suspense } from 'react'
 import BootLoader from '@/components/BootLoader'
 import AppShell from '@/components/AppShell'
-import dynamic from 'next/dynamic'
-
-// Динамический импорт тяжелых компонентов для улучшения производительности
-const TBankWidgetWrapper = dynamic(() => import('@/components/TBankWidgetWrapper'), {
-  ssr: false,
-})
-const DolyameSnippet = dynamic(() => import('@/components/DolyameSnippet'), {
-  ssr: false,
-})
-const YandexPaySdk = dynamic(() => import('@/components/YandexPaySdk'), {
-  ssr: false,
-})
+import LazyPaymentWidgets from '@/components/LazyPaymentWidgets'
 
 export const metadata: Metadata = {
   title: 'ARTECO - Интернет-магазин',
@@ -71,8 +60,6 @@ export default function RootLayout({
         <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
       </head>
       <body className="overflow-x-hidden">
-        {/* Сниппет Долями - загружается в начале body согласно документации */}
-        <DolyameSnippet />
         {/* Прелоадер до гидрации (виден и на жёстком обновлении, и на мобилках) */}
         <div id="arteco-boot-loader" className="fixed inset-0 z-[1000] bg-white grid place-items-center">
           <div className="flex flex-col items-center gap-4">
@@ -105,10 +92,8 @@ export default function RootLayout({
             </WishlistProvider>
           </CartProvider>
         </Providers>
-        {/* T-Bank Payment Widget */}
-        <TBankWidgetWrapper />
-        {/* Яндекс Pay SDK */}
-        <YandexPaySdk />
+        {/* Платежные виджеты (динамическая загрузка) */}
+        <LazyPaymentWidgets />
       </body>
     </html>
   )
