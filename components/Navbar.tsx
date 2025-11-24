@@ -147,8 +147,8 @@ export default function Navbar() {
           {/* Лого: абсолютный центр на мобайле, обычный поток на десктопе */}
           <div className="absolute left-1/2 -translate-x-1/2 xl:static xl:translate-x-0">
             <Link href="/" className="flex items-center gap-2 text-2xl font-bold text-black select-none">
-              {/* Логотип ARTECO */}
-              <div className="relative w-12 h-12 sm:w-14 sm:h-14 md:w-10 md:h-10 flex-shrink-0">
+              {/* Логотип ARTECO - скрыт на мобильных */}
+              <div className="relative w-12 h-12 sm:w-14 sm:h-14 md:w-10 md:h-10 flex-shrink-0 hidden md:block">
                 <Image
                   src="/arteco-logo-header.png"
                   alt="ARTECO Logo"
@@ -159,17 +159,33 @@ export default function Navbar() {
                   sizes="(max-width: 640px) 40px, 48px"
                 />
               </div>
+              {/* Текст ARTECO на мобильных - показывается на мобильных, скрыт на десктопе */}
+              <span className="md:hidden">ART</span>
+              {/* Буква E стилизована как гамбургер-иконка с морфом X ↔︎ ≡ при появлении хэдера - мобильная версия */}
+              <span aria-hidden className="relative w-5 h-4 mx-0.5 md:hidden inline-block">
+                <span
+                  className={`absolute left-0 right-0 h-[2.5px] bg-black rounded origin-center transition-all duration-700 ease-[cubic-bezier(0.68,-0.55,0.265,1.55)] ${isCross ? 'top-1/2 -translate-y-1/2 rotate-45 delay-0' : 'top-0 rotate-0 delay-200'}`}
+                />
+                <span
+                  className={`absolute left-0 right-0 h-[2.5px] bg-black rounded origin-center transition-all duration-500 ease-in-out ${isCross ? 'opacity-0 scale-0 delay-0' : 'top-1/2 -translate-y-1/2 opacity-100 scale-100 delay-300'}`}
+                />
+                <span
+                  className={`absolute left-0 right-0 h-[2.5px] bg-black rounded origin-center transition-all duration-700 ease-[cubic-bezier(0.68,-0.55,0.265,1.55)] ${isCross ? 'top-1/2 -translate-y-1/2 -rotate-45 delay-0' : 'bottom-0 rotate-0 delay-200'}`}
+                />
+              </span>
+              <span className="md:hidden">CO</span>
+              {/* Десктопная версия */}
               <span className="hidden md:inline">ART</span>
-              {/* Буква E стилизована как гамбургер-иконка с морфом X ↔︎ ≡ при появлении хэдера */}
+              {/* Буква E стилизована как гамбургер-иконка с морфом X ↔︎ ≡ при появлении хэдера - десктопная версия */}
               <span aria-hidden className="relative w-5 h-4 mx-0.5 hidden md:inline-block">
                 <span
-                  className={`absolute left-0 right-0 h-[2px] bg-black rounded origin-center transition-all duration-1000 ease-in-out ${isCross ? 'top-1/2 -translate-y-1/2 rotate-45' : 'top-0 rotate-0'}`}
+                  className={`absolute left-0 right-0 h-[2.5px] bg-black rounded origin-center transition-all duration-700 ease-[cubic-bezier(0.68,-0.55,0.265,1.55)] ${isCross ? 'top-1/2 -translate-y-1/2 rotate-45 delay-0' : 'top-0 rotate-0 delay-200'}`}
                 />
                 <span
-                  className={`absolute left-0 right-0 h-[2px] bg-black rounded origin-center transition-all duration-1000 ease-in-out ${isCross ? 'opacity-0' : 'top-1/2 -translate-y-1/2 opacity-100'}`}
+                  className={`absolute left-0 right-0 h-[2.5px] bg-black rounded origin-center transition-all duration-500 ease-in-out ${isCross ? 'opacity-0 scale-0 delay-0' : 'top-1/2 -translate-y-1/2 opacity-100 scale-100 delay-300'}`}
                 />
                 <span
-                  className={`absolute left-0 right-0 h-[2px] bg-black rounded origin-center transition-all duration-1000 ease-in-out ${isCross ? 'top-1/2 -translate-y-1/2 -rotate-45' : 'bottom-0 rotate-0'}`}
+                  className={`absolute left-0 right-0 h-[2.5px] bg-black rounded origin-center transition-all duration-700 ease-[cubic-bezier(0.68,-0.55,0.265,1.55)] ${isCross ? 'top-1/2 -translate-y-1/2 -rotate-45 delay-0' : 'bottom-0 rotate-0 delay-200'}`}
                 />
               </span>
               <span className="hidden md:inline">CO</span>
