@@ -98,3 +98,5 @@ COMMENT ON TABLE kitchen_quiz_steps IS 'Шаги/вопросы квиза';
 COMMENT ON TABLE kitchen_quiz_options IS 'Варианты ответов для вопросов квиза';
 COMMENT ON TABLE kitchen_quiz_submissions IS 'Заявки пользователей из квиза';
 
+
+

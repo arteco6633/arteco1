@@ -101,6 +101,7 @@ export default function ProductPage() {
   const [selectedModules, setSelectedModules] = useState<Record<number, number>>({})
   const [previewImage, setPreviewImage] = useState<string | null>(null)
   const [interiorPreviewIdx, setInteriorPreviewIdx] = useState<number | null>(null)
+  const [showDesignProjectForm, setShowDesignProjectForm] = useState(false)
   const interiorCarouselRef = useRef<HTMLDivElement | null>(null)
   const [openModuleGroup, setOpenModuleGroup] = useState<'base' | 'wall' | 'tall' | 'other' | null>('base')
   const finalPrice = useMemo(() => {
@@ -623,6 +624,49 @@ export default function ProductPage() {
                     willChange: (product.images && product.images.length > 1) ? 'transform' : 'auto'
                   }}
                 >
+                  {/* Бейджи в верхнем левом углу */}
+                  <div className="absolute top-3 left-3 z-20 flex flex-col gap-1.5 items-start">
+                    {/* Бейдж "Под заказ" или "В наличии" */}
+                    {product.stock_quantity !== undefined && product.stock_quantity !== null && (
+                      <>
+                        {product.stock_quantity >= 9999 ? (
+                          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[50px] bg-green-50 border border-green-200">
+                            <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                            <span className="text-green-700 font-semibold text-sm">В наличии: Много</span>
+                          </div>
+                        ) : product.stock_quantity > 0 ? (
+                          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[50px] bg-blue-50 border border-blue-200">
+                            <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                            <span className="text-blue-700 font-semibold text-sm">В наличии: {product.stock_quantity} шт.</span>
+                          </div>
+                        ) : (
+                          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[50px] bg-yellow-50 border border-yellow-200">
+                            <svg className="w-4 h-4 text-yellow-600" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M12 2C6.486 2 2 6.486 2 12s4.486 10 10 10 10-4.486 10-10S17.514 2 12 2zm0 18c-4.411 0-8-3.589-8-8s3.589-8 8-8 8 3.589 8 8-3.589 8-8 8z"/>
+                              <path d="M13 7h-2v6h6v-2h-4z"/>
+                            </svg>
+                            <span className="text-yellow-700 font-semibold text-sm">Под заказ</span>
+                          </div>
+                        )}
+                        {/* Бейдж NEW под текстом */}
+                        {product.is_new && (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[50px] bg-green-500 border border-green-600/20 ml-1">
+                            <span className="text-white font-semibold text-sm">NEW</span>
+                          </span>
+                        )}
+                      </>
+                    )}
+                    {/* Если нет информации об остатках, но есть NEW */}
+                    {(product.stock_quantity === undefined || product.stock_quantity === null) && product.is_new && (
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[50px] bg-green-500 border border-green-600/20">
+                        <span className="text-white font-semibold text-sm">NEW</span>
+                      </span>
+                    )}
+                  </div>
                   {/* Контейнер для плавной анимации пролистывания */}
                   <div
                     className="flex w-full h-full transition-transform duration-700 ease-in-out"
@@ -766,40 +810,7 @@ export default function ProductPage() {
                 <span>{finalPrice.toLocaleString('ru-RU')} ₽</span>
               </div>
 
-              {/* Информация об остатках */}
-              {product.stock_quantity !== undefined && product.stock_quantity !== null && (
-                <div className="mt-3 mb-4">
-                  {product.stock_quantity >= 9999 ? (
-                    <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-[50px] bg-green-50 border border-green-200">
-                      <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                      </svg>
-                      <span className="text-green-700 font-semibold">В наличии: Много</span>
-                    </div>
-                  ) : product.stock_quantity > 0 ? (
-                    <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-[50px] bg-blue-50 border border-blue-200">
-                      <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                      </svg>
-                      <span className="text-blue-700 font-semibold">В наличии: {product.stock_quantity} шт.</span>
-                    </div>
-                  ) : (
-                    <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-[50px] bg-yellow-50 border border-yellow-200">
-                      <svg className="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      <span className="text-yellow-700 font-semibold">Под заказ</span>
-                    </div>
-                  )}
-                </div>
-              )}
-
               <div className="flex gap-2 mb-4 md:mb-0">
-              {product.is_new && (
-                <span className="bg-green-500 text-white px-3 py-1 rounded-full text-sm font-semibold">
-                  NEW
-                </span>
-              )}
               {product.is_featured && (
                 <span className="inline-flex items-center gap-2 px-3 py-1 rounded-[50px] text-sm font-semibold text-white bg-rose-400">
                   <svg viewBox="0 0 24 24" className="w-4.5 h-4.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -1222,34 +1233,6 @@ export default function ProductPage() {
 
             {/* Sticky блок с названием и ценой на мобильных (над кнопками) */}
             <div className="md:hidden sticky bottom-[140px] z-10 bg-white pt-4 pb-2 -mx-4 px-4">
-              {/* Информация об остатках на мобильных - над названием */}
-              {product.stock_quantity !== undefined && product.stock_quantity !== null && (
-                <div className="mb-3">
-                  {product.stock_quantity >= 9999 ? (
-                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[50px] bg-green-50 border border-green-200">
-                      <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                      </svg>
-                      <span className="text-green-700 font-semibold text-sm">В наличии: Много</span>
-                    </div>
-                  ) : product.stock_quantity > 0 ? (
-                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[50px] bg-blue-50 border border-blue-200">
-                      <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                      </svg>
-                      <span className="text-blue-700 font-semibold text-sm">В наличии: {product.stock_quantity} шт.</span>
-                    </div>
-                  ) : (
-                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[50px] bg-yellow-50 border border-yellow-200">
-                      <svg className="w-4 h-4 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      <span className="text-yellow-700 font-semibold text-sm">Под заказ</span>
-                    </div>
-                  )}
-                </div>
-              )}
-              
               <h1 className="text-2xl font-bold mb-1 leading-tight">{product.name}</h1>
               <div className="text-3xl font-bold text-black mb-2">
                 {(product as any).original_price && (
@@ -1509,7 +1492,7 @@ export default function ProductPage() {
             <div className="w-full grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-6">
               <div className="w-full md:col-span-5 flex items-start justify-center">
                 {(product.videos && product.videos.length > 0) ? (
-                  <div className="w-full rounded-[28px] overflow-hidden border border-gray-200 shadow-[0_28px_90px_-60px_rgba(15,23,42,0.55)]">
+                  <div className="w-full rounded-lg overflow-hidden border border-gray-200 shadow-[0_28px_90px_-60px_rgba(15,23,42,0.55)]">
                     <video
                       src={product.videos[0]}
                       className="w-full h-auto md:h-[70vh] object-cover bg-transparent"
@@ -1610,16 +1593,13 @@ export default function ProductPage() {
                 {/* Контейнер для карусели */}
                 <div 
                   ref={interiorCarouselRef}
-                  className="overflow-x-auto -mx-4 px-4 scrollbar-hide snap-x snap-mandatory"
+                  className="overflow-x-auto overflow-y-hidden scrollbar-hide snap-x snap-mandatory"
                   style={{
-                    touchAction: 'pan-x',
+                    touchAction: 'pan-x pan-y',
                     overscrollBehaviorX: 'contain',
-                    overscrollBehaviorY: 'none',
+                    overscrollBehaviorY: 'auto',
                     WebkitOverflowScrolling: 'touch',
                     scrollSnapType: 'x mandatory'
-                  }}
-                  onTouchStart={(e) => {
-                    e.stopPropagation()
                   }}
                 >
                   <div 
@@ -1631,10 +1611,10 @@ export default function ProductPage() {
                     {validInteriorImages.map((url, idx) => (
                       <div 
                         key={idx} 
-                        className="relative flex-shrink-0 rounded-xl overflow-hidden bg-gray-100 cursor-pointer transition-transform hover:scale-[1.02] snap-start w-[calc(100vw-2rem)] min-w-[calc(100vw-2rem)] max-w-[calc(100vw-2rem)] md:w-[calc((100vw-2rem-2rem)/3)] md:min-w-[280px] md:max-w-[calc((100vw-2rem-2rem)/3)]"
+                        className="relative flex-shrink-0 rounded-lg overflow-hidden bg-gray-100 cursor-pointer snap-start w-[calc(100vw-2rem)] min-w-[calc(100vw-2rem)] max-w-[calc(100vw-2rem)] md:w-[calc((100vw-2rem-2rem)/3)] md:min-w-[280px] md:max-w-[calc((100vw-2rem-2rem)/3)]"
                         onClick={() => setInteriorPreviewIdx(idx)}
                       >
-                        <div className="relative aspect-[4/3]">
+                        <div className="relative aspect-[4/3] w-full">
                           <Image
                             src={url}
                             alt={`${product.name} в интерьере ${idx + 1}`}
@@ -1696,6 +1676,75 @@ export default function ProductPage() {
             </section>
           )
         })()}
+
+        {/* Кнопка "Бесплатный замер за 24 часа" */}
+        <section className="mt-8 md:mt-12 mb-8 md:mb-12">
+          <div className="relative overflow-hidden rounded-lg group cursor-pointer" onClick={() => setShowDesignProjectForm(true)}>
+            {/* Градиентный фон с анимацией */}
+            <div className="absolute inset-0 bg-gradient-to-br from-black via-gray-900 to-black transition-all duration-700 group-hover:scale-105"></div>
+            
+            {/* Декоративные элементы - тонкие линии */}
+            <div className="absolute inset-0 opacity-20">
+              <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-white/50 to-transparent"></div>
+              <div className="absolute bottom-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-white/50 to-transparent"></div>
+              <div className="absolute top-1/2 left-0 w-1/2 h-px bg-gradient-to-r from-transparent via-white/30 to-transparent transform -translate-y-1/2"></div>
+              <div className="absolute top-1/2 right-0 w-1/2 h-px bg-gradient-to-r from-transparent via-white/30 to-transparent transform -translate-y-1/2"></div>
+            </div>
+
+            {/* Светящиеся точки для эффекта глубины */}
+            <div className="absolute inset-0 opacity-30">
+              <div className="absolute top-1/4 left-1/4 w-2 h-2 bg-white rounded-full blur-sm animate-pulse"></div>
+              <div className="absolute bottom-1/4 right-1/4 w-1.5 h-1.5 bg-white rounded-full blur-sm animate-pulse" style={{ animationDelay: '1s' }}></div>
+              <div className="absolute top-1/2 right-1/3 w-1 h-1 bg-white rounded-full blur-sm animate-pulse" style={{ animationDelay: '2s' }}></div>
+            </div>
+
+            {/* Контент */}
+            <div className="relative z-10 px-6 md:px-8 lg:px-12 py-10 md:py-14 lg:py-16">
+              <div className="max-w-3xl mx-auto text-center">
+                {/* Иконка с анимацией */}
+                <div className="flex items-center justify-center mb-6 md:mb-8">
+                  <div className="relative">
+                    <div className="absolute inset-0 bg-white/20 rounded-full blur-xl animate-ping"></div>
+                    <div className="relative w-16 h-16 md:w-20 md:h-20 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 flex items-center justify-center transition-transform duration-500 group-hover:scale-110 group-hover:rotate-12">
+                      <svg className="w-8 h-8 md:w-10 md:h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Заголовок */}
+                <h3 className="text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-light text-white mb-4 md:mb-6 tracking-tight">
+                  Бесплатный <span className="font-semibold">замер за 24 часа</span>
+                </h3>
+
+                {/* Описание */}
+                <p className="text-white/70 text-sm md:text-base lg:text-lg mb-8 md:mb-10 max-w-xl mx-auto leading-relaxed font-light">
+                  Сделаем обмер, подберем материалы, спроектируем и посчитаем
+                </p>
+
+                {/* Кнопка */}
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setShowDesignProjectForm(true)
+                  }}
+                  className="group/btn relative inline-flex items-center gap-3 px-8 md:px-10 py-3.5 md:py-4 bg-white text-black font-medium text-base md:text-lg rounded-full overflow-hidden transition-all duration-500 hover:shadow-2xl hover:shadow-white/20"
+                >
+                  {/* Эффект свечения при наведении */}
+                  <span className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-100%] group-hover/btn:translate-x-[100%] transition-transform duration-1000"></span>
+                  
+                  <span className="relative z-10">Получить проект</span>
+                  <svg className="relative z-10 w-5 h-5 md:w-6 md:h-6 transition-transform duration-300 group-hover/btn:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
 
         {/* Модальное окно для просмотра фото в интерьере */}
         {interiorPreviewIdx !== null && validInteriorImages.length > 0 && interiorPreviewIdx >= 0 && interiorPreviewIdx < validInteriorImages.length && (
@@ -1815,7 +1864,185 @@ export default function ProductPage() {
           </section>
         )}
 
+        {/* Модальное окно для заявки на бесплатный замер */}
+        {showDesignProjectForm && <DesignProjectFormModal 
+          productName={product?.name || ''} 
+          onClose={() => setShowDesignProjectForm(false)} 
+        />}
+
       </main>
+    </div>
+  )
+}
+
+// Компонент модального окна для заявки на дизайн проект
+function DesignProjectFormModal({ productName, onClose }: { productName: string; onClose: () => void }) {
+  const [formData, setFormData] = useState({
+    name: '',
+    phone: '',
+    email: '',
+    comment: '',
+  })
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isSuccess, setIsSuccess] = useState(false)
+
+  const handlePhoneChange = (value: string) => {
+    const digits = value.replace(/\D/g, '').slice(0, 11)
+    let formatted = digits
+    if (digits.length > 1) formatted = `+${digits[0]} ${digits.slice(1)}`
+    if (digits.length >= 4) formatted = `+${digits[0]} (${digits.slice(1,4)}) ${digits.slice(4)}`
+    if (digits.length >= 7) formatted = `+${digits[0]} (${digits.slice(1,4)}) ${digits.slice(4,7)}-${digits.slice(7)}`
+    if (digits.length >= 9) formatted = `+${digits[0]} (${digits.slice(1,4)}) ${digits.slice(4,7)}-${digits.slice(7,9)}-${digits.slice(9,11)}`
+    setFormData({ ...formData, phone: formatted })
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    
+    if (!formData.name.trim() || !formData.phone.trim()) {
+      alert('Пожалуйста, заполните имя и телефон')
+      return
+    }
+
+    setIsSubmitting(true)
+
+    try {
+      const comment = `Бесплатный замер за 24 часа для товара: ${productName}${formData.comment ? '\n\n' + formData.comment : ''}`
+      
+      const response = await fetch('/api/callback', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: formData.name.trim(),
+          phone: formData.phone.trim(),
+          comment: comment,
+        }),
+      })
+
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(result.message || 'Ошибка при отправке заявки')
+      }
+
+      setIsSuccess(true)
+      setFormData({ name: '', phone: '', email: '', comment: '' })
+      
+      setTimeout(() => {
+        setIsSuccess(false)
+        onClose()
+      }, 3000)
+    } catch (error: any) {
+      console.error('Ошибка отправки заявки:', error)
+      alert(error.message || 'Не удалось отправить заявку. Попробуйте еще раз.')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-2 sm:p-4" onClick={onClose}>
+      <div 
+        className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {isSuccess ? (
+          <div className="p-6 text-center">
+            <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
+              <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-1">Заявка отправлена!</h3>
+            <p className="text-sm text-gray-600">Наш менеджер свяжется с вами в ближайшее время</p>
+          </div>
+        ) : (
+          <>
+            <div className="px-6 pt-6 pb-4 border-b">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-gray-900">Бесплатный замер за 24 часа</h3>
+                <button
+                  onClick={onClose}
+                  className="text-gray-400 hover:text-gray-600 transition-colors text-xl"
+                  aria-label="Закрыть"
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+            
+            <form onSubmit={handleSubmit} className="p-6 space-y-3">
+              <div>
+                <label htmlFor="design-name" className="block text-sm text-gray-700 mb-1">
+                  Имя <span className="text-red-500">*</span>
+                </label>
+                <input
+                  id="design-name"
+                  type="text"
+                  required
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-1 focus:ring-black focus:border-black transition-all outline-none"
+                  placeholder="Иван Иванов"
+                />
+              </div>
+              
+              <div>
+                <label htmlFor="design-phone" className="block text-sm text-gray-700 mb-1">
+                  Телефон <span className="text-red-500">*</span>
+                </label>
+                <input
+                  id="design-phone"
+                  type="tel"
+                  required
+                  value={formData.phone}
+                  onChange={(e) => handlePhoneChange(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-1 focus:ring-black focus:border-black transition-all outline-none"
+                  placeholder="+7 (999) 123-45-67"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="design-email" className="block text-sm text-gray-700 mb-1">
+                  Email
+                </label>
+                <input
+                  id="design-email"
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-1 focus:ring-black focus:border-black transition-all outline-none"
+                  placeholder="ivan@example.com"
+                />
+              </div>
+              
+              <div>
+                <label htmlFor="design-comment" className="block text-sm text-gray-700 mb-1">
+                  Комментарий
+                </label>
+                <textarea
+                  id="design-comment"
+                  value={formData.comment}
+                  onChange={(e) => setFormData({ ...formData, comment: e.target.value })}
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-1 focus:ring-black focus:border-black transition-all outline-none resize-none"
+                  placeholder="Опишите ваши пожелания..."
+                />
+              </div>
+              
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full bg-black text-white py-2.5 rounded-lg font-medium hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed mt-4"
+              >
+                {isSubmitting ? 'Отправка...' : 'Отправить заявку'}
+              </button>
+            </form>
+          </>
+        )}
+      </div>
     </div>
   )
 }

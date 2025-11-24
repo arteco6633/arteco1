@@ -12,6 +12,7 @@ interface Product {
   original_price?: number
   image_url: string
   images?: string[] | null
+  colors?: any[] | null
   category_id: number
   is_new?: boolean
   is_featured?: boolean
@@ -26,7 +27,7 @@ type Props = {
   onAdd?: (product: Product) => void
 }
 
-function Card({ product, onAdd, priority = false }: { product: Product; onAdd?: (product: Product) => void; priority?: boolean }) {
+function Card({ product, onAdd, priority = false, fixedWidth }: { product: Product; onAdd?: (product: Product) => void; priority?: boolean; fixedWidth?: string }) {
   const { toggle, isInWishlist } = useWishlist()
   const inWishlist = isInWishlist(product.id)
 
@@ -48,10 +49,17 @@ function Card({ product, onAdd, priority = false }: { product: Product; onAdd?: 
   return (
     <Link
       href={`/product/${product.id}`}
-      className="bg-white rounded-xl shadow-md transition-all duration-300 group md:hover:-translate-y-1.5 md:hover:shadow-xl md:hover:ring-1 md:hover:ring-black/10 block cursor-pointer"
+      className="bg-white rounded-lg border border-gray-200 transition-all duration-300 group md:hover:border-gray-300 block cursor-pointer h-full flex flex-col w-full"
+      style={fixedWidth ? { 
+        width: fixedWidth, 
+        minWidth: fixedWidth, 
+        maxWidth: fixedWidth,
+        flexShrink: 0,
+        boxSizing: 'border-box'
+      } : {}}
     >
       {/* Обёртка для изображения с клипом только картинки, не тени */}
-      <div className="relative rounded-t-xl overflow-hidden h-60 sm:h-72 bg-gray-100">
+      <div className="relative rounded-t-lg overflow-hidden h-56 sm:h-64 md:h-72 bg-gray-100">
         {(() => {
           const src = (product.images && product.images.length > 0) ? product.images[0] : product.image_url
           if (!src) {
@@ -75,12 +83,12 @@ function Card({ product, onAdd, priority = false }: { product: Product; onAdd?: 
         })()}
         <button
           type="button"
-          className={`absolute top-3 right-3 w-10 h-10 rounded-full bg-white/90 flex items-center justify-center md:hover:bg-white transition-colors ${inWishlist ? 'bg-white' : ''}`}
+          className={`absolute top-2 right-2 sm:top-3 sm:right-3 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white/90 flex items-center justify-center md:hover:bg-white transition-colors ${inWishlist ? 'bg-white' : ''}`}
           onClick={handleWishlistClick}
           aria-label={inWishlist ? 'Удалить из избранного' : 'Добавить в избранное'}
         >
           <svg
-            className={`w-6 h-6 transition-colors ${inWishlist ? 'fill-black stroke-black' : 'fill-none stroke-gray-400'}`}
+            className={`w-5 h-5 sm:w-6 sm:h-6 transition-colors ${inWishlist ? 'fill-black stroke-black' : 'fill-none stroke-gray-400'}`}
             fill="currentColor"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -89,45 +97,67 @@ function Card({ product, onAdd, priority = false }: { product: Product; onAdd?: 
           </svg>
         </button>
         {product.is_new && (
-          <span className="absolute top-3 left-3 bg-green-500 text-white px-2.5 py-1 rounded-full text-[10px] font-bold">
+          <span className="absolute top-2 left-2 sm:top-3 sm:left-3 bg-green-500 text-white px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full text-[9px] sm:text-[10px] font-bold">
             NEW
           </span>
         )}
         {discount > 0 && (
-          <span className="absolute top-12 left-3 bg-red-500 text-white px-2.5 py-1 rounded-full text-[10px] font-bold">
+          <span className="absolute top-10 left-2 sm:top-12 sm:left-3 bg-red-500 text-white px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full text-[9px] sm:text-[10px] font-bold">
             -{discount}%
           </span>
         )}
       </div>
-      <div className="p-4 sm:p-5 pr-16 relative rounded-b-xl">
-        <h3 className="text-[16px] md:text-[18px] leading-6 text-gray-900/90 font-medium line-clamp-2 mb-3">
-          {product.name}
-        </h3>
-        <div className="flex items-center gap-2">
-          <span className="text-[20px] sm:text-[22px] font-semibold text-gray-900">
+      <div className="p-3 sm:p-4 md:p-5 relative rounded-b-lg flex flex-col flex-grow min-h-[100px] sm:min-h-[110px] md:min-h-[120px]">
+        <div className="flex items-center gap-1.5 sm:gap-2 mb-2 sm:mb-3">
+          <span className="text-base sm:text-lg md:text-xl lg:text-[22px] font-semibold text-gray-900">
             {product.price.toLocaleString('ru-RU')} ₽
           </span>
           {product.original_price && (
-            <span className="text-xs sm:text-sm text-gray-400 line-through">
+            <span className="text-[10px] sm:text-xs md:text-sm text-gray-400 line-through">
               {product.original_price.toLocaleString('ru-RU')} ₽
             </span>
           )}
         </div>
+        <h3 className="text-sm sm:text-base md:text-lg leading-5 sm:leading-6 text-gray-900/90 font-medium line-clamp-2 mb-2 sm:mb-3 flex-grow min-h-[2.5rem] sm:min-h-[3rem]">
+          {product.name}
+        </h3>
+        {/* Свотчи цветов */}
+        {!!product.colors?.length && (
+          <div className="flex items-center gap-1.5 sm:gap-2 mb-2 sm:mb-3">
+            {product.colors.slice(0, 5).map((c, idx) => {
+              const value = typeof c === 'string' ? c : (c?.value ?? '')
+              const name = typeof c === 'string' ? c : (c?.name ?? '')
+              const isImage = typeof value === 'string' && (value.startsWith('http') || value.startsWith('/'))
+              return (
+                <div
+                  key={idx}
+                  className="rounded-full border border-black/10 shadow-sm overflow-hidden w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0"
+                  title={name || value}
+                  style={isImage ? { backgroundImage: `url(${value})`, backgroundSize: 'cover', backgroundPosition: 'center' } : { background: value || '#eee' }}
+                />
+              )
+            })}
+            {product.colors.length > 5 && (
+              <span className="text-[10px] sm:text-xs text-gray-500">+{product.colors.length - 5}</span>
+            )}
+          </div>
+        )}
         {onAdd ? (
           <button
             type="button"
             onClick={(e) => { e.preventDefault(); onAdd(product) }}
-            className="absolute right-4 sm:right-5 top-1/2 -translate-y-1/2 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-black text-white flex items-center justify-center shadow-md transition-all duration-300 md:hover:bg-gray-900 md:hover:shadow-lg"
+            className="w-full bg-black text-white py-2.5 sm:py-3 flex items-center justify-center transition-all duration-300 md:hover:bg-gray-900 rounded-[50px]"
             aria-label="Добавить в корзину"
           >
-            <span className="text-xl leading-none">+</span>
+            <span className="text-lg sm:text-xl leading-none">+</span>
           </button>
         ) : (
           <span
-            className="absolute right-4 sm:right-5 top-1/2 -translate-y-1/2 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-black text-white flex items-center justify-center shadow-md transition-all duration-300 md:group-hover:bg-gray-900 md:group-hover:shadow-lg"
+            className="w-full bg-black text-white py-2.5 sm:py-3 flex items-center justify-center gap-2 transition-all duration-300 md:group-hover:bg-gray-900 rounded-[50px]"
             aria-hidden
           >
-            <span className="text-lg sm:text-xl transform transition-transform duration-300 md:group-hover:translate-x-1">→</span>
+            <span className="text-sm sm:text-base font-medium">Смотреть</span>
+            <span className="text-base sm:text-lg md:text-xl transform transition-transform duration-300 md:group-hover:translate-x-1">→</span>
           </span>
         )}
       </div>
@@ -139,21 +169,22 @@ export default function ProductGrid({ products, splitTwoFirst = false, onlyFirst
   if (horizontal) {
     return (
       <div 
-        className="overflow-x-auto -mx-4 px-4 scrollbar-hide"
+        className="overflow-x-auto scrollbar-hide"
         style={{
-          // Разрешаем и горизонтальную, и вертикальную прокрутку
-          // Браузер определит направление свайпа на основе движения
-          touchAction: 'pan-x pan-y pinch-zoom',
+          touchAction: 'pan-x pan-y',
           overscrollBehaviorX: 'contain',
           overscrollBehaviorY: 'auto',
           WebkitOverflowScrolling: 'touch'
         }}
       >
-        <div className="flex gap-4 sm:gap-6">
+        <div className="flex gap-3 sm:gap-4 md:gap-6 pb-2 items-stretch pr-1 sm:pr-2 md:pr-4">
           {products.map((p) => (
             <div 
               key={p.id} 
-              className="w-[260px] sm:w-[300px] flex-shrink-0"
+              className="flex flex-shrink-0 w-[280px] min-w-[280px] max-w-[280px] sm:w-[320px] sm:min-w-[320px] sm:max-w-[320px] md:w-[360px] md:min-w-[360px] md:max-w-[360px]"
+              style={{ 
+                boxSizing: 'border-box'
+              }}
             >
               <Card product={p} onAdd={onAdd} />
             </div>

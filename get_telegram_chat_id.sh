@@ -26,3 +26,5 @@ echo "Добавьте в .env.local:"
 echo "TELEGRAM_BOT_TOKEN=${BOT_TOKEN}"
 echo "TELEGRAM_CHAT_ID=-1001234567890"
 
+
+
