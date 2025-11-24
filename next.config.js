@@ -13,7 +13,7 @@ const nextConfig = {
   outputFileTracingRoot: path.resolve(__dirname),
   
   // Оптимизация производительности
-  swcMinify: true,
+  // swcMinify по умолчанию включен в Next.js 15
   compress: true,
   
   // Оптимизация сборки
