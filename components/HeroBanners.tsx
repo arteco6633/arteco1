@@ -20,6 +20,7 @@ export default function HeroBanners({ banners }: { banners: Banner[] }) {
                     src={banner.image_url}
                     alt={banner.title}
                     className="w-full h-44 sm:h-48 object-cover hover:scale-105 transition-transform"
+                    loading="lazy"
                   />
                 </a>
               ) : (
@@ -27,6 +28,7 @@ export default function HeroBanners({ banners }: { banners: Banner[] }) {
                   src={banner.image_url}
                   alt={banner.title}
                   className="w-full h-44 sm:h-48 object-cover"
+                  loading="lazy"
                 />
               )}
             </div>

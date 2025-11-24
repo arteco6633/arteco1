@@ -33,6 +33,7 @@ export default function Categories({ categories }: { categories: Category[] }) {
                     src={category.image_url}
                     alt={category.name}
                     className="w-full h-full object-cover rounded-lg"
+                    loading="lazy"
                   />
                 </div>
               ) : (

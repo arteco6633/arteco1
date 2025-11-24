@@ -6,9 +6,18 @@ import { WishlistProvider } from '@/components/WishlistContext'
 import { Suspense } from 'react'
 import BootLoader from '@/components/BootLoader'
 import AppShell from '@/components/AppShell'
-import TBankWidgetWrapper from '@/components/TBankWidgetWrapper'
-import DolyameSnippet from '@/components/DolyameSnippet'
-import YandexPaySdk from '@/components/YandexPaySdk'
+import dynamic from 'next/dynamic'
+
+// Динамический импорт тяжелых компонентов для улучшения производительности
+const TBankWidgetWrapper = dynamic(() => import('@/components/TBankWidgetWrapper'), {
+  ssr: false,
+})
+const DolyameSnippet = dynamic(() => import('@/components/DolyameSnippet'), {
+  ssr: false,
+})
+const YandexPaySdk = dynamic(() => import('@/components/YandexPaySdk'), {
+  ssr: false,
+})
 
 export const metadata: Metadata = {
   title: 'ARTECO - Интернет-магазин',
@@ -51,15 +60,15 @@ export default function RootLayout({
     <html lang="ru" className="overflow-x-hidden">
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        {/* Preconnect к Supabase для ускорения загрузки */}
+        {process.env.NEXT_PUBLIC_SUPABASE_URL && (
+          <link rel="preconnect" href={process.env.NEXT_PUBLIC_SUPABASE_URL} />
+        )}
+        <link rel="preconnect" href="https://zijajicude.beget.app" />
+        {/* Оптимизированные favicon - только необходимые */}
         <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
         <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192x192.png" />
-        <link rel="icon" type="image/png" sizes="512x512" href="/favicon-512x512.png" />
-        <link rel="icon" type="image/png" sizes="1024x1024" href="/favicon-1024x1024.png" />
-        <link rel="icon" type="image/png" sizes="2048x2048" href="/favicon-2048x2048.png" />
-        <link rel="icon" type="image/png" sizes="1920x1920" href="/favicon-original.png" />
-        <link rel="shortcut icon" type="image/png" href="/favicon-2048x2048.png" />
         <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
-        <link rel="apple-touch-icon" sizes="1024x1024" href="/favicon-1024x1024.png" />
       </head>
       <body className="overflow-x-hidden">
         {/* Сниппет Долями - загружается в начале body согласно документации */}
@@ -72,6 +81,20 @@ export default function RootLayout({
           </div>
         </div>
         <BootLoader />
+        {/* Регистрация Service Worker для кэширования */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              if ('serviceWorker' in navigator) {
+                window.addEventListener('load', () => {
+                  navigator.serviceWorker.register('/sw.js')
+                    .then((reg) => console.log('SW registered'))
+                    .catch((err) => console.log('SW registration failed'));
+                });
+              }
+            `,
+          }}
+        />
         {/* Более широкая контентная ширина и адаптивные боковые отступы */}
         <Providers>
           <CartProvider>

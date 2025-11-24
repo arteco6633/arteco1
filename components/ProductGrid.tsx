@@ -77,6 +77,7 @@ function Card({ product, onAdd, priority = false, fixedWidth }: { product: Produ
               sizes="(min-width: 1280px) 25vw, (min-width: 768px) 33vw, 100vw"
               className="transition-transform duration-300 ease-out md:group-hover:scale-[1.01] object-cover"
               priority={priority}
+              loading={priority ? 'eager' : 'lazy'}
               unoptimized={true}
             />
           )
