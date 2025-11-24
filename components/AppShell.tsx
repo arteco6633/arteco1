@@ -6,6 +6,7 @@ import Navbar from '@/components/Navbar'
 import PageLoader from '@/components/PageLoader'
 import MobileBottomNav from '@/components/MobileBottomNav'
 import CartDrawer from '@/components/CartDrawer'
+import CallbackWidget from '@/components/CallbackWidget'
 import { Suspense } from 'react'
 
 export default function AppShell({ children }: PropsWithChildren) {
@@ -42,6 +43,7 @@ export default function AppShell({ children }: PropsWithChildren) {
       </footer>
       <MobileBottomNav />
       <CartDrawer />
+      <CallbackWidget />
     </div>
   )
 }
