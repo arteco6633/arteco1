@@ -311,7 +311,7 @@ export default function Navbar() {
                 </button>
               </div>
             )}
-            <Link href="/wishlist" className="p-2 hover:bg-gray-100 rounded-lg transition-colors relative">
+            <Link href="/wishlist" prefetch={true} className="p-2 hover:bg-gray-100 rounded-lg transition-colors relative">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
               </svg>
@@ -338,12 +338,13 @@ export default function Navbar() {
             <div className="max-w-[1880px] mx-auto px-6 md:px-8 py-10">
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-8">
                 {categories.map((category) => (
-                  <Link
-                    key={category.id}
-                    href={`/catalog/${category.slug}`}
-                    className="w-full p-5 border border-gray-200 rounded-2xl hover:border-gray-400 hover:shadow-md transition-all flex flex-col items-center text-center gap-4"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
+                    <Link
+                      key={category.id}
+                      href={`/catalog/${category.slug}`}
+                      prefetch={true}
+                      className="w-full p-5 border border-gray-200 rounded-2xl hover:border-gray-400 hover:shadow-md transition-all flex flex-col items-center text-center gap-4"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
                     <div className="w-24 h-24 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0 flex items-center justify-center">
                       {category.image_url ? (
                         <img src={category.image_url} alt={category.name} className="w-full h-full object-cover" />
@@ -370,9 +371,9 @@ export default function Navbar() {
                 <div className="bg-white rounded-b-2xl shadow-xl p-4 pb-6 border">
                   {/* Быстрые ссылки */}
                   <div className="grid grid-cols-2 gap-3">
-                    <Link href="/catalog" className="px-4 py-3 rounded-[50px] border bg-white hover:bg-gray-50 text-center font-medium" onClick={() => setIsMobileOpen(false)}>Каталог</Link>
-                    <Link href="/partners" className="px-4 py-3 rounded-[50px] border bg-white hover:bg-gray-50 text-center font-medium" onClick={() => setIsMobileOpen(false)}>Партнерам</Link>
-                    <Link href="/journal" className="px-4 py-3 rounded-[50px] border bg-white hover:bg-gray-50 text-center font-medium" onClick={() => setIsMobileOpen(false)}>Журнал</Link>
+                    <Link href="/catalog" prefetch={true} className="px-4 py-3 rounded-[50px] border bg-white hover:bg-gray-50 text-center font-medium" onClick={() => setIsMobileOpen(false)}>Каталог</Link>
+                    <Link href="/partners" prefetch={true} className="px-4 py-3 rounded-[50px] border bg-white hover:bg-gray-50 text-center font-medium" onClick={() => setIsMobileOpen(false)}>Партнерам</Link>
+                    <Link href="/journal" prefetch={true} className="px-4 py-3 rounded-[50px] border bg-white hover:bg-gray-50 text-center font-medium" onClick={() => setIsMobileOpen(false)}>Журнал</Link>
                     <a href="#showrooms" className="px-4 py-3 rounded-[50px] border bg-white hover:bg-gray-50 text-center font-medium" onClick={() => setIsMobileOpen(false)}>Шоурумы</a>
                   </div>
 
@@ -385,6 +386,7 @@ export default function Navbar() {
                           <Link
                             key={category.id}
                             href={`/catalog/${category.slug}`}
+                            prefetch={true}
                             className="flex items-center gap-3 p-3 rounded-xl border bg-white hover:bg-gray-50"
                             onClick={() => setIsMobileOpen(false)}
                           >
