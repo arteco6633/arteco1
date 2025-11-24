@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 import { sendTelegramMessage, formatCallbackRequest } from '@/lib/telegram'
+import { sendEmail, getCallbackRequestEmail } from '@/lib/email'
 
 export async function POST(request: NextRequest) {
   try {
@@ -71,6 +72,31 @@ export async function POST(request: NextRequest) {
       }
     } else {
       console.warn('TELEGRAM_BOT_TOKEN или TELEGRAM_CHAT_ID не настроены. Уведомление в Telegram не отправлено.')
+    }
+
+    // Отправляем email уведомление на arteco.one@mail.ru
+    const notificationEmail = process.env.CALLBACK_NOTIFICATION_EMAIL || 'arteco.one@mail.ru'
+    
+    try {
+      const emailHtml = getCallbackRequestEmail({
+        name: name.trim(),
+        phone: phone.trim(),
+        comment: comment?.trim() || null,
+        createdAt: data?.created_at || new Date().toISOString(),
+      })
+
+      const emailSent = await sendEmail({
+        to: notificationEmail,
+        subject: `📞 Новая заявка на обратный звонок от ${name.trim()}`,
+        html: emailHtml,
+      })
+
+      if (!emailSent) {
+        console.warn('Не удалось отправить email уведомление. Проверьте настройки SMTP.')
+      }
+    } catch (emailError) {
+      console.error('Ошибка при отправке email уведомления:', emailError)
+      // Не прерываем выполнение, заявка уже сохранена
     }
 
     return NextResponse.json({

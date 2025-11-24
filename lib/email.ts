@@ -170,3 +170,87 @@ export function getStatusText(status: string): string {
   return statusMap[status] || status
 }
 
+// Шаблон письма для заявок на обратный звонок
+export function getCallbackRequestEmail(data: {
+  name: string
+  phone: string
+  comment?: string | null
+  createdAt?: string
+}): string {
+  const date = data.createdAt
+    ? new Date(data.createdAt).toLocaleString('ru-RU', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      })
+    : new Date().toLocaleString('ru-RU', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      })
+
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background-color: #000; color: #fff; padding: 20px; text-align: center; }
+        .content { padding: 20px; background-color: #f9f9f9; }
+        .footer { padding: 20px; text-align: center; color: #666; font-size: 12px; }
+        .info-block { background-color: #fff; padding: 15px; margin: 10px 0; border-left: 4px solid #000; }
+        .info-label { font-weight: bold; color: #000; margin-bottom: 5px; }
+        .info-value { color: #333; }
+        .comment-block { background-color: #fff; padding: 15px; margin: 10px 0; border-left: 4px solid #000; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>📞 Новая заявка на обратный звонок</h1>
+        </div>
+        <div class="content">
+          <p>Поступила новая заявка на обратный звонок с сайта ART=CO.</p>
+          
+          <div class="info-block">
+            <div class="info-label">👤 Имя клиента:</div>
+            <div class="info-value">${data.name}</div>
+          </div>
+          
+          <div class="info-block">
+            <div class="info-label">📱 Телефон:</div>
+            <div class="info-value"><a href="tel:${data.phone}" style="color: #000; text-decoration: none;">${data.phone}</a></div>
+          </div>
+          
+          ${data.comment && data.comment.trim() ? `
+          <div class="comment-block">
+            <div class="info-label">💬 Комментарий:</div>
+            <div class="info-value">${data.comment.trim().replace(/\n/g, '<br>')}</div>
+          </div>
+          ` : ''}
+          
+          <div class="info-block">
+            <div class="info-label">🕐 Дата и время:</div>
+            <div class="info-value">${date}</div>
+          </div>
+          
+          <p style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd;">
+            <strong>Не забудьте связаться с клиентом в ближайшее время!</strong>
+          </p>
+        </div>
+        <div class="footer">
+          <p>С уважением,<br>Система уведомлений ART=CO</p>
+          <p>Это автоматическое письмо, не отвечайте на него.</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `
+}
+

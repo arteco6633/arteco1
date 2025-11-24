@@ -4,6 +4,7 @@ import { useEffect, useState, useRef, useCallback, type TouchEvent, type Synthet
 import { createPortal } from 'react-dom'
 import Image from 'next/image'
 import GameModal from '@/components/GameModal'
+import KitchenMatchmakerQuiz from '@/components/KitchenMatchmakerQuiz'
 import { supabase } from '@/lib/supabase'
 import HeroBanners from '@/components/HeroBanners'
 import ProductGrid from '@/components/ProductGrid'
@@ -79,6 +80,7 @@ interface Interior {
 export default function HomePage() {
   const NEW_PRODUCTS_LIMIT = 8
   const [gameOpen, setGameOpen] = useState(false)
+  const [quizOpen, setQuizOpen] = useState(false)
   const [banners, setBanners] = useState<Banner[]>([])
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([])
   const [newProducts, setNewProducts] = useState<Product[]>([])
@@ -805,8 +807,7 @@ export default function HomePage() {
         {!hideSet.has('bottom') && bottomBanner && (
           <section className="py-2 clip-x overflow-x-hidden">
             <div className="max-w-[1680px] 2xl:max-w-none mx-auto px-1 md:px-2 xl:px-4 2xl:px-6 max-w-full">
-              <a
-                href={bottomBanner.link_url || '/catalog'}
+              <div
                 className="block w-full h-[600px] md:h-[700px] relative overflow-hidden rounded-[15px] group cursor-pointer max-w-full contain-inline"
                 style={{ 
                   background: '#B2F542',
@@ -861,15 +862,22 @@ export default function HomePage() {
                     </p>
                     
                     {/* Кнопка с анимацией стрелки */}
-                    <div className="flex items-center">
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault()
+                        e.stopPropagation()
+                        setQuizOpen(true)
+                      }}
+                      className="flex items-center cursor-pointer"
+                    >
                       <span className="w-0 overflow-hidden opacity-0 group-hover:w-6 group-hover:opacity-100 transition-[width,opacity,transform] duration-300 -translate-x-2 group-hover:translate-x-0 text-3xl text-black mr-0 group-hover:mr-2">→</span>
                       <span className="text-black font-semibold text-2xl">
                         Пройди тест!
                       </span>
-                    </div>
+                    </button>
                   </div>
                 </div>
-              </a>
+              </div>
             </div>
           </section>
         )}
@@ -1429,6 +1437,7 @@ export default function HomePage() {
           : null}
 
         <GameModal open={gameOpen} onClose={() => setGameOpen(false)} />
+        <KitchenMatchmakerQuiz isOpen={quizOpen} onClose={() => setQuizOpen(false)} />
       </main>
     </div>
   )
