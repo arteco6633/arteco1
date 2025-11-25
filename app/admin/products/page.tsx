@@ -53,6 +53,7 @@ interface Product {
   image_url: string
   images?: string[] | null
   colors?: string[] | null
+  handles?: Array<{ name: string; description?: string; image_url?: string; delta_price?: number }> | null
   fillings?: Array<{ name: string; description?: string; image_url?: string; delta_price?: number }> | null
   hinges?: Array<{ name: string; description?: string; image_url?: string; delta_price?: number }> | null
   drawers?: Array<{ name: string; description?: string; image_url?: string; delta_price?: number }> | null
@@ -118,11 +119,13 @@ export default function AdminProductsPage() {
   // Состояние для открытия dropdown выбора изображения для цвета
   const [openImageSelect, setOpenImageSelect] = useState<number | null>(null)
   // Состояния для существующих вариантов наполнения из всех товаров
+  const [existingHandles, setExistingHandles] = useState<any[]>([])
   const [existingFillings, setExistingFillings] = useState<any[]>([])
   const [existingHinges, setExistingHinges] = useState<any[]>([])
   const [existingDrawers, setExistingDrawers] = useState<any[]>([])
   const [existingLighting, setExistingLighting] = useState<any[]>([])
   // Состояния для открытия dropdown выбора существующих вариантов
+  const [openExistingHandles, setOpenExistingHandles] = useState(false)
   const [openExistingFillings, setOpenExistingFillings] = useState(false)
   const [openExistingHinges, setOpenExistingHinges] = useState(false)
   const [openExistingDrawers, setOpenExistingDrawers] = useState(false)
@@ -136,6 +139,7 @@ export default function AdminProductsPage() {
     image_url: '',
     images: [] as string[],
     colors: [] as any,
+    handles: [] as any,
     fillings: [] as any,
     hinges: [] as any,
     drawers: [] as any,
@@ -177,6 +181,9 @@ export default function AdminProductsPage() {
       if (openImageSelect !== null && !(event.target as HTMLElement).closest('.image-select-dropdown')) {
         setOpenImageSelect(null)
       }
+      if (openExistingHandles && !(event.target as HTMLElement).closest('.existing-options-dropdown')) {
+        setOpenExistingHandles(false)
+      }
       if (openExistingFillings && !(event.target as HTMLElement).closest('.existing-options-dropdown')) {
         setOpenExistingFillings(false)
       }
@@ -192,7 +199,7 @@ export default function AdminProductsPage() {
     }
     document.addEventListener('click', handleClickOutside)
     return () => document.removeEventListener('click', handleClickOutside)
-  }, [openImageSelect, openExistingFillings, openExistingHinges, openExistingDrawers, openExistingLighting])
+  }, [openImageSelect, openExistingHandles, openExistingFillings, openExistingHinges, openExistingDrawers, openExistingLighting])
 
   async function loadData() {
     try {
@@ -222,12 +229,20 @@ export default function AdminProductsPage() {
       setCategories(categoriesData || [])
 
       // Собираем все существующие варианты наполнения из всех товаров
+      const allHandles: any[] = []
       const allFillings: any[] = []
       const allHinges: any[] = []
       const allDrawers: any[] = []
       const allLighting: any[] = []
 
       productsData?.forEach(product => {
+        if (product.handles && Array.isArray(product.handles)) {
+          product.handles.forEach((h: any) => {
+            if (h && h.name && !allHandles.find(ex => ex.name === h.name && ex.description === h.description && ex.image_url === h.image_url)) {
+              allHandles.push(h)
+            }
+          })
+        }
         if (product.fillings && Array.isArray(product.fillings)) {
           product.fillings.forEach((f: any) => {
             if (f && f.name && !allFillings.find(ex => ex.name === f.name && ex.description === f.description && ex.image_url === f.image_url)) {
@@ -258,6 +273,7 @@ export default function AdminProductsPage() {
         }
       })
 
+      setExistingHandles(allHandles)
       setExistingFillings(allFillings)
       setExistingHinges(allHinges)
       setExistingDrawers(allDrawers)
@@ -282,6 +298,7 @@ export default function AdminProductsPage() {
       image_url: '',
       images: [],
       colors: [],
+      handles: [],
       fillings: [],
       hinges: [],
       drawers: [],
@@ -332,6 +349,7 @@ export default function AdminProductsPage() {
             return { value: (c as any).value, name: (c as any).name || '', imageIndex: (c as any).imageIndex ?? null }
           })
         : [],
+      handles: (product.handles as any) || [],
       fillings: (product.fillings as any) || [],
       hinges: (product.hinges as any) || [],
       drawers: (product.drawers as any) || [],
@@ -621,6 +639,7 @@ export default function AdminProductsPage() {
         image_url: imageUrl,
         images: filteredImages,
         colors: Array.isArray(formData.colors) ? formData.colors : [],
+        handles: formData.handles,
         fillings: formData.fillings,
         hinges: formData.hinges,
         drawers: formData.drawers,
@@ -668,9 +687,10 @@ export default function AdminProductsPage() {
         imageInput.value = ''
       }
       loadData()
-    } catch (error) {
+    } catch (error: any) {
       console.error('Ошибка сохранения:', error)
-      alert('Ошибка при сохранении товара')
+      const errorMessage = error?.message || error?.details || 'Неизвестная ошибка'
+      alert(`Ошибка при сохранении товара: ${errorMessage}\n\nВозможно, нужно добавить колонку "handles" в таблицу products через SQL скрипт setup_products_handles.sql`)
     } finally {
       setUploading(false)
     }
@@ -1972,6 +1992,91 @@ export default function AdminProductsPage() {
                   </div>
                 </div>
 
+                {/* Ручки */}
+                <div className="mb-6">
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="font-semibold">Ручки</label>
+                    <div className="relative existing-options-dropdown">
+                      <button 
+                        type="button" 
+                        className="px-3 py-1 border rounded hover:bg-gray-50" 
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setOpenExistingHandles(!openExistingHandles)
+                          setOpenExistingFillings(false)
+                          setOpenExistingHinges(false)
+                          setOpenExistingDrawers(false)
+                          setOpenExistingLighting(false)
+                        }}
+                      >
+                        + Добавить {openExistingHandles ? '▲' : '▼'}
+                      </button>
+                      {openExistingHandles && (
+                        <div className="absolute right-0 mt-1 bg-white border rounded-lg shadow-lg z-50 min-w-[300px] max-h-60 overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+                          <button
+                            type="button"
+                            className="w-full px-3 py-2 text-left hover:bg-gray-100 border-b"
+                            onClick={() => {
+                              setFormData({ ...formData, handles: [...formData.handles, { name: '', description: '', image_url: '', delta_price: 0 }] })
+                              setOpenExistingHandles(false)
+                            }}
+                          >
+                            + Создать новый
+                          </button>
+                          {existingHandles.length > 0 && (
+                            <>
+                              <div className="px-3 py-2 text-xs text-gray-500 border-b bg-gray-50">Выбрать из существующих:</div>
+                              {existingHandles.map((h, idx) => (
+                                <button
+                                  key={idx}
+                                  type="button"
+                                  className="w-full px-3 py-2 text-left hover:bg-gray-100 flex items-center gap-2"
+                                  onClick={() => {
+                                    setFormData({ ...formData, handles: [...formData.handles, { ...h }] })
+                                    setOpenExistingHandles(false)
+                                  }}
+                                >
+                                  {h.image_url && (
+                                    <img src={h.image_url} alt={h.name} className="w-10 h-10 object-contain rounded border bg-gray-50 flex-shrink-0" />
+                                  )}
+                                  <div className="flex-1">
+                                    <div className="text-sm font-medium">{h.name || 'Без названия'}</div>
+                                    {h.description && <div className="text-xs text-gray-500">{h.description}</div>}
+                                    {h.delta_price !== undefined && <div className="text-xs text-gray-500">Δ цена: {h.delta_price} ₽</div>}
+                                  </div>
+                                </button>
+                              ))}
+                            </>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  {(formData.handles as any[]).map((h, idx) => (
+                    <div key={idx} className="border rounded-lg p-3 mb-3 grid grid-cols-1 md:grid-cols-4 gap-3">
+                      <input className="px-3 py-2 border rounded" placeholder="Название" value={h.name} onChange={(e)=>{
+                        const arr=[...formData.handles]; (arr as any)[idx].name=e.target.value; setFormData({ ...formData, handles: arr })
+                      }} />
+                      <input className="px-3 py-2 border rounded" placeholder="URL изображения" value={h.image_url||''} onChange={(e)=>{
+                        const arr=[...formData.handles]; (arr as any)[idx].image_url=e.target.value; setFormData({ ...formData, handles: arr })
+                      }} />
+                      <input type="file" accept="image/*" onChange={async (e)=>{
+                        const file=e.target.files?.[0]; if(!file) return; 
+                        try{ const url= await uploadToFolder(file,'options/handles'); const arr=[...formData.handles]; (arr as any)[idx].image_url=url; setFormData({ ...formData, handles: arr }) }catch(err){ console.error(err); alert('Не удалось загрузить изображение ручки') }
+                      }} />
+                      <input type="number" className="px-3 py-2 border rounded" placeholder="Δ цена" value={h.delta_price||0} onChange={(e)=>{
+                        const arr=[...formData.handles]; (arr as any)[idx].delta_price= Number(e.target.value); setFormData({ ...formData, handles: arr })
+                      }} />
+                      <input className="px-3 py-2 border rounded md:col-span-4" placeholder="Описание" value={h.description||''} onChange={(e)=>{
+                        const arr=[...formData.handles]; (arr as any)[idx].description= e.target.value; setFormData({ ...formData, handles: arr })
+                      }} />
+                      <div className="md:col-span-4 text-right">
+                        <button type="button" className="text-red-600" onClick={()=> setFormData({ ...formData, handles: (formData.handles as any[]).filter((_,i)=>i!==idx) })}>Удалить</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
                 {/* Варианты наполнений */}
                 <div className="mb-6">
                   <div className="flex items-center justify-between mb-2">
@@ -1983,6 +2088,7 @@ export default function AdminProductsPage() {
                         onClick={(e) => {
                           e.stopPropagation()
                           setOpenExistingFillings(!openExistingFillings)
+                          setOpenExistingHandles(false)
                           setOpenExistingHinges(false)
                           setOpenExistingDrawers(false)
                           setOpenExistingLighting(false)
@@ -2067,6 +2173,7 @@ export default function AdminProductsPage() {
                         onClick={(e) => {
                           e.stopPropagation()
                           setOpenExistingHinges(!openExistingHinges)
+                          setOpenExistingHandles(false)
                           setOpenExistingFillings(false)
                           setOpenExistingDrawers(false)
                           setOpenExistingLighting(false)
@@ -2151,6 +2258,7 @@ export default function AdminProductsPage() {
                         onClick={(e) => {
                           e.stopPropagation()
                           setOpenExistingDrawers(!openExistingDrawers)
+                          setOpenExistingHandles(false)
                           setOpenExistingFillings(false)
                           setOpenExistingHinges(false)
                           setOpenExistingLighting(false)
@@ -2235,6 +2343,7 @@ export default function AdminProductsPage() {
                         onClick={(e) => {
                           e.stopPropagation()
                           setOpenExistingLighting(!openExistingLighting)
+                          setOpenExistingHandles(false)
                           setOpenExistingFillings(false)
                           setOpenExistingHinges(false)
                           setOpenExistingDrawers(false)

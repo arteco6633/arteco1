@@ -21,6 +21,7 @@ interface Product {
   image_url: string
   images?: string[] | null
   colors?: string[] | null
+  handles?: Array<{ name: string; description?: string; image_url?: string; delta_price?: number }> | null
   fillings?: Array<{ name: string; description?: string; image_url?: string; delta_price?: number }> | null
   hinges?: Array<{ name: string; description?: string; image_url?: string; delta_price?: number }> | null
   drawers?: Array<{ name: string; description?: string; image_url?: string; delta_price?: number }> | null
@@ -68,6 +69,7 @@ export default function ProductPage() {
   const [loading, setLoading] = useState(true)
   const [quantity, setQuantity] = useState(1)
   const [activeImageIdx, setActiveImageIdx] = useState(0)
+  const [selectedHandlesIdx, setSelectedHandlesIdx] = useState<number | null>(null)
   const [selectedFillingIdx, setSelectedFillingIdx] = useState<number | null>(null)
   const [selectedHingeIdx, setSelectedHingeIdx] = useState<number | null>(null)
   const leftMainImageRef = useRef<HTMLDivElement | null>(null)
@@ -107,6 +109,7 @@ export default function ProductPage() {
   const finalPrice = useMemo(() => {
     if (!product) return 0
     // Доплаты опций
+    const handles = (product.handles && selectedHandlesIdx != null && product.handles[selectedHandlesIdx]?.delta_price) || 0
     const hinge = (product.hinges && selectedHingeIdx != null && product.hinges[selectedHingeIdx]?.delta_price) || 0
     const drawer = (product.drawers && selectedDrawerIdx != null && product.drawers[selectedDrawerIdx]?.delta_price) || 0
     const lighting = (product.lighting && selectedLightingIdx != null && product.lighting[selectedLightingIdx]?.delta_price) || 0
@@ -122,8 +125,9 @@ export default function ProductPage() {
     // - цена считается только за выбранные модули
     const base = hasModules ? 0 : (Number(product.price) || 0)
 
-    return base + hinge + drawer + lighting + modulesSum
-  }, [product, selectedHingeIdx, selectedDrawerIdx, selectedLightingIdx, selectedModules, modules])
+    return base + handles + hinge + drawer + lighting + modulesSum
+  }, [product, selectedHandlesIdx, selectedHingeIdx, selectedDrawerIdx, selectedLightingIdx, selectedModules, modules])
+  const [openHandles, setOpenHandles] = useState(false)
   const [openFilling, setOpenFilling] = useState(true)
   const [openHinge, setOpenHinge] = useState(false)
   const [openDrawer, setOpenDrawer] = useState(false)
@@ -473,6 +477,10 @@ export default function ProductPage() {
       }
     }
     const options: Record<string, any> = {}
+    if (product.handles && selectedHandlesIdx != null) {
+      const h = product.handles[selectedHandlesIdx]
+      if (h) options.handles = { name: h.name, delta_price: h.delta_price || 0 }
+    }
     if (product.fillings && selectedFillingIdx != null) {
       const f = product.fillings[selectedFillingIdx]
       if (f) options.filling = { name: f.name, delta_price: f.delta_price || 0 }
@@ -869,10 +877,10 @@ export default function ProductPage() {
                               setActiveImageIdx(Math.min(idx, product.images.length - 1))
                             }
                           }}
-                          className={`w-12 h-12 rounded-full border-2 ${isSelected ? 'border-black ring-2 ring-black/30' : 'border-black/10'} object-cover cursor-pointer hover:ring-2 hover:ring-black/20 transition-all ${linkedProductId ? 'ring-1 ring-blue-400' : ''}`}
+                          className={`w-16 h-16 rounded-lg border-2 ${isSelected ? 'border-black ring-2 ring-black/30' : 'border-black/10'} cursor-pointer hover:ring-2 hover:ring-black/20 transition-all ${linkedProductId ? 'ring-1 ring-blue-400' : ''} bg-gray-50 overflow-hidden flex items-center justify-center`}
                           title={linkedProductId ? 'Нажмите, чтобы открыть товар с этим цветом' : `Цвет ${idx + 1}`}
                         >
-                          <img src={colorValue} alt={`Цвет ${idx + 1}`} className="w-full h-full rounded-full object-cover" />
+                          <img src={colorValue} alt={`Цвет ${idx + 1}`} className="w-full h-full rounded-lg object-contain" />
                         </button>
                       ) : (
                         <button
@@ -892,7 +900,7 @@ export default function ProductPage() {
                               setActiveImageIdx(Math.min(idx, product.images.length - 1))
                             }
                           }}
-                          className={`w-12 h-12 rounded-full border-2 ${isSelected ? 'border-black ring-2 ring-black/30' : 'border-black/10'} shadow-sm cursor-pointer hover:ring-2 hover:ring-black/20 transition-all ${linkedProductId ? 'ring-1 ring-blue-400' : ''}`}
+                          className={`w-16 h-16 rounded-lg border-2 ${isSelected ? 'border-black ring-2 ring-black/30' : 'border-black/10'} shadow-sm cursor-pointer hover:ring-2 hover:ring-black/20 transition-all ${linkedProductId ? 'ring-1 ring-blue-400' : ''}`}
                           style={{ background: colorValue || '#ccc' }}
                           title={linkedProductId ? 'Нажмите, чтобы открыть товар с этим цветом' : (colorValue || 'Цвет')}
                         />
@@ -951,6 +959,54 @@ export default function ProductPage() {
                 </div>
               )}
 
+              {/* Ручки — Аккордеон */}
+              {product.handles && product.handles.length > 0 && (
+                <div className="mb-2 border rounded-lg overflow-hidden">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setOpenHandles(!openHandles)
+                      if (!openHandles) { setOpenFilling(false); setOpenHinge(false); setOpenDrawer(false); setOpenLighting(false) }
+                    }}
+                    className="w-full px-4 py-3 flex items-center justify-between bg-white hover:bg-gray-50 transition-colors"
+                  >
+                    <span className="font-semibold">Ручки</span>
+                    <span className="text-xl">{openHandles ? '−' : '+'}</span>
+                  </button>
+                  <div
+                    className="px-2 sm:px-4 bg-white overflow-hidden transition-all duration-400 ease-in-out"
+                    style={{ maxHeight: openHandles ? 800 : 0, paddingBottom: openHandles ? 16 : 0, opacity: openHandles ? 1 : 0 }}
+                    aria-hidden={!openHandles}
+                  >
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {product.handles.map((h, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => setSelectedHandlesIdx(idx)}
+                          className={`text-left p-3 rounded-lg border hover:bg-gray-50 ${selectedHandlesIdx===idx ? 'border-black' : 'border-gray-200'}`}
+                        >
+                          <div className="flex items-start gap-2 sm:gap-3">
+                            {h.image_url ? (
+                              <Image src={h.image_url} alt={h.name || 'Вариант'} width={128} height={128} quality={90} className="w-24 h-24 sm:w-32 sm:h-32 min-w-[96px] sm:min-w-[128px] rounded object-cover border border-gray-200 flex-shrink-0" unoptimized={true} />
+                            ) : (
+                              <div className="w-24 h-24 sm:w-32 sm:h-32 min-w-[96px] sm:min-w-[128px] rounded bg-gray-100 border border-gray-200 flex items-center justify-center text-gray-400 text-xs flex-shrink-0">Нет фото</div>
+                            )}
+                            <div className="flex-1">
+                              <div className="font-medium mb-1">{h.name || 'Без названия'}</div>
+                              {typeof h.delta_price === 'number' && h.delta_price !== 0 && (
+                                <div className="text-sm text-gray-600 mb-1">{h.delta_price > 0 ? '+' : ''}{h.delta_price?.toLocaleString('ru-RU')} ₽</div>
+                              )}
+                              {h.description && <div className="text-xs text-gray-500">{h.description}</div>}
+                            </div>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+              </div>
+              )}
+
               {/* Варианты наполнений — Аккордеон */}
               {product.fillings && product.fillings.length > 0 && (
                 <div className="mb-2 border rounded-lg overflow-hidden">
@@ -958,7 +1014,7 @@ export default function ProductPage() {
                     type="button"
                     onClick={() => {
                       setOpenFilling(!openFilling)
-                      if (!openFilling) { setOpenHinge(false); setOpenDrawer(false); setOpenLighting(false) }
+                      if (!openFilling) { setOpenHandles(false); setOpenHinge(false); setOpenDrawer(false); setOpenLighting(false) }
                     }}
                     className="w-full px-4 py-3 flex items-center justify-between bg-white hover:bg-gray-50 transition-colors"
                   >
@@ -1006,7 +1062,7 @@ export default function ProductPage() {
                     type="button"
                     onClick={() => {
                       setOpenHinge(!openHinge)
-                      if (!openHinge) { setOpenFilling(false); setOpenDrawer(false); setOpenLighting(false) }
+                      if (!openHinge) { setOpenHandles(false); setOpenFilling(false); setOpenDrawer(false); setOpenLighting(false) }
                     }}
                     className="w-full px-4 py-3 flex items-center justify-between bg-white hover:bg-gray-50 transition-colors"
                   >
@@ -1054,7 +1110,7 @@ export default function ProductPage() {
                     type="button"
                     onClick={() => {
                       setOpenDrawer(!openDrawer)
-                      if (!openDrawer) { setOpenFilling(false); setOpenHinge(false); setOpenLighting(false) }
+                      if (!openDrawer) { setOpenHandles(false); setOpenFilling(false); setOpenHinge(false); setOpenLighting(false) }
                     }}
                     className="w-full px-4 py-3 flex items-center justify-between bg-white hover:bg-gray-50 transition-colors"
                   >
@@ -1102,7 +1158,7 @@ export default function ProductPage() {
                     type="button"
                     onClick={() => {
                       setOpenLighting(!openLighting)
-                      if (!openLighting) { setOpenFilling(false); setOpenHinge(false); setOpenDrawer(false) }
+                      if (!openLighting) { setOpenHandles(false); setOpenFilling(false); setOpenHinge(false); setOpenDrawer(false) }
                     }}
                     className="w-full px-4 py-3 flex items-center justify-between bg-white hover:bg-gray-50 transition-colors"
                   >
@@ -1706,9 +1762,17 @@ export default function ProductPage() {
                   <div className="relative">
                     <div className="absolute inset-0 bg-white/20 rounded-full blur-xl animate-ping"></div>
                     <div className="relative w-16 h-16 md:w-20 md:h-20 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 flex items-center justify-center transition-transform duration-500 group-hover:scale-110 group-hover:rotate-12">
-                      <svg className="w-8 h-8 md:w-10 md:h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      {/* Иконка рулетки */}
+                      <svg 
+                        className="w-8 h-8 md:w-10 md:h-10" 
+                        viewBox="0 0 100.5 100.5" 
+                        xmlns="http://www.w3.org/2000/svg"
+                        style={{ fill: 'white', stroke: 'none' }}
+                      >
+                        <path 
+                          d="M89.398,9.602H11.102c-0.829,0-1.5,0.672-1.5,1.5v78.296c0,0.828,0.671,1.5,1.5,1.5h29.937c0.829,0,1.5-0.672,1.5-1.5s-0.671-1.5-1.5-1.5H12.602V64.72h15.353c0.829,0,1.5-0.672,1.5-1.5s-0.671-1.5-1.5-1.5H12.602V12.602H50.75v23.672c0,0.828,0.671,1.5,1.5,1.5s1.5-0.672,1.5-1.5V12.602h34.148v37.064H39.482c-0.829,0-1.5,0.672-1.5,1.5s0.671,1.5,1.5,1.5h48.416v35.231H66.123l-11.23-16.352c-0.468-0.682-1.403-0.857-2.085-0.387c-0.683,0.469-0.856,1.402-0.387,2.086l11.677,17.002c0.28,0.407,0.742,0.65,1.236,0.65h24.065c0.829,0,1.5-0.672,1.5-1.5V11.102C90.898,10.274,90.227,9.602,89.398,9.602z" 
+                          fill="white"
+                        />
                       </svg>
                     </div>
                   </div>
