@@ -733,6 +733,7 @@ export default function AdminProductsPage() {
             return { value: (c as any).value, name: (c as any).name || '', imageIndex: (c as any).imageIndex ?? null }
           })
         : [],
+      handles: (product.handles as any) || [],
       fillings: (product.fillings as any) || [],
       hinges: (product.hinges as any) || [],
       drawers: (product.drawers as any) || [],
