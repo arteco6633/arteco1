@@ -12,6 +12,7 @@ interface Product {
   description: string | null
   price: number
   original_price?: number | null
+  price_type?: 'fixed' | 'per_m2' | null
   image_url: string
   images?: string[] | null
   colors?: string[] | null
@@ -495,10 +496,10 @@ export default function CategoryPage() {
                     <div className="mb-1 text-black font-semibold text-base md:text-lg">
                       {(product as any).original_price && (
                         <span className="text-gray-400 line-through mr-2 text-sm md:text-base font-normal">
-                          {(product as any).original_price.toLocaleString('ru-RU')} ₽
+                          {(product as any).original_price.toLocaleString('ru-RU')} {product.price_type === 'per_m2' ? '₽/м²' : '₽'}
                         </span>
                       )}
-                      <span>{product.price.toLocaleString('ru-RU')} ₽</span>
+                      <span>{product.price.toLocaleString('ru-RU')} {product.price_type === 'per_m2' ? '₽/м²' : '₽'}</span>
                     </div>
                     <h3 className="font-medium text-sm md:text-[15px] sm:md:text-[16px] leading-snug line-clamp-2 md:group-hover:text-black transition-colors text-black">
                     {product.name}

@@ -10,6 +10,7 @@ interface Product {
   description: string
   price: number
   original_price?: number
+  price_type?: 'fixed' | 'per_m2' | null
   image_url: string
   images?: string[] | null
   colors?: any[] | null
@@ -111,11 +112,11 @@ function Card({ product, onAdd, priority = false, fixedWidth }: { product: Produ
       <div className="p-3 sm:p-4 md:p-5 relative rounded-b-lg flex flex-col flex-grow min-h-[100px] sm:min-h-[110px] md:min-h-[120px]">
         <div className="flex items-center gap-1.5 sm:gap-2 mb-2 sm:mb-3">
           <span className="text-base sm:text-lg md:text-xl lg:text-[22px] font-semibold text-gray-900">
-            {product.price.toLocaleString('ru-RU')} ₽
+            {product.price.toLocaleString('ru-RU')} {product.price_type === 'per_m2' ? '₽/м²' : '₽'}
           </span>
           {product.original_price && (
             <span className="text-[10px] sm:text-xs md:text-sm text-gray-400 line-through">
-              {product.original_price.toLocaleString('ru-RU')} ₽
+              {product.original_price.toLocaleString('ru-RU')} {product.price_type === 'per_m2' ? '₽/м²' : '₽'}
             </span>
           )}
         </div>

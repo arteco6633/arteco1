@@ -11,6 +11,7 @@ interface Product {
   description: string
   price: number
   original_price?: number | null
+  price_type?: 'fixed' | 'per_m2' | null
   image_url: string
   images?: string[] | null
   category_id: number
@@ -313,25 +314,25 @@ export default function FamilyPricePage() {
                         {product.original_price ? (
                           <>
                             <span className="text-2xl font-light text-black">
-                              {formatPrice(discountPrice)} ₽
+                              {formatPrice(discountPrice)} {product.price_type === 'per_m2' ? '₽/м²' : '₽'}
                             </span>
                             <span className="text-sm text-gray-400 line-through font-light">
-                              {formatPrice(product.original_price)} ₽
+                              {formatPrice(product.original_price)} {product.price_type === 'per_m2' ? '₽/м²' : '₽'}
                             </span>
                           </>
                         ) : (
                           <>
                             <span className="text-2xl font-light text-black">
-                              {formatPrice(discountPrice)} ₽
+                              {formatPrice(discountPrice)} {product.price_type === 'per_m2' ? '₽/м²' : '₽'}
                             </span>
                             <span className="text-xs text-gray-500 font-light">
-                              (было {formatPrice(product.price)} ₽)
+                              (было {formatPrice(product.price)} {product.price_type === 'per_m2' ? '₽/м²' : '₽'})
                             </span>
                           </>
                         )}
                       </div>
                       <div className="mt-4 text-xs text-gray-500 uppercase tracking-wider font-medium">
-                        Экономия {formatPrice(product.original_price ? product.original_price - discountPrice : product.price - discountPrice)} ₽
+                        Экономия {formatPrice(product.original_price ? product.original_price - discountPrice : product.price - discountPrice)} {product.price_type === 'per_m2' ? '₽/м²' : '₽'}
                       </div>
                     </div>
                   </Link>

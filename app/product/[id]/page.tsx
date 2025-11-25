@@ -17,6 +17,8 @@ interface Product {
   description: string | null
   price: number
   original_price?: number | null
+  price_type?: 'fixed' | 'per_m2' | null
+  price_per_m2?: number | null
   stock_quantity?: number | null
   image_url: string
   images?: string[] | null
@@ -77,6 +79,7 @@ export default function ProductPage() {
   const [selectedDrawerIdx, setSelectedDrawerIdx] = useState<number | null>(null)
   const [selectedLightingIdx, setSelectedLightingIdx] = useState<number | null>(null)
   const [selectedColorIdx, setSelectedColorIdx] = useState<number | null>(null)
+  const [customArea, setCustomArea] = useState<number | null>(null) // Площадь для расчета цены за м²
   // Плавное появление изображений после полной загрузки
   const [loadedImages, setLoadedImages] = useState<Record<number, boolean>>({})
   // Хук для отслеживания брейкпоинта (избегаем разницы SSR/CSR)
@@ -123,10 +126,16 @@ export default function ProductPage() {
     // Базовая цена:
     // - если пользователь добавил модули через конструктор, базовая цена не учитывается
     // - цена считается только за выбранные модули
-    const base = hasModules ? 0 : (Number(product.price) || 0)
+    // - если цена за м², умножаем на площадь (customArea или price_per_m2)
+    let base = hasModules ? 0 : (Number(product.price) || 0)
+    
+    if (product.price_type === 'per_m2' && base > 0) {
+      const area = customArea || product.price_per_m2 || 1
+      base = base * area
+    }
 
     return base + handles + hinge + drawer + lighting + modulesSum
-  }, [product, selectedHandlesIdx, selectedHingeIdx, selectedDrawerIdx, selectedLightingIdx, selectedModules, modules])
+  }, [product, selectedHandlesIdx, selectedHingeIdx, selectedDrawerIdx, selectedLightingIdx, selectedModules, modules, customArea])
   const [openHandles, setOpenHandles] = useState(false)
   const [openFilling, setOpenFilling] = useState(true)
   const [openHinge, setOpenHinge] = useState(false)
@@ -809,13 +818,31 @@ export default function ProductPage() {
 
               <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2 leading-tight">{product.name}</h1>
 
-              <div className="text-3xl sm:text-4xl font-bold text-black mt-1 mb-1">
-                {(product as any).original_price && (
-                  <span className="text-gray-400 line-through mr-3 text-2xl sm:text-3xl font-normal">
-                    {(product as any).original_price.toLocaleString('ru-RU')} ₽
+              <div className={`mt-1 mb-1 ${product?.price_type === 'per_m2' ? 'flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4' : ''}`}>
+                <div className="text-3xl sm:text-4xl font-bold text-black">
+                  {(product as any).original_price && (
+                    <span className="text-gray-400 line-through mr-3 text-2xl sm:text-3xl font-normal">
+                      {(product as any).original_price.toLocaleString('ru-RU')} {product?.price_type === 'per_m2' ? '₽/м²' : '₽'}
+                    </span>
+                  )}
+                  <span>
+                    {finalPrice.toLocaleString('ru-RU')} {product?.price_type === 'per_m2' ? '₽/м²' : '₽'}
+                    {product?.price_type === 'per_m2' && customArea && <span className="text-lg font-normal text-gray-600"> за {customArea.toLocaleString('ru-RU')} м²</span>}
                   </span>
+                </div>
+                {product?.price_type === 'per_m2' && (
+                  <div className="flex-shrink-0">
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0.01"
+                      className="w-full sm:w-auto min-w-[160px] px-4 py-2 border border-gray-300 rounded-[50px] focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-base"
+                      value={customArea || product?.price_per_m2 || ''}
+                      onChange={(e) => setCustomArea(e.target.value ? parseFloat(e.target.value) : null)}
+                      placeholder={product?.price_per_m2 ? product.price_per_m2.toString() : 'Введите площадь'}
+                    />
+                  </div>
                 )}
-                <span>{finalPrice.toLocaleString('ru-RU')} ₽</span>
               </div>
 
               <div className="flex gap-2 mb-4 md:mb-0">
@@ -1293,10 +1320,12 @@ export default function ProductPage() {
               <div className="text-3xl font-bold text-black mb-2">
                 {(product as any).original_price && (
                   <span className="text-gray-400 line-through mr-2 text-2xl font-normal">
-                    {(product as any).original_price.toLocaleString('ru-RU')} ₽
+                    {(product as any).original_price.toLocaleString('ru-RU')} {product.price_type === 'per_m2' ? '₽/м²' : '₽'}
                   </span>
                 )}
-                <span>{finalPrice.toLocaleString('ru-RU')} ₽</span>
+                <span>
+                  {finalPrice.toLocaleString('ru-RU')} {product.price_type === 'per_m2' ? '₽/м²' : '₽'}
+                </span>
               </div>
             </div>
 

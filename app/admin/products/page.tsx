@@ -49,6 +49,8 @@ interface Product {
   description: string | null
   price: number
   original_price?: number | null
+  price_type?: 'fixed' | 'per_m2' | null
+  price_per_m2?: number | null
   sku?: string | null
   image_url: string
   images?: string[] | null
@@ -135,6 +137,8 @@ export default function AdminProductsPage() {
     description: '',
     price: '',
     original_price: '',
+    price_type: 'fixed' as 'fixed' | 'per_m2',
+    price_per_m2: '',
     sku: '',
     image_url: '',
     images: [] as string[],
@@ -294,6 +298,8 @@ export default function AdminProductsPage() {
       description: '',
       price: '',
       original_price: '',
+      price_type: 'fixed' as 'fixed' | 'per_m2',
+      price_per_m2: '',
       sku: '',
       image_url: '',
       images: [],
@@ -340,6 +346,8 @@ export default function AdminProductsPage() {
       description: product.description || '',
       price: product.price.toString(),
       original_price: (product.original_price || '').toString(),
+      price_type: (product.price_type as 'fixed' | 'per_m2') || 'fixed',
+      price_per_m2: product.price_per_m2 ? product.price_per_m2.toString() : '',
       sku: (product.sku || '').toString(),
       image_url: product.image_url,
       images: (product.images as any) || [],
@@ -635,6 +643,8 @@ export default function AdminProductsPage() {
         description: formData.description || null,
         price: parseFloat(formData.price),
         original_price: formData.original_price ? parseFloat(formData.original_price) : null,
+        price_type: formData.price_type || 'fixed',
+        price_per_m2: formData.price_per_m2 ? parseFloat(formData.price_per_m2) : null,
         sku: formData.sku || null,
         image_url: imageUrl,
         images: filteredImages,
@@ -724,6 +734,8 @@ export default function AdminProductsPage() {
       description: product.description || '',
       price: product.price.toString(),
       original_price: (product.original_price || '').toString(),
+      price_type: (product.price_type as 'fixed' | 'per_m2') || 'fixed',
+      price_per_m2: product.price_per_m2 ? product.price_per_m2.toString() : '',
       sku: '', // Очищаем SKU, чтобы не было дубликатов
       image_url: product.image_url,
       images: (product.images as any) || [],
@@ -1074,7 +1086,37 @@ export default function AdminProductsPage() {
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Цена <span className="text-red-500">*</span>
+                        Тип цены <span className="text-red-500">*</span>
+                      </label>
+                      <div className="flex gap-4 mb-3">
+                        <label className="flex items-center cursor-pointer">
+                          <input
+                            type="radio"
+                            name="price_type"
+                            value="fixed"
+                            checked={formData.price_type === 'fixed'}
+                            onChange={(e) => setFormData({ ...formData, price_type: e.target.value as 'fixed' | 'per_m2' })}
+                            className="mr-2"
+                          />
+                          <span>За всё</span>
+                        </label>
+                        <label className="flex items-center cursor-pointer">
+                          <input
+                            type="radio"
+                            name="price_type"
+                            value="per_m2"
+                            checked={formData.price_type === 'per_m2'}
+                            onChange={(e) => setFormData({ ...formData, price_type: e.target.value as 'fixed' | 'per_m2' })}
+                            className="mr-2"
+                          />
+                          <span>За м²</span>
+                        </label>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        {formData.price_type === 'per_m2' ? 'Цена за м²' : 'Цена'} <span className="text-red-500">*</span>
                       </label>
                       <div className="relative">
                         <input
@@ -1087,9 +1129,32 @@ export default function AdminProductsPage() {
                           placeholder="0.00"
                           required
                         />
-                        <span className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500">₽</span>
+                        <span className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500">
+                          {formData.price_type === 'per_m2' ? '₽/м²' : '₽'}
+                        </span>
                       </div>
                     </div>
+
+                    {formData.price_type === 'per_m2' && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Площадь для расчета (м²)
+                          <span className="ml-2 text-xs text-gray-500 font-normal">(необязательно, для предпросмотра)</span>
+                        </label>
+                        <div className="relative">
+                          <input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            className="w-full px-4 py-2.5 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                            value={formData.price_per_m2 || ''}
+                            onChange={(e) => setFormData({ ...formData, price_per_m2: e.target.value })}
+                            placeholder="0.00"
+                          />
+                          <span className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500">м²</span>
+                        </div>
+                      </div>
+                    )}
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
