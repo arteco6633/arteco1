@@ -26,3 +26,4 @@ COMMENT ON COLUMN promo_blocks.video_url IS 'URL видео для промо-б
 
 
 
+

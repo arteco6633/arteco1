@@ -56,3 +56,4 @@ export function createCacheKey(table: string, filters: Record<string, any> = {})
   return `supabase:${table}:${filterStr}`
 }
 
+

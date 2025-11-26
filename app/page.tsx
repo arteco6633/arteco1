@@ -1047,10 +1047,15 @@ export default function HomePage() {
         {/* Новинки */}
         {!hideSet.has('new') && newProducts.length > 0 && (
           <section className="py-8 bg-white">
-            <div className="max-w-[1400px] 2xl:max-w-none mx-auto px-4 md:px-3 xl:px-6 2xl:px-9">
+            <div className="max-w-[1680px] 2xl:max-w-none mx-auto px-1 md:px-2 xl:px-4 2xl:px-6 max-w-full">
               <div className="mb-6 flex flex-col md:flex-row md:items-start md:justify-between gap-4 md:gap-6">
                 <div className="order-2 md:order-1 flex-1">
-                  <ProductGrid products={newProducts.slice(0, NEW_PRODUCTS_LIMIT)} onlyFirstTwo />
+                  <ProductGrid
+                    products={newProducts.slice(0, NEW_PRODUCTS_LIMIT)}
+                    onlyFirstTwo
+                    hideButton={true}
+                    hideColors={true}
+                  />
                 </div>
                 <div className="order-1 md:order-2 w-full md:w-[420px] lg:w-[480px]">
                   <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4">Каталог новинок</h2>
@@ -1069,6 +1074,8 @@ export default function HomePage() {
                 <div className="mt-6">
                   <ProductGrid
                     products={newProducts.slice(2, NEW_PRODUCTS_LIMIT)}
+                    hideButton={true}
+                    hideColors={true}
                     ctaRight={(
                       <a
                         href="/catalog"
@@ -1112,15 +1119,6 @@ export default function HomePage() {
         {/* Arteco - реальные интерьеры */}
         <section className="py-8 bg-white">
           <div className="max-w-[1680px] 2xl:max-w-none mx-auto px-1 md:px-2 xl:px-4 2xl:px-6 max-w-full">
-            <div className="text-center mb-8 sm:mb-10 md:mb-12">
-              <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-black mb-4 tracking-tight">
-                Arteco - реальные интерьеры
-              </h2>
-              <p className="text-sm sm:text-base text-gray-600 max-w-xl mx-auto font-light">
-                Вдохновитесь реальными интерьерами, созданных с любовью
-              </p>
-            </div>
-
             {interiorsLoading ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                 {Array.from({ length: 6 }).map((_, index) => (
@@ -1133,74 +1131,152 @@ export default function HomePage() {
                 ))}
               </div>
             ) : interiors.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-                {interiors.map((interior, index) => (
-                  <button
-                    type="button"
-                    key={interior.id}
-                    onClick={() => openInterior(index)}
-                    className="group relative aspect-[4/3] overflow-hidden rounded-xl border border-gray-200 bg-gray-50 text-left transition-all duration-500 hover:-translate-y-1 hover:border-gray-300 hover:shadow-[0_32px_90px_-45px_rgba(15,23,42,0.55)] focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-4"
-                  >
-                    {interior.cover_image ? (
-                      <Image
-                        src={interior.cover_image}
-                        alt={interior.title}
-                        fill
-                        className="object-cover transition-transform duration-500 group-hover:scale-105"
-                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                        unoptimized={true}
-                        priority={index < 3}
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement
-                          target.style.display = 'none'
-                        }}
-                      />
-                    ) : (
-                      <div className="flex h-full items-center justify-center bg-gray-100 text-sm text-gray-400">
-                        Изображение готовится
-                      </div>
-                    )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent opacity-60 transition-opacity duration-500 group-hover:opacity-80" />
-                    <div className="absolute top-5 left-5 px-3 py-1 rounded-full bg-white/85 text-[10px] sm:text-xs tracking-[0.4em] text-gray-700 shadow-sm">
-                      {String(index + 1).padStart(2, '0')}
+              <>
+                <div className="mb-6 flex flex-col md:flex-row md:items-start md:justify-between gap-4 md:gap-6">
+                  <div className="order-2 md:order-1 flex-1">
+                    <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 gap-4 sm:gap-6">
+                      {interiors.slice(0, 2).map((interior, index) => (
+                        <button
+                          type="button"
+                          key={interior.id}
+                          onClick={() => openInterior(index)}
+                          className="group relative aspect-[4/3] overflow-hidden rounded-xl border border-gray-200 bg-gray-50 text-left transition-all duration-500 hover:-translate-y-1 hover:border-gray-300 hover:shadow-[0_32px_90px_-45px_rgba(15,23,42,0.55)] focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-4"
+                        >
+                          {interior.cover_image ? (
+                            <Image
+                              src={interior.cover_image}
+                              alt={interior.title}
+                              fill
+                              className="object-cover transition-transform duration-500 group-hover:scale-105"
+                              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 50vw"
+                              unoptimized={true}
+                              priority={index < 2}
+                              onError={(e) => {
+                                const target = e.target as HTMLImageElement
+                                target.style.display = 'none'
+                              }}
+                            />
+                          ) : (
+                            <div className="flex h-full items-center justify-center bg-gray-100 text-sm text-gray-400">
+                              Изображение готовится
+                            </div>
+                          )}
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent opacity-60 transition-opacity duration-500 group-hover:opacity-80" />
+                          <div className="absolute top-5 left-5 px-3 py-1 rounded-full bg-white/85 text-[10px] sm:text-xs tracking-[0.4em] text-gray-700 shadow-sm">
+                            {String(index + 1).padStart(2, '0')}
+                          </div>
+                          {(interior.video_urls?.length || interior.document_files?.length) && (
+                            <div className="absolute top-5 right-5 flex items-center gap-2 text-[10px] font-medium uppercase tracking-[0.25em] text-white/80">
+                              {interior.video_urls?.length ? (
+                                <span className="flex items-center gap-1 rounded-full bg-white/15 px-3 py-1 backdrop-blur">
+                                  <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M8 5v14l11-7-11-7z" />
+                                  </svg>
+                                  {interior.video_urls.length}
+                                </span>
+                              ) : null}
+                              {interior.document_files?.length ? (
+                                <span className="flex items-center gap-1 rounded-full bg-white/15 px-3 py-1 backdrop-blur">
+                                  <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M7 7h4.5a2.5 2.5 0 012.5 2.5V21" />
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M7 7v12a2 2 0 002 2h8" />
+                                  </svg>
+                                  {interior.document_files.length}
+                                </span>
+                              ) : null}
+                            </div>
+                          )}
+                          <div className="absolute inset-x-0 bottom-0 p-5 sm:p-6">
+                            <div className="text-base sm:text-lg md:text-xl font-semibold text-white leading-tight line-clamp-2">
+                              {interior.title}
+                            </div>
+                            {(interior.location || interior.subtitle) && (
+                              <div className="mt-2 text-xs sm:text-sm text-white/80">
+                                {interior.location || interior.subtitle}
+                              </div>
+                            )}
+                          </div>
+                        </button>
+                      ))}
                     </div>
-                    {(interior.video_urls?.length || interior.document_files?.length) && (
-                      <div className="absolute top-5 right-5 flex items-center gap-2 text-[10px] font-medium uppercase tracking-[0.25em] text-white/80">
-                        {interior.video_urls?.length ? (
-                          <span className="flex items-center gap-1 rounded-full bg-white/15 px-3 py-1 backdrop-blur">
-                            <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M8 5v14l11-7-11-7z" />
-                            </svg>
-                            {interior.video_urls.length}
-                          </span>
-                        ) : null}
-                        {interior.document_files?.length ? (
-                          <span className="flex items-center gap-1 rounded-full bg-white/15 px-3 py-1 backdrop-blur">
-                            <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M7 7h4.5a2.5 2.5 0 012.5 2.5V21" />
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M7 7v12a2 2 0 002 2h8" />
-                            </svg>
-                            {interior.document_files.length}
-                          </span>
-                        ) : null}
-                      </div>
-                    )}
-                    <div className="absolute inset-x-0 bottom-0 p-5 sm:p-6">
-                      <div className="text-xs uppercase tracking-[0.35em] text-white/70 mb-2">
-                        Квартира · Проект
-                      </div>
-                      <div className="text-lg sm:text-xl font-light text-white leading-tight line-clamp-2">
-                        {interior.title}
-                      </div>
-                      {(interior.location || interior.subtitle) && (
-                        <div className="mt-2 text-[11px] sm:text-xs text-white/70 tracking-wide">
-                          {interior.location || interior.subtitle}
-                        </div>
-                      )}
+                  </div>
+                  <div className="order-1 md:order-2 w-full md:w-[420px] lg:w-[480px]">
+                    <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4">Arteco - реальные интерьеры</h2>
+                    <p className="text-gray-600 text-base mb-4">
+                      Вдохновитесь реальными интерьерами, созданных с любовью. Продуманные проекты дизайнеров реализованными нашими силами
+                    </p>
+                  </div>
+                </div>
+                {/* Остальные карточки во всю ширину */}
+                {interiors.length > 2 && (
+                  <div className="mt-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                      {interiors.slice(2).map((interior, index) => (
+                        <button
+                          type="button"
+                          key={interior.id}
+                          onClick={() => openInterior(index + 2)}
+                          className="group relative aspect-[4/3] overflow-hidden rounded-xl border border-gray-200 bg-gray-50 text-left transition-all duration-500 hover:-translate-y-1 hover:border-gray-300 hover:shadow-[0_32px_90px_-45px_rgba(15,23,42,0.55)] focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-4"
+                        >
+                          {interior.cover_image ? (
+                            <Image
+                              src={interior.cover_image}
+                              alt={interior.title}
+                              fill
+                              className="object-cover transition-transform duration-500 group-hover:scale-105"
+                              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                              unoptimized={true}
+                              onError={(e) => {
+                                const target = e.target as HTMLImageElement
+                                target.style.display = 'none'
+                              }}
+                            />
+                          ) : (
+                            <div className="flex h-full items-center justify-center bg-gray-100 text-sm text-gray-400">
+                              Изображение готовится
+                            </div>
+                          )}
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent opacity-60 transition-opacity duration-500 group-hover:opacity-80" />
+                          <div className="absolute top-5 left-5 px-3 py-1 rounded-full bg-white/85 text-[10px] sm:text-xs tracking-[0.4em] text-gray-700 shadow-sm">
+                            {String(index + 3).padStart(2, '0')}
+                          </div>
+                          {(interior.video_urls?.length || interior.document_files?.length) && (
+                            <div className="absolute top-5 right-5 flex items-center gap-2 text-[10px] font-medium uppercase tracking-[0.25em] text-white/80">
+                              {interior.video_urls?.length ? (
+                                <span className="flex items-center gap-1 rounded-full bg-white/15 px-3 py-1 backdrop-blur">
+                                  <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M8 5v14l11-7-11-7z" />
+                                  </svg>
+                                  {interior.video_urls.length}
+                                </span>
+                              ) : null}
+                              {interior.document_files?.length ? (
+                                <span className="flex items-center gap-1 rounded-full bg-white/15 px-3 py-1 backdrop-blur">
+                                  <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M7 7h4.5a2.5 2.5 0 012.5 2.5V21" />
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M7 7v12a2 2 0 002 2h8" />
+                                  </svg>
+                                  {interior.document_files.length}
+                                </span>
+                              ) : null}
+                            </div>
+                          )}
+                          <div className="absolute inset-x-0 bottom-0 p-5 sm:p-6">
+                            <div className="text-base sm:text-lg md:text-xl font-semibold text-white leading-tight line-clamp-2">
+                              {interior.title}
+                            </div>
+                            {(interior.location || interior.subtitle) && (
+                              <div className="mt-2 text-xs sm:text-sm text-white/80">
+                                {interior.location || interior.subtitle}
+                              </div>
+                            )}
+                          </div>
+                        </button>
+                      ))}
                     </div>
-                  </button>
-                ))}
-              </div>
+                  </div>
+                )}
+              </>
             ) : (
               <div className="rounded-3xl border border-dashed border-gray-300 bg-white/60 py-16 px-6 text-center text-sm sm:text-base text-gray-500">
                 Добавьте реальные интерьеры через админ-панель, чтобы вдохновлять клиентов.

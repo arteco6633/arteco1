@@ -100,3 +100,4 @@ COMMENT ON TABLE kitchen_quiz_submissions IS 'Заявки пользовате�
 
 
 
+

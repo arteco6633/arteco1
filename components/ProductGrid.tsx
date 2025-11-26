@@ -26,9 +26,11 @@ type Props = {
   ctaRight?: React.ReactNode
   horizontal?: boolean
   onAdd?: (product: Product) => void
+  hideButton?: boolean
+  hideColors?: boolean
 }
 
-function Card({ product, onAdd, priority = false, fixedWidth }: { product: Product; onAdd?: (product: Product) => void; priority?: boolean; fixedWidth?: string }) {
+function Card({ product, onAdd, priority = false, fixedWidth, hideButton = false, hideColors = false }: { product: Product; onAdd?: (product: Product) => void; priority?: boolean; fixedWidth?: string; hideButton?: boolean; hideColors?: boolean }) {
   const { toggle, isInWishlist } = useWishlist()
   const inWishlist = isInWishlist(product.id)
 
@@ -124,7 +126,7 @@ function Card({ product, onAdd, priority = false, fixedWidth }: { product: Produ
           {product.name}
         </h3>
         {/* Свотчи цветов */}
-        {!!product.colors?.length && (
+        {!hideColors && !!product.colors?.length && (
           <div className="flex items-center gap-1.5 sm:gap-2 mb-2 sm:mb-3">
             {product.colors.slice(0, 5).map((c, idx) => {
               const value = typeof c === 'string' ? c : (c?.value ?? '')
@@ -144,7 +146,7 @@ function Card({ product, onAdd, priority = false, fixedWidth }: { product: Produ
             )}
           </div>
         )}
-        {onAdd ? (
+        {!hideButton && (onAdd ? (
           <button
             type="button"
             onClick={(e) => { e.preventDefault(); onAdd(product) }}
@@ -161,13 +163,13 @@ function Card({ product, onAdd, priority = false, fixedWidth }: { product: Produ
             <span className="text-sm sm:text-base font-medium">Смотреть</span>
             <span className="text-base sm:text-lg md:text-xl transform transition-transform duration-300 md:group-hover:translate-x-1">→</span>
           </span>
-        )}
+        ))}
       </div>
     </Link>
   )
 }
 
-export default function ProductGrid({ products, splitTwoFirst = false, onlyFirstTwo = false, ctaRight, horizontal = false, onAdd }: Props) {
+export default function ProductGrid({ products, splitTwoFirst = false, onlyFirstTwo = false, ctaRight, horizontal = false, onAdd, hideButton = false, hideColors = false }: Props) {
   if (horizontal) {
     return (
       <div 
@@ -188,7 +190,7 @@ export default function ProductGrid({ products, splitTwoFirst = false, onlyFirst
                 boxSizing: 'border-box'
               }}
             >
-              <Card product={p} onAdd={onAdd} />
+              <Card product={p} onAdd={onAdd} hideButton={hideButton} hideColors={hideColors} />
             </div>
           ))}
         </div>
@@ -200,7 +202,7 @@ export default function ProductGrid({ products, splitTwoFirst = false, onlyFirst
     return (
       <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 gap-4 sm:gap-7 overflow-visible max-w-full">
         {firstTwoOnly.map((p, index) => (
-          <Card key={p.id} product={p} onAdd={onAdd} priority={index < 2} />
+          <Card key={p.id} product={p} onAdd={onAdd} priority={index < 2} hideButton={hideButton} hideColors={hideColors} />
         ))}
       </div>
     )
@@ -210,7 +212,7 @@ export default function ProductGrid({ products, splitTwoFirst = false, onlyFirst
     return (
       <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-7 overflow-visible max-w-full">
         {products.map((p) => (
-          <Card key={p.id} product={p} onAdd={onAdd} />
+          <Card key={p.id} product={p} onAdd={onAdd} hideButton={hideButton} hideColors={hideColors} />
         ))}
         {ctaRight}
       </div>
@@ -233,13 +235,13 @@ export default function ProductGrid({ products, splitTwoFirst = false, onlyFirst
     <div className="space-y-6">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-7">
         {firstTwo.map((p) => (
-          <Card key={p.id} product={p} onAdd={onAdd} />
+          <Card key={p.id} product={p} onAdd={onAdd} hideButton={hideButton} hideColors={hideColors} />
         ))}
       </div>
       {rest.length > 0 && (
         <div className={`grid ${colsClass} gap-4 sm:gap-7`}>
           {rest.map((p) => (
-            <Card key={p.id} product={p} onAdd={onAdd} />
+            <Card key={p.id} product={p} onAdd={onAdd} hideButton={hideButton} hideColors={hideColors} />
           ))}
         </div>
       )}
