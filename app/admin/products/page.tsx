@@ -429,6 +429,35 @@ export default function AdminProductsPage() {
     return data.publicUrl
   }
 
+  // Функция для удаления файла из Supabase Storage
+  async function deleteFileFromStorage(url: string): Promise<void> {
+    if (!url) return
+    
+    try {
+      // Извлекаем путь к файлу из URL
+      // URL формат: https://zijajicude.beget.app/storage/v1/object/public/product/path/to/file.jpg
+      const urlObj = new URL(url)
+      const pathMatch = urlObj.pathname.match(/\/storage\/v1\/object\/public\/product\/(.+)/)
+      
+      if (pathMatch && pathMatch[1]) {
+        const filePath = pathMatch[1]
+        const { error } = await supabase.storage
+          .from('product')
+          .remove([filePath])
+        
+        if (error) {
+          console.warn('Не удалось удалить файл из Storage:', filePath, error)
+          // Не бросаем ошибку, чтобы не блокировать сохранение
+        } else {
+          console.log('✓ Старый файл удален:', filePath)
+        }
+      }
+    } catch (error) {
+      console.warn('Ошибка при удалении файла:', error)
+      // Не бросаем ошибку, чтобы не блокировать сохранение
+    }
+  }
+
   // Загрузка нескольких файлов в Storage -> массив публичных ссылок
   async function uploadGalleryFiles(files: File[]): Promise<string[]> {
     const urls: string[] = []
@@ -601,12 +630,19 @@ export default function AdminProductsPage() {
     
     try {
       let imageUrl = formData.image_url
+      // Сохраняем старый URL для удаления после загрузки нового
+      const oldImageUrl = editingProduct?.image_url
 
       // Загружаем изображение, если оно выбрано
       if (selectedImageFile) {
         try {
           imageUrl = await uploadImage(selectedImageFile)
           console.log('✓ Изображение загружено:', imageUrl)
+          
+          // Удаляем старое изображение, если оно было заменено
+          if (oldImageUrl && oldImageUrl !== imageUrl) {
+            await deleteFileFromStorage(oldImageUrl)
+          }
         } catch (error) {
           console.error('Ошибка загрузки изображения:', error)
           alert('Ошибка при загрузке изображения. Попробуйте еще раз.')

@@ -37,9 +37,12 @@ export async function POST(req: Request) {
 
     console.log('=== Callback Signature Verification ===')
     console.log('OrderId:', orderId)
-    console.log('Status:', status)
-    console.log('PaymentId:', paymentId)
-    console.log('Received Token:', receivedToken)
+    // Безопасность: не логируем токены в production
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Status:', status)
+      console.log('PaymentId:', paymentId)
+      console.log('Received Token (DEV ONLY):', receivedToken)
+    }
 
     // Формируем строку для проверки подписи
     // Согласно документации, для callback подпись формируется из всех полей кроме Token
@@ -61,10 +64,12 @@ export async function POST(req: Request) {
     const signString = signValues.join('')
     const expectedToken = crypto.createHash('sha256').update(signString).digest('hex')
 
-    console.log('Sign fields:', sortedKeys)
-    console.log('Sign string:', signString)
-    console.log('Expected token:', expectedToken)
-    console.log('Token match:', receivedToken === expectedToken)
+    // Безопасность: debug логи только в development
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Sign fields:', sortedKeys)
+      // Не логируем sign string и токены в production
+      console.log('Token match:', receivedToken === expectedToken)
+    }
 
     // Проверяем подпись
     if (receivedToken !== expectedToken) {

@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabase'
 import Link from 'next/link'
 import Head from 'next/head'
 import ProductGrid from '@/components/ProductGrid'
+import DOMPurify from 'isomorphic-dompurify'
 
 interface Article {
   id: number
@@ -418,7 +419,13 @@ export default function ArticlePage() {
             {/* Контент */}
             <div
               className="prose prose-lg max-w-none"
-              dangerouslySetInnerHTML={{ __html: parseMarkdown(article.content) }}
+              dangerouslySetInnerHTML={{ 
+                __html: DOMPurify.sanitize(parseMarkdown(article.content), {
+                  ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'u', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'ul', 'ol', 'li', 'a', 'img', 'pre', 'code', 'blockquote'],
+                  ALLOWED_ATTR: ['href', 'src', 'alt', 'class', 'target', 'rel'],
+                  ALLOW_DATA_ATTR: false
+                })
+              }}
             />
           </div>
         </article>

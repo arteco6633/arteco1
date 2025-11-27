@@ -116,6 +116,32 @@ export default function AdminBannersPage() {
     return data.publicUrl
   }
 
+  // Функция для удаления файла из Supabase Storage
+  async function deleteFileFromStorage(url: string): Promise<void> {
+    if (!url) return
+    
+    try {
+      // Извлекаем путь к файлу из URL
+      const urlObj = new URL(url)
+      const pathMatch = urlObj.pathname.match(/\/storage\/v1\/object\/public\/product\/(.+)/)
+      
+      if (pathMatch && pathMatch[1]) {
+        const filePath = pathMatch[1]
+        const { error } = await supabase.storage
+          .from('product')
+          .remove([filePath])
+        
+        if (error) {
+          console.warn('Не удалось удалить файл из Storage:', filePath, error)
+        } else {
+          console.log('✓ Старый файл удален:', filePath)
+        }
+      }
+    } catch (error) {
+      console.warn('Ошибка при удалении файла:', error)
+    }
+  }
+
   async function uploadVideo(file: File): Promise<string> {
     const fileExt = file.name.split('.').pop()
     const fileName = `banners/videos/${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`
@@ -189,9 +215,16 @@ export default function AdminBannersPage() {
     
     try {
       let imageUrl = formData.image_url
+      // Сохраняем старый URL для удаления после загрузки нового
+      const oldImageUrl = editingBanner?.image_url
 
       if (selectedImageFile) {
         imageUrl = await uploadImage(selectedImageFile)
+        
+        // Удаляем старое изображение, если оно было заменено
+        if (oldImageUrl && oldImageUrl !== imageUrl) {
+          await deleteFileFromStorage(oldImageUrl)
+        }
       }
 
       // Формируем данные для сохранения, исключая video_url, если оно пустое

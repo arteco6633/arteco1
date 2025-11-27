@@ -39,9 +39,10 @@ export async function POST(req: Request) {
       hasTabs: terminalId?.includes('\t'),
       charCodes: terminalId ? Array.from(terminalId).map(c => c.charCodeAt(0)) : [],
     })
-    console.log('TBANK_PASSWORD:', {
-      value: password ? '*'.repeat(password.length) : null,
-      length: password?.length,
+    // Безопасность: не логируем пароль даже в маскированном виде в production
+    if (process.env.NODE_ENV === 'development') {
+      console.log('TBANK_PASSWORD (DEV ONLY):', {
+        length: password?.length,
       bytes: password ? Buffer.from(password, 'utf8').length : 0,
       hasSpaces: password?.includes(' '),
       hasNewlines: password?.includes('\n'),
@@ -273,33 +274,18 @@ export async function POST(req: Request) {
     const passwordStr = String(password)
     signFields.Password = passwordStr
     
-    // Дополнительная проверка: убеждаемся, что пароль не содержит невидимых символов
-    console.log('=== Password Debug ===')
-    console.log('Password from env (raw):', JSON.stringify(password))
-    console.log('Password in signature:', JSON.stringify(passwordStr))
-    console.log('Password bytes:', Buffer.from(passwordStr, 'utf8').toString('hex'))
-    console.log('Password char codes:', Array.from(passwordStr).map(c => c.charCodeAt(0)))
-    
     // Сортируем ключи по алфавиту и формируем строку из значений
     const sortedKeys = Object.keys(signFields).sort()
     const signString = sortedKeys.map(key => signFields[key]).join('')
     
-    console.log('=== Signature Debug ===')
-    console.log('Sign fields order (alphabetical, Password included):', sortedKeys)
-    console.log('Sign fields values (detailed):')
-    sortedKeys.forEach(key => {
-      const value = signFields[key]
-      console.log(`  ${key}: "${value}" (length: ${value.length}, type: ${typeof value})`)
-      // Для пароля показываем только длину
-      if (key === 'Password') {
-        console.log(`    Password value: "${'*'.repeat(value.length)}"`)
-      }
-    })
-    console.log('Sign string (Password included in alphabetical order):', signString)
-    console.log('Sign string length:', signString.length)
-    console.log('Sign string bytes (UTF-8):', Buffer.from(signString, 'utf8').length)
-    console.log('Terminal ID:', terminalId)
-    console.log('Password length:', passwordStr.length)
+    // Безопасность: debug логи только в development режиме и без чувствительных данных
+    if (process.env.NODE_ENV === 'development') {
+      console.log('=== Signature Debug (DEV ONLY) ===')
+      console.log('Sign fields order (alphabetical):', sortedKeys)
+      console.log('Sign string length:', signString.length)
+      console.log('Terminal ID:', terminalId)
+      // НЕ логируем пароль даже в development
+    }
     console.log('Original initData (for reference):', JSON.stringify({
       TerminalKey: initData.TerminalKey,
       Amount: initData.Amount,
@@ -335,12 +321,16 @@ export async function POST(req: Request) {
       Token: token,
     }
 
-    // Логируем запрос для отладки (без пароля)
-    console.log('=== T-Bank Init Request ===')
-    console.log('URL:', apiUrl)
-    console.log('Request payload:', JSON.stringify(requestPayload, null, 2))
-    console.log('Sign string:', signString)
-    console.log('Token (signature):', token)
+    // Безопасность: логируем только в development и без чувствительных данных
+    if (process.env.NODE_ENV === 'development') {
+      console.log('=== T-Bank Init Request (DEV ONLY) ===')
+      console.log('URL:', apiUrl)
+      // Не логируем полный payload и токен в production
+      console.log('Request payload (sanitized):', JSON.stringify({
+        ...requestPayload,
+        Token: '***REDACTED***'
+      }, null, 2))
+    }
 
     // Отправляем запрос в T-Bank API
     // ВАЖНО: Для тестового API (rest-api-test.tinkoff.ru) ваш IP должен быть в белом списке!

@@ -1,9 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseServer } from '@/lib/supabase-server'
 import bcrypt from 'bcryptjs'
+import { rateLimiters } from '@/lib/rate-limit'
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limiting для защиты от брутфорса
+    const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown'
+    const rateLimitResult = await rateLimiters.login(`partners-login:${ip}`)
+    
+    if (!rateLimitResult.success) {
+      return NextResponse.json(
+        { error: 'Слишком много попыток. Попробуйте позже.' },
+        { 
+          status: 429,
+          headers: {
+            'Retry-After': String(Math.ceil((rateLimitResult.reset - Date.now()) / 1000))
+          }
+        }
+      )
+    }
+
     const body = await request.json()
     const { phone, password } = body
 
@@ -20,8 +37,6 @@ export async function POST(request: NextRequest) {
     // Также пробуем формат с +7
     const phoneWithPlus = phone.startsWith('+') ? phone : `+${normalizedPhone}`
 
-    console.log('Поиск партнера по телефону:', { phone, normalizedPhone, phoneWithPlus })
-
     // Получаем партнера по телефону (пробуем разные форматы)
     let { data: partner, error: partnerError } = await supabaseServer
       .from('partners')
@@ -29,8 +44,6 @@ export async function POST(request: NextRequest) {
       .or(`phone.eq.${phone},phone.eq.${normalizedPhone},phone.eq.${phoneWithPlus}`)
       .eq('is_active', true)
       .maybeSingle()
-
-    console.log('Результат поиска партнера:', { found: !!partner, error: partnerError?.message })
 
     // Если ошибка не связана с отсутствием записи (PGRST116), значит что-то пошло не так
     if (partnerError && partnerError.code !== 'PGRST116') {
@@ -67,11 +80,9 @@ export async function POST(request: NextRequest) {
 
     // Проверяем пароль
     console.log('Сравнение пароля для партнера ID:', partner.id)
-    console.log('Длина password_hash:', partner.password_hash?.length)
-    
     try {
       const isPasswordValid = await bcrypt.compare(password, partner.password_hash)
-      console.log('Результат сравнения пароля:', isPasswordValid)
+      // Безопасность: не логируем результат проверки пароля
       
       if (!isPasswordValid) {
         console.error('Пароль не совпадает для партнера ID:', partner.id)

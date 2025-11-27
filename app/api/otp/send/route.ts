@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { rateLimiters } from '@/lib/rate-limit'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -19,6 +20,22 @@ export async function POST(req: Request) {
     const { phone } = await req.json()
     if (!phone) return NextResponse.json({ error: 'phone required' }, { status: 400 })
     const normalized = normalizePhone(phone)
+
+    // Rate limiting для защиты от спама OTP
+    const ip = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown'
+    const rateLimitResult = await rateLimiters.otp(`otp-send:${normalized}:${ip}`)
+    
+    if (!rateLimitResult.success) {
+      return NextResponse.json(
+        { error: 'Слишком много запросов. Попробуйте позже.' },
+        { 
+          status: 429,
+          headers: {
+            'Retry-After': String(Math.ceil((rateLimitResult.reset - Date.now()) / 1000))
+          }
+        }
+      )
+    }
 
     const code = Math.floor(100000 + Math.random() * 900000).toString()
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString()

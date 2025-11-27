@@ -69,6 +69,7 @@ export default function RootLayout({
         </div>
         <BootLoader />
         {/* Регистрация Service Worker для кэширования */}
+        {/* Безопасность: inline script безопасен, так как это статический код без пользовательского ввода */}
         <script
           dangerouslySetInnerHTML={{
             __html: `

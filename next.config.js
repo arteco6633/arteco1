@@ -53,7 +53,7 @@ const nextConfig = {
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
   },
   
-  // Headers для кэширования и оптимизации
+  // Headers для безопасности и кэширования
   async headers() {
     return [
       {
@@ -74,6 +74,39 @@ const nextConfig = {
           {
             key: 'X-XSS-Protection',
             value: '1; mode=block'
+          },
+          // Content Security Policy для защиты от XSS
+          {
+            key: 'Content-Security-Policy',
+            value: [
+              "default-src 'self'",
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://integrationjs.tbank.ru https://pay.yandex.ru https://securepay.tinkoff.ru",
+              "style-src 'self' 'unsafe-inline'",
+              "img-src 'self' data: https: blob:",
+              "font-src 'self' data:",
+              "connect-src 'self' https://zijajicude.beget.app https://api-statist.tinkoff.ru https://integrationjs.tbank.ru",
+              "frame-src https://integrationjs.tbank.ru https://securepay.tinkoff.ru",
+              "object-src 'none'",
+              "base-uri 'self'",
+              "form-action 'self'",
+              "frame-ancestors 'self'",
+              "upgrade-insecure-requests"
+            ].join('; ')
+          },
+          // Strict Transport Security для принудительного HTTPS
+          {
+            key: 'Strict-Transport-Security',
+            value: 'max-age=31536000; includeSubDomains; preload'
+          },
+          // Referrer Policy для контроля передачи referrer
+          {
+            key: 'Referrer-Policy',
+            value: 'strict-origin-when-cross-origin'
+          },
+          // Permissions Policy для ограничения доступа к API браузера
+          {
+            key: 'Permissions-Policy',
+            value: 'geolocation=(), microphone=(), camera=(), payment=()'
           },
         ],
       },
