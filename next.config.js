@@ -83,6 +83,7 @@ const nextConfig = {
               "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://integrationjs.tbank.ru https://pay.yandex.ru https://securepay.tinkoff.ru",
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: https: blob:",
+              "media-src 'self' data: https: blob:",
               "font-src 'self' data:",
               "connect-src 'self' https://zijajicude.beget.app https://api-statist.tinkoff.ru https://integrationjs.tbank.ru",
               "frame-src https://integrationjs.tbank.ru https://securepay.tinkoff.ru",

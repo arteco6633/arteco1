@@ -952,6 +952,13 @@ export default function ProductPage() {
                               muted
                               loop
                               playsInline
+                              preload="auto"
+                              onLoadedData={(e) => {
+                                const video = e.target as HTMLVideoElement
+                                video.play().catch(() => {
+                                  // Игнорируем ошибки автозапуска (браузер может блокировать)
+                                })
+                              }}
                             />
                           </div>
                         )}
@@ -1586,7 +1593,14 @@ export default function ProductPage() {
                       playsInline
                       loop
                       controls
+                      preload="auto"
                       poster={product.images?.[0] || product.image_url}
+                      onLoadedData={(e) => {
+                        const video = e.target as HTMLVideoElement
+                        video.play().catch(() => {
+                          // Игнорируем ошибки автозапуска (браузер может блокировать)
+                        })
+                      }}
                     />
                   </div>
                 ) : (
