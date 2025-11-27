@@ -61,7 +61,7 @@ export async function rateLimit(
     memoryStore.set(key, { count: 1, resetTime: now + windowMs })
     // Очистка старых записей
     if (memoryStore.size > 1000) {
-      for (const [k, v] of memoryStore.entries()) {
+      for (const [k, v] of Array.from(memoryStore.entries())) {
         if (v.resetTime < now) {
           memoryStore.delete(k)
         }
