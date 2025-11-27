@@ -43,13 +43,14 @@ export async function POST(req: Request) {
     if (process.env.NODE_ENV === 'development') {
       console.log('TBANK_PASSWORD (DEV ONLY):', {
         length: password?.length,
-      bytes: password ? Buffer.from(password, 'utf8').length : 0,
-      hasSpaces: password?.includes(' '),
-      hasNewlines: password?.includes('\n'),
-      hasTabs: password?.includes('\t'),
-      firstChar: password ? password.charCodeAt(0) : null,
-      lastChar: password ? password.charCodeAt(password.length - 1) : null,
-    })
+        bytes: password ? Buffer.from(password, 'utf8').length : 0,
+        hasSpaces: password?.includes(' '),
+        hasNewlines: password?.includes('\n'),
+        hasTabs: password?.includes('\t'),
+        firstChar: password ? password.charCodeAt(0) : null,
+        lastChar: password ? password.charCodeAt(password.length - 1) : null,
+      })
+    }
     
     // API endpoint для T-Bank согласно документации:
     // Документация: https://developer.tbank.ru/eacq/intro/errors/test-cases
