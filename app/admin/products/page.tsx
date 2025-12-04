@@ -835,6 +835,7 @@ export default function AdminProductsPage() {
       videos: (product.videos as any) || [],
       downloadable_files: (product.downloadable_files as any) || [],
       interior_images: (product.interior_images as any) || [],
+      model_3d_url: (product.model_3d_url || '') as string,
       category_id: product.category_id.toString(),
       is_featured: false, // Новый товар не должен быть избранным по умолчанию
       is_new: false, // Новый товар не должен быть новинкой по умолчанию
