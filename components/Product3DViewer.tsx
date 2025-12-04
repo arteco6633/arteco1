@@ -2,7 +2,7 @@
 
 import { Suspense, useRef, useState, useEffect } from 'react'
 import { Canvas, useLoader, useFrame } from '@react-three/fiber'
-import { OrbitControls, PerspectiveCamera, Environment } from '@react-three/drei'
+import { OrbitControls, PerspectiveCamera } from '@react-three/drei'
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js'
 import { MTLLoader } from 'three/examples/jsm/loaders/MTLLoader.js'
 import * as THREE from 'three'
@@ -97,7 +97,7 @@ function Scene({ modelUrl, mtlUrl, autoRotate }: { modelUrl: string; mtlUrl?: st
       <ambientLight intensity={0.6} />
       <directionalLight position={[10, 10, 5]} intensity={1} />
       <directionalLight position={[-10, -10, -5]} intensity={0.5} />
-      <Environment preset="city" />
+      <pointLight position={[0, 10, 0]} intensity={0.3} />
       <Suspense fallback={null}>
         <Model url={modelUrl} mtlUrl={mtlUrl} />
       </Suspense>
