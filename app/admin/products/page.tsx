@@ -766,7 +766,20 @@ export default function AdminProductsPage() {
     } catch (error: any) {
       console.error('Ошибка сохранения:', error)
       const errorMessage = error?.message || error?.details || 'Неизвестная ошибка'
-      alert(`Ошибка при сохранении товара: ${errorMessage}\n\nВозможно, нужно добавить колонку "handles" в таблицу products через SQL скрипт setup_products_handles.sql`)
+      
+      // Определяем, какая колонка отсутствует, и предлагаем соответствующий скрипт
+      let suggestion = ''
+      if (errorMessage.includes('model_3d_url')) {
+        suggestion = 'Возможно, нужно добавить колонку "model_3d_url" в таблицу products через SQL скрипт setup_products_model_3d_url.sql'
+      } else if (errorMessage.includes('handles')) {
+        suggestion = 'Возможно, нужно добавить колонку "handles" в таблицу products через SQL скрипт setup_products_handles.sql'
+      } else if (errorMessage.includes('price_type') || errorMessage.includes('price_per_m2')) {
+        suggestion = 'Возможно, нужно добавить колонки "price_type" и "price_per_m2" в таблицу products через SQL скрипт setup_products_price_type.sql'
+      } else {
+        suggestion = 'Проверьте, что все необходимые колонки добавлены в таблицу products. Смотрите SQL скрипты в корне проекта.'
+      }
+      
+      alert(`Ошибка при сохранении товара: ${errorMessage}\n\n${suggestion}`)
     } finally {
       setUploading(false)
     }
