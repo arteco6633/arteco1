@@ -1,6 +1,7 @@
 'use client'
 
 import { SessionProvider } from 'next-auth/react'
+import { TelegramProvider } from '@/components/TelegramProvider'
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   return (
@@ -9,7 +10,9 @@ export default function Providers({ children }: { children: React.ReactNode }) {
       refetchInterval={0}
       refetchOnWindowFocus={false}
     >
-      {children}
+      <TelegramProvider>
+        {children}
+      </TelegramProvider>
     </SessionProvider>
   )
 }

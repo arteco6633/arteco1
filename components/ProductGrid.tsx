@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { useWishlist } from '@/components/WishlistContext'
+import Product3DViewer from '@/components/Product3DViewer'
 
 interface Product {
   id: number
@@ -17,6 +18,7 @@ interface Product {
   category_id: number
   is_new?: boolean
   is_featured?: boolean
+  model_3d_url?: string | null
 }
 
 type Props = {
@@ -64,6 +66,18 @@ function Card({ product, onAdd, priority = false, fixedWidth, hideButton = false
       {/* Обёртка для изображения с клипом только картинки, не тени */}
       <div className="relative rounded-t-lg overflow-hidden h-56 sm:h-64 md:h-72 bg-gray-100">
         {(() => {
+          // Если есть 3D модель, показываем её
+          if (product.model_3d_url) {
+            return (
+              <Product3DViewer 
+                modelUrl={product.model_3d_url}
+                autoRotate={false}
+                className="rounded-t-lg"
+              />
+            )
+          }
+          
+          // Иначе показываем обычное фото
           const src = (product.images && product.images.length > 0) ? product.images[0] : product.image_url
           if (!src) {
             return (

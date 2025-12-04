@@ -75,6 +75,7 @@ interface Product {
   videos?: string[] | null
   downloadable_files?: Array<{ url: string; name: string }> | null
   interior_images?: string[] | null
+  model_3d_url?: string | null
   category_id: number
   is_featured: boolean
   is_new: boolean
@@ -115,6 +116,10 @@ export default function AdminProductsPage() {
   const filesInputRef = useRef<HTMLInputElement | null>(null)
   const [isDraggingFiles, setIsDraggingFiles] = useState(false)
   const [uploadingFiles, setUploadingFiles] = useState(false)
+  // Загрузка 3D модели
+  const [selected3DModelFile, setSelected3DModelFile] = useState<File | null>(null)
+  const [uploading3DModel, setUploading3DModel] = useState(false)
+  const model3DInputRef = useRef<HTMLInputElement | null>(null)
   // Состояния для drag-and-drop перестановки изображений
   const [draggedImageIndex, setDraggedImageIndex] = useState<number | null>(null)
   const [dragOverImageIndex, setDragOverImageIndex] = useState<number | null>(null)
@@ -164,6 +169,7 @@ export default function AdminProductsPage() {
     videos: [] as string[],
     downloadable_files: [] as Array<{ url: string; name: string }>,
     interior_images: [] as string[],
+    model_3d_url: '' as string,
     category_id: '',
     is_featured: false,
     is_new: false,
@@ -324,6 +330,7 @@ export default function AdminProductsPage() {
       videos: [],
       downloadable_files: [],
       interior_images: [],
+      model_3d_url: '',
       category_id: '',
       is_featured: false,
       is_new: false,
@@ -341,6 +348,7 @@ export default function AdminProductsPage() {
     setEditingProduct(product)
     setSelectedImageFile(null)
     setImagePreview('')
+    setSelected3DModelFile(null)
     setFormData({
       name: product.name,
       description: product.description || '',
@@ -381,6 +389,7 @@ export default function AdminProductsPage() {
       videos: (product.videos as any) || [],
       downloadable_files: (product.downloadable_files as any) || [],
       interior_images: (product.interior_images as any) || [],
+      model_3d_url: (product.model_3d_url || '') as string,
       category_id: product.category_id.toString(),
       is_featured: product.is_featured,
       is_new: product.is_new,
@@ -632,6 +641,26 @@ export default function AdminProductsPage() {
       let imageUrl = formData.image_url
       // Сохраняем старый URL для удаления после загрузки нового
       const oldImageUrl = editingProduct?.image_url
+      const oldModel3DUrl = editingProduct?.model_3d_url || null
+
+      // Загружаем 3D модель, если она выбрана
+      let model3DUrl = formData.model_3d_url
+      if (selected3DModelFile) {
+        try {
+          model3DUrl = await uploadToFolder(selected3DModelFile, 'products/3d-models')
+          console.log('✓ 3D модель загружена:', model3DUrl)
+          
+          // Удаляем старую модель, если она была заменена
+          if (oldModel3DUrl && oldModel3DUrl !== model3DUrl) {
+            await deleteFileFromStorage(oldModel3DUrl)
+          }
+        } catch (error) {
+          console.error('Ошибка загрузки 3D модели:', error)
+          alert('Ошибка при загрузке 3D модели. Попробуйте еще раз.')
+          setUploading(false)
+          return
+        }
+      }
 
       // Загружаем изображение, если оно выбрано
       if (selectedImageFile) {
@@ -693,9 +722,10 @@ export default function AdminProductsPage() {
         specs: formData.specs,
         schemes: filteredSchemes,
         videos: filteredVideos,
-        downloadable_files: formData.downloadable_files,
-        interior_images: filteredInteriorImages,
-        category_id: parseInt(formData.category_id),
+      downloadable_files: formData.downloadable_files,
+      interior_images: filteredInteriorImages,
+      model_3d_url: model3DUrl || null,
+      category_id: parseInt(formData.category_id),
         is_featured: formData.is_featured,
         is_new: formData.is_new,
         is_custom_size: formData.is_custom_size,
@@ -1556,6 +1586,96 @@ export default function AdminProductsPage() {
                           ))}
                         </div>
                       )}
+                    </div>
+
+                    {/* 3D модель товара */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        3D модель (OBJ файл)
+                        <span className="text-xs text-gray-500 ml-2">Модель можно будет вращать на 360°</span>
+                      </label>
+                      <div className="space-y-3">
+                        {formData.model_3d_url ? (
+                          <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-3">
+                                <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                                </svg>
+                                <div>
+                                  <p className="text-sm font-medium text-gray-900">3D модель загружена</p>
+                                  <a href={formData.model_3d_url} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 hover:underline">
+                                    {formData.model_3d_url.split('/').pop()}
+                                  </a>
+                                </div>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setFormData({ ...formData, model_3d_url: '' })
+                                  setSelected3DModelFile(null)
+                                  if (model3DInputRef.current) model3DInputRef.current.value = ''
+                                }}
+                                className="text-red-600 hover:text-red-800 text-sm font-medium transition-colors"
+                              >
+                                Удалить
+                              </button>
+                            </div>
+                          </div>
+                        ) : null}
+                        <div
+                          className={`w-full border-2 border-dashed border-gray-300 rounded-lg p-5 text-center transition-colors hover:border-gray-400 ${uploading3DModel ? 'opacity-50 pointer-events-none' : ''}`}
+                        >
+                          <p className="mb-2 text-sm text-gray-600">Выберите OBJ файл 3D модели</p>
+                          <button 
+                            type="button" 
+                            className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium" 
+                            onClick={() => model3DInputRef.current?.click()} 
+                            disabled={uploading3DModel}
+                          >
+                            {uploading3DModel ? 'Загрузка...' : 'Выбрать файл'}
+                          </button>
+                          <input 
+                            ref={model3DInputRef} 
+                            type="file" 
+                            accept=".obj,.OBJ" 
+                            className="hidden" 
+                            onChange={async (e) => {
+                              const file = e.target.files?.[0]
+                              if (!file) return
+                              
+                              // Проверяем расширение
+                              if (!file.name.toLowerCase().endsWith('.obj')) {
+                                alert('Пожалуйста, выберите OBJ файл')
+                                if (model3DInputRef.current) model3DInputRef.current.value = ''
+                                return
+                              }
+                              
+                              try {
+                                setUploading3DModel(true)
+                                const url = await uploadToFolder(file, 'products/3d-models')
+                                setFormData({ ...formData, model_3d_url: url })
+                                setSelected3DModelFile(file)
+                                console.log('✓ 3D модель загружена:', url)
+                              } catch (err) {
+                                console.error('Ошибка загрузки 3D модели:', err)
+                                alert('Не удалось загрузить 3D модель')
+                              } finally {
+                                setUploading3DModel(false)
+                                if (model3DInputRef.current) model3DInputRef.current.value = ''
+                              }
+                            }}
+                          />
+                          {uploading3DModel && (
+                            <div className="mt-2 text-sm text-gray-500">Загрузка 3D модели...</div>
+                          )}
+                        </div>
+                        {formData.model_3d_url && (
+                          <p className="text-xs text-gray-500">
+                            💡 Если модель загружена, она будет отображаться в карточке товара вместо главного фото. Пользователи смогут вращать её на 360°.
+                          </p>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>

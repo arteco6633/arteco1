@@ -8,6 +8,7 @@ import { useParams, useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import ProductGrid from '@/components/ProductGrid'
 import KitchenQuiz from '@/components/KitchenQuiz'
+import Product3DViewer from '@/components/Product3DViewer'
 import Link from 'next/link'
 import type { Metadata } from 'next'
 
@@ -44,6 +45,7 @@ interface Product {
   videos?: string[] | null
   downloadable_files?: Array<{ url: string; name: string }> | null
   interior_images?: string[] | null
+  model_3d_url?: string | null
   category_id: number
   is_featured: boolean
   is_new: boolean
@@ -691,9 +693,21 @@ export default function ProductPage() {
                       transform: `translateX(-${activeImageIdx * 100}%)`
                     }}
                   >
+                    {/* Если есть 3D модель, показываем её первой */}
+                    {product.model_3d_url && (
+                      <div className="relative w-full h-full flex-shrink-0 bg-gray-100">
+                        <Product3DViewer 
+                          modelUrl={product.model_3d_url}
+                          autoRotate={false}
+                          className="w-full h-full"
+                        />
+                      </div>
+                    )}
+                    {/* Обычные изображения */}
                     {(product.images && product.images.length > 0 ? product.images : (product.image_url ? [product.image_url] : [])).map((imgUrl, idx) => {
-                      // Первое изображение всегда имеет priority для LCP оптимизации
-                      const isFirstImage = idx === 0
+                      // Если есть 3D модель, индексы сдвигаются на 1
+                      const displayIdx = product.model_3d_url ? idx + 1 : idx
+                      const isFirstImage = displayIdx === 0
                       return (
                         <div key={idx} className="relative w-full h-full flex-shrink-0 bg-gray-100">
                           {!loadedImages[idx] && (
@@ -705,12 +719,12 @@ export default function ProductPage() {
                             fill
                             sizes="(min-width: 1280px) 700px, (min-width: 768px) 50vw, 100vw"
                             quality={95}
-                            priority={isFirstImage}
+                            priority={isFirstImage && !product.model_3d_url}
                             className={`object-cover object-center transition-opacity duration-300 ${loadedImages[idx] ? 'opacity-100' : 'opacity-0'}`}
                             unoptimized={true}
                             onLoad={() => {
                               setLoadedImages((prev) => ({ ...prev, [idx]: true }))
-                              if (isFirstImage && leftMainImageRef.current) {
+                              if (isFirstImage && !product.model_3d_url && leftMainImageRef.current) {
                                 setSyncedRightHeight(leftMainImageRef.current.offsetHeight || 0)
                               }
                             }}
@@ -721,21 +735,29 @@ export default function ProductPage() {
                   </div>
                   
                   {/* Точки пагинации */}
-                  {product.images && product.images.length > 1 && (
-                    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-10">
-                      {product.images.slice(0, 10).map((_, idx) => (
-                        <div
-                          key={idx}
-                          className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                            activeImageIdx === idx ? 'bg-white w-6' : 'bg-white/50'
-                          }`}
-                        />
-                      ))}
-                      {product.images.length > 10 && (
-                        <div className="w-2 h-2 rounded-full bg-white/30" />
-                      )}
-                    </div>
-                  )}
+                  {(() => {
+                    const hasModel3D = !!product.model_3d_url
+                    const imagesCount = product.images?.length || (product.image_url ? 1 : 0)
+                    const totalCount = (hasModel3D ? 1 : 0) + imagesCount
+                    
+                    if (totalCount <= 1) return null
+                    
+                    return (
+                      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-10">
+                        {Array.from({ length: Math.min(totalCount, 10) }).map((_, idx) => (
+                          <div
+                            key={idx}
+                            className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                              activeImageIdx === idx ? 'bg-white w-6' : 'bg-white/50'
+                            }`}
+                          />
+                        ))}
+                        {totalCount > 10 && (
+                          <div className="w-2 h-2 rounded-full bg-white/30" />
+                        )}
+                      </div>
+                    )
+                  })()}
 
                   {/* Стрелки навигации (только на десктопе, внутри фото) */}
                   {product.images && product.images.length > 1 && (
