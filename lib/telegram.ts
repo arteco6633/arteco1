@@ -298,3 +298,45 @@ export async function sendTelegramMessage(
     }
   }
 }
+
+/**
+ * Получает chat_id из последних обновлений бота
+ * @param botToken - токен Telegram бота
+ * @returns chat_id или null, если не удалось получить
+ */
+export async function getChatId(botToken: string): Promise<string | null> {
+  try {
+    const apiUrl = `https://api.telegram.org/bot${botToken}/getUpdates`
+    
+    const response = await fetch(apiUrl, {
+      method: 'GET',
+    })
+
+    if (!response.ok) {
+      return null
+    }
+
+    const result = await response.json()
+    
+    if (!result.ok || !result.result || result.result.length === 0) {
+      return null
+    }
+
+    // Получаем chat_id из последнего обновления
+    const updates = result.result
+    const lastUpdate = updates[updates.length - 1]
+    
+    // chat_id может быть в message, callback_query, channel_post и т.д.
+    const chatId = 
+      lastUpdate.message?.chat?.id ||
+      lastUpdate.callback_query?.message?.chat?.id ||
+      lastUpdate.channel_post?.chat?.id ||
+      lastUpdate.edited_message?.chat?.id ||
+      lastUpdate.edited_channel_post?.chat?.id
+
+    return chatId ? String(chatId) : null
+  } catch (error: any) {
+    console.error('Ошибка получения chat_id:', error)
+    return null
+  }
+}
