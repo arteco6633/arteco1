@@ -209,3 +209,92 @@ export function applyTelegramTheme() {
     root.style.setProperty('--tg-theme-secondary-bg-color', theme.secondary_bg_color)
   }
 }
+
+/**
+ * Интерфейс для данных заявки на обратный звонок
+ */
+export interface CallbackRequestData {
+  name: string
+  phone: string
+  comment: string | null
+  createdAt: string
+}
+
+/**
+ * Форматирует данные заявки на обратный звонок для отправки в Telegram
+ */
+export function formatCallbackRequest(data: CallbackRequestData): string {
+  const date = new Date(data.createdAt)
+  const formattedDate = date.toLocaleString('ru-RU', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+
+  let message = `📞 <b>Новая заявка на обратный звонок</b>\n\n`
+  message += `👤 <b>Имя:</b> ${data.name}\n`
+  message += `📱 <b>Телефон:</b> ${data.phone}\n`
+  
+  if (data.comment) {
+    message += `\n💬 <b>Комментарий:</b>\n${data.comment}\n`
+  }
+  
+  message += `\n🕐 <i>${formattedDate}</i>`
+  
+  return message
+}
+
+/**
+ * Отправляет сообщение в Telegram через Bot API
+ * @param botToken - токен Telegram бота
+ * @param chatId - ID чата для отправки сообщения
+ * @param message - текст сообщения (поддерживается HTML)
+ * @returns объект с результатом отправки
+ */
+export async function sendTelegramMessage(
+  botToken: string,
+  chatId: string,
+  message: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const apiUrl = `https://api.telegram.org/bot${botToken}/sendMessage`
+    
+    const response = await fetch(apiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        chat_id: chatId,
+        text: message,
+        parse_mode: 'HTML',
+      }),
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}))
+      return {
+        success: false,
+        error: errorData.description || `HTTP error! status: ${response.status}`,
+      }
+    }
+
+    const result = await response.json()
+    
+    if (!result.ok) {
+      return {
+        success: false,
+        error: result.description || 'Неизвестная ошибка при отправке сообщения',
+      }
+    }
+
+    return { success: true }
+  } catch (error: any) {
+    return {
+      success: false,
+      error: error.message || 'Ошибка при отправке сообщения в Telegram',
+    }
+  }
+}
