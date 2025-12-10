@@ -21,10 +21,11 @@ const Product3DViewer = dynamic(() => import('@/components/Product3DViewer'), {
 interface Product {
   id: number
   name: string
-  description: string
+  description?: string | null
   price: number
-  original_price?: number
+  original_price?: number | null
   price_type?: 'fixed' | 'per_m2' | null
+  price_per_m2?: number | null
   image_url: string
   images?: string[] | null
   colors?: any[] | null
