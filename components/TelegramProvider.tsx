@@ -58,10 +58,12 @@ export function TelegramProvider({ children }: { children: ReactNode }) {
         // Слушаем изменения темы
         tg.onEvent('themeChanged', applyTelegramTheme)
 
-        // Слушаем изменения viewport
-        tg.onViewportChanged(() => {
-          // Обновляем при необходимости
-        })
+        // Слушаем изменения viewport (только если метод доступен)
+        if (typeof tg.onViewportChanged === 'function') {
+          tg.onViewportChanged(() => {
+            // Обновляем при необходимости
+          })
+        }
 
         setReady(true)
       }
