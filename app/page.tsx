@@ -37,13 +37,18 @@ function useInView(ref: React.RefObject<HTMLElement>, rootMargin = '0px') {
 interface Product {
   id: number
   name: string
-  description: string
+  description?: string | null
   price: number
+  original_price?: number | null
+  price_type?: 'fixed' | 'per_m2' | null
+  price_per_m2?: number | null
   image_url: string
   images?: string[] | null
+  colors?: any[] | null
   category_id: number
   is_featured: boolean
   is_new: boolean
+  model_3d_url?: string | null
 }
 
 interface Banner {
@@ -204,9 +209,9 @@ export default function HomePage() {
       // Категории не критичны для первого экрана - загружаем отдельно с таймаутом
       const [bannersResult, featuredResult, newResult] = await Promise.all(criticalPromises)
 
-      setBanners(bannersResult.data || [])
-      setFeaturedProducts(featuredResult.data || [])
-      setNewProducts(newResult.data || [])
+      setBanners((bannersResult.data || []) as Banner[])
+      setFeaturedProducts((featuredResult.data || []) as Product[])
+      setNewProducts((newResult.data || []) as Product[])
       setLoading(false) // Показываем контент как можно скорее!
 
       // Категории загружаем после отображения основного контента
