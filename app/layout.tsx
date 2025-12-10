@@ -49,8 +49,8 @@ export default function RootLayout({
     <html lang="ru" className="overflow-x-hidden">
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-        {/* Telegram Web App Script */}
-        <script src="https://telegram.org/js/telegram-web-app.js" async />
+        {/* Telegram Web App Script - загружаем асинхронно, не блокируя рендеринг */}
+        <script src="https://telegram.org/js/telegram-web-app.js" async defer />
         {/* Preconnect к Supabase для ускорения загрузки */}
         {process.env.NEXT_PUBLIC_SUPABASE_URL && (
           <link rel="preconnect" href={process.env.NEXT_PUBLIC_SUPABASE_URL} />

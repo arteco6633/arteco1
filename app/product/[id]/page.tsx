@@ -8,8 +8,21 @@ import { useParams, useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import ProductGrid from '@/components/ProductGrid'
 import KitchenQuiz from '@/components/KitchenQuiz'
-import Product3DViewer from '@/components/Product3DViewer'
+import dynamic from 'next/dynamic'
 import Link from 'next/link'
+
+// Динамический импорт 3D просмотрщика - three.js очень тяжелый (~600KB)
+const Product3DViewer = dynamic(() => import('@/components/Product3DViewer'), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full h-full flex items-center justify-center bg-gray-100">
+      <div className="flex flex-col items-center gap-2">
+        <div className="w-8 h-8 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin" />
+        <span className="text-sm text-gray-500">Загрузка 3D модели...</span>
+      </div>
+    </div>
+  ),
+})
 import type { Metadata } from 'next'
 
 interface Product {

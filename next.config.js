@@ -80,19 +80,19 @@ const nextConfig = {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://integrationjs.tbank.ru https://pay.yandex.ru https://securepay.tinkoff.ru",
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://integrationjs.tbank.ru https://pay.yandex.ru https://securepay.tinkoff.ru https://telegram.org",
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: https: blob:",
               "media-src 'self' data: https: blob:",
               "font-src 'self' data:",
-              "connect-src 'self' https://zijajicude.beget.app https://api-statist.tinkoff.ru https://integrationjs.tbank.ru",
+              `connect-src 'self' https://zijajicude.beget.app ${supabaseHost ? `https://${supabaseHost}` : ''} https://api-statist.tinkoff.ru https://integrationjs.tbank.ru https://gate.smsaero.ru`,
               "frame-src https://integrationjs.tbank.ru https://securepay.tinkoff.ru",
               "object-src 'none'",
               "base-uri 'self'",
               "form-action 'self'",
               "frame-ancestors 'self'",
               "upgrade-insecure-requests"
-            ].join('; ')
+            ].filter(Boolean).join('; ')
           },
           // Strict Transport Security для принудительного HTTPS
           {
