@@ -49,13 +49,16 @@ export default function RootLayout({
     <html lang="ru" className="overflow-x-hidden">
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+        {/* DNS Prefetch для ускорения подключения на медленном интернете */}
+        <link rel="dns-prefetch" href={process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://zijajicude.beget.app'} />
+        <link rel="dns-prefetch" href="https://zijajicude.beget.app" />
         {/* Telegram Web App Script - загружаем асинхронно, не блокируя рендеринг */}
         <script src="https://telegram.org/js/telegram-web-app.js" async defer />
         {/* Preconnect к Supabase для ускорения загрузки */}
         {process.env.NEXT_PUBLIC_SUPABASE_URL && (
-          <link rel="preconnect" href={process.env.NEXT_PUBLIC_SUPABASE_URL} />
+          <link rel="preconnect" href={process.env.NEXT_PUBLIC_SUPABASE_URL} crossOrigin="anonymous" />
         )}
-        <link rel="preconnect" href="https://zijajicude.beget.app" />
+        <link rel="preconnect" href="https://zijajicude.beget.app" crossOrigin="anonymous" />
         {/* Оптимизированные favicon - только необходимые */}
         <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
         <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192x192.png" />
