@@ -3,8 +3,15 @@
 import { useEffect, useState, useRef, useCallback, type TouchEvent, type SyntheticEvent } from 'react'
 import { createPortal } from 'react-dom'
 import Image from 'next/image'
-import GameModal from '@/components/GameModal'
-import KitchenMatchmakerQuiz from '@/components/KitchenMatchmakerQuiz'
+import dynamic from 'next/dynamic'
+
+// Динамический импорт тяжелых модальных окон - загружаются только при необходимости
+const GameModal = dynamic(() => import('@/components/GameModal'), {
+  ssr: false,
+})
+const KitchenMatchmakerQuiz = dynamic(() => import('@/components/KitchenMatchmakerQuiz'), {
+  ssr: false,
+})
 import { supabase } from '@/lib/supabase'
 import HeroBanners from '@/components/HeroBanners'
 import ProductGrid from '@/components/ProductGrid'
@@ -142,40 +149,36 @@ export default function HomePage() {
 
   async function loadData() {
     try {
-      // Загружаем баннеры
-      const { data: bannersData } = await supabase
-        .from('promo_blocks')
-        .select('*')
-        .eq('is_active', 'true')
-        .order('position', { ascending: true })
+      // Параллельная загрузка всех данных - критично для производительности!
+      const [bannersResult, featuredResult, newResult, categoriesResult] = await Promise.all([
+        supabase
+          .from('promo_blocks')
+          .select('*')
+          .eq('is_active', 'true')
+          .order('position', { ascending: true }),
+        supabase
+          .from('products')
+          .select('*')
+          .eq('is_featured', 'true')
+          .eq('is_hidden', false)
+          .limit(8),
+        supabase
+          .from('products')
+          .select('*')
+          .eq('is_new', 'true')
+          .eq('is_hidden', false)
+          .order('id', { ascending: false })
+          .limit(NEW_PRODUCTS_LIMIT),
+        supabase
+          .from('categories')
+          .select('*')
+          .order('name', { ascending: true })
+      ])
 
-      // Загружаем featured товары (исключаем скрытые)
-      const { data: featuredData } = await supabase
-        .from('products')
-        .select('*')
-        .eq('is_featured', 'true')
-        .eq('is_hidden', false)
-        .limit(8)
-
-      // Загружаем новые товары: фиксируем лимит карточек (исключаем скрытые)
-      const { data: newData } = await supabase
-        .from('products')
-        .select('*')
-        .eq('is_new', 'true')
-        .eq('is_hidden', false)
-        .order('id', { ascending: false })
-        .limit(NEW_PRODUCTS_LIMIT)
-
-      // Загружаем категории
-      const { data: categoriesData } = await supabase
-        .from('categories')
-        .select('*')
-        .order('name', { ascending: true })
-
-      setBanners(bannersData || [])
-      setFeaturedProducts(featuredData || [])
-      setNewProducts(newData || [])
-      setCategories(categoriesData || [])
+      setBanners(bannersResult.data || [])
+      setFeaturedProducts(featuredResult.data || [])
+      setNewProducts(newResult.data || [])
+      setCategories(categoriesResult.data || [])
     } catch (error) {
       console.error('Ошибка загрузки данных:', error)
     } finally {
