@@ -179,21 +179,22 @@ export default function HomePage() {
       )
 
       // Критические данные (баннеры и товары) загружаем сразу и параллельно
+      // ВАЖНО: Выбираем только нужные поля для списков товаров, чтобы уменьшить размер ответа
       const criticalPromises = [
         supabase
           .from('promo_blocks')
-          .select('*')
+          .select('id, title, description, image_url, video_url, link_url, button_text, position, sort_order, is_active')
           .eq('is_active', 'true')
           .order('position', { ascending: true }),
         supabase
           .from('products')
-          .select('*')
+          .select('id, name, description, price, original_price, price_type, price_per_m2, image_url, images, colors, category_id, is_featured, is_new, model_3d_url')
           .eq('is_featured', 'true')
           .eq('is_hidden', false)
           .limit(8),
         supabase
           .from('products')
-          .select('*')
+          .select('id, name, description, price, original_price, price_type, price_per_m2, image_url, images, colors, category_id, is_featured, is_new, model_3d_url')
           .eq('is_new', 'true')
           .eq('is_hidden', false)
           .order('id', { ascending: false })
@@ -209,11 +210,12 @@ export default function HomePage() {
       setLoading(false) // Показываем контент как можно скорее!
 
       // Категории загружаем после отображения основного контента
+      // Выбираем только нужные поля
       if (isSlowConnection) {
         setTimeout(async () => {
           const { data: categoriesData } = await supabase
             .from('categories')
-            .select('*')
+            .select('id, name, slug, image_url, is_active')
             .order('name', { ascending: true })
           setCategories(categoriesData || [])
         }, 1000)
@@ -221,7 +223,7 @@ export default function HomePage() {
         // На быстром интернете загружаем сразу
         const { data: categoriesData } = await supabase
           .from('categories')
-          .select('*')
+          .select('id, name, slug, image_url, is_active')
           .order('name', { ascending: true })
         setCategories(categoriesData || [])
       }
