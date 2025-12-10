@@ -130,8 +130,29 @@ export default function HomePage() {
   }, [])
 
   useEffect(() => {
+    // Определяем скорость соединения для оптимизации загрузки
+    const connection = (navigator as any).connection || (navigator as any).mozConnection || (navigator as any).webkitConnection
+    const isSlowConnection = connection && (
+      connection.effectiveType === 'slow-2g' || 
+      connection.effectiveType === '2g' ||
+      (connection.downlink && connection.downlink < 1.5) // Медленнее 1.5 Mbps
+    )
+
+    // Загружаем критические данные сразу
     loadData()
-    loadInteriors()
+    
+    // Интерьеры загружаем с задержкой на медленном интернете, чтобы не блокировать основной контент
+    if (isSlowConnection) {
+      // На медленном интернете откладываем загрузку интерьеров до загрузки основного контента
+      setTimeout(() => {
+        loadInteriors()
+      }, 2000)
+    } else {
+      // На быстром интернете загружаем параллельно, но с небольшой задержкой
+      setTimeout(() => {
+        loadInteriors()
+      }, 500)
+    }
   }, [])
 
   useEffect(() => {
@@ -149,8 +170,16 @@ export default function HomePage() {
 
   async function loadData() {
     try {
-      // Параллельная загрузка всех данных - критично для производительности!
-      const [bannersResult, featuredResult, newResult, categoriesResult] = await Promise.all([
+      // Определяем скорость соединения
+      const connection = (navigator as any).connection || (navigator as any).mozConnection || (navigator as any).webkitConnection
+      const isSlowConnection = connection && (
+        connection.effectiveType === 'slow-2g' || 
+        connection.effectiveType === '2g' ||
+        (connection.downlink && connection.downlink < 1.5)
+      )
+
+      // Критические данные (баннеры и товары) загружаем сразу и параллельно
+      const criticalPromises = [
         supabase
           .from('promo_blocks')
           .select('*')
@@ -168,21 +197,37 @@ export default function HomePage() {
           .eq('is_new', 'true')
           .eq('is_hidden', false)
           .order('id', { ascending: false })
-          .limit(NEW_PRODUCTS_LIMIT),
-        supabase
-          .from('categories')
-          .select('*')
-          .order('name', { ascending: true })
-      ])
+          .limit(NEW_PRODUCTS_LIMIT)
+      ]
+
+      // Категории не критичны для первого экрана - загружаем отдельно с таймаутом
+      const [bannersResult, featuredResult, newResult] = await Promise.all(criticalPromises)
 
       setBanners(bannersResult.data || [])
       setFeaturedProducts(featuredResult.data || [])
       setNewProducts(newResult.data || [])
-      setCategories(categoriesResult.data || [])
+      setLoading(false) // Показываем контент как можно скорее!
+
+      // Категории загружаем после отображения основного контента
+      if (isSlowConnection) {
+        setTimeout(async () => {
+          const { data: categoriesData } = await supabase
+            .from('categories')
+            .select('*')
+            .order('name', { ascending: true })
+          setCategories(categoriesData || [])
+        }, 1000)
+      } else {
+        // На быстром интернете загружаем сразу
+        const { data: categoriesData } = await supabase
+          .from('categories')
+          .select('*')
+          .order('name', { ascending: true })
+        setCategories(categoriesData || [])
+      }
     } catch (error) {
       console.error('Ошибка загрузки данных:', error)
-    } finally {
-      setLoading(false)
+      setLoading(false) // Все равно показываем страницу, даже если есть ошибки
     }
   }
 
@@ -568,10 +613,16 @@ export default function HomePage() {
     }
   }, [isVideoModalOpen])
 
-  if (loading) {
+  // Показываем минимальный контент сразу, даже если данные еще загружаются
+  // Это критично для медленного интернета
+  if (loading && banners.length === 0 && featuredProducts.length === 0 && newProducts.length === 0) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-xl">Загрузка...</div>
+        <div className="flex flex-col items-center gap-4">
+          <div className="text-3xl font-bold tracking-wide">ART × CO</div>
+          <div className="w-8 h-8 rounded-full border-2 border-black/20 border-t-black animate-spin" />
+          <div className="text-sm text-gray-500">Загрузка...</div>
+        </div>
       </div>
     )
   }
