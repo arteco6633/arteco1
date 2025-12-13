@@ -240,17 +240,18 @@ export default function HomePage() {
       // Категории загружаем после отображения основного контента
       // Выбираем только нужные поля
       const loadCategories = async () => {
-        const { data: categoriesData } = await withQueryTimeout(
+        const { data: categoriesData } = await withQueryTimeout<Category[]>(
           supabase
             .from('categories')
             .select('id, name, slug, image_url, is_active')
             .order('name', { ascending: true })
         )
-        if (!categoriesData) {
+        if (!categoriesData || !Array.isArray(categoriesData)) {
           console.warn('Не удалось загрузить категории (таймаут или ошибка)')
+          setCategories([])
           return
         }
-        setCategories(categoriesData)
+        setCategories(categoriesData as Category[])
       }
       
       if (isSlowConnection) {
