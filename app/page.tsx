@@ -275,7 +275,7 @@ export default function HomePage() {
       const slowConn = checkSlowConnection()
       const interiorsLimit = slowConn ? 10 : 20 // Меньше записей на медленном интернете
       
-      const { data, error } = await withQueryTimeout(
+      const { data, error } = await withQueryTimeout<Interior[]>(
         supabase
           .from('client_interiors')
           .select('id, title, description, cover_image, cover_preview, location, project_type, created_at')
@@ -284,7 +284,11 @@ export default function HomePage() {
       )
 
       if (error) throw error
-      setInteriors(data || [])
+      if (!data || !Array.isArray(data)) {
+        setInteriors([])
+        return
+      }
+      setInteriors(data as Interior[])
     } catch (error) {
       console.error('Ошибка загрузки интерьеров клиентов:', error)
       setInteriors([])
