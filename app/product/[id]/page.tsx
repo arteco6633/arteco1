@@ -457,7 +457,7 @@ export default function ProductPage() {
 
   async function loadProduct() {
     try {
-      const { data: productData } = await withQueryTimeout(
+      const { data: productData } = await withQueryTimeout<Product>(
         supabase
           .from('products')
           .select('*')
@@ -470,10 +470,10 @@ export default function ProductPage() {
         return
       }
 
-      setProduct(productData)
+      setProduct(productData as Product)
 
       // Загружаем категорию
-      const { data: categoryData } = await withQueryTimeout(
+      const { data: categoryData } = await withQueryTimeout<Category>(
         supabase
           .from('categories')
           .select('id, name, slug')
@@ -481,19 +481,19 @@ export default function ProductPage() {
           .single()
       )
 
-      setCategory(categoryData || null)
+      setCategory(categoryData ? (categoryData as Category) : null)
 
       // Загружаем модули для конструктора
       try {
-        const { data: mods } = await withQueryTimeout(
+        type ModuleType = Array<{ id:number; name:string; price:number; image_url?:string|null; description?:string|null; width?:number|null; height?:number|null; depth?:number|null; kind?:string|null }>
+        const { data: mods } = await withQueryTimeout<ModuleType>(
           supabase
             .from('product_modules')
             .select('id, name, price, image_url, description, width, height, depth, kind')
             .eq('product_id', productData.id)
             .order('position', { ascending: true })
         )
-          .order('position', { ascending: true })
-        setModules((mods as any) || [])
+        setModules(Array.isArray(mods) ? (mods as ModuleType) : [])
       } catch {}
     } catch (error) {
       console.error('Ошибка загрузки товара:', error)

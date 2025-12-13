@@ -121,7 +121,8 @@ export default function Navbar() {
     setSearchLoading(true)
     const t = setTimeout(async () => {
       try {
-        const { data } = await withQueryTimeout(
+        type SearchProductType = Array<{id:number; name:string; price:number; image_url:string}>
+        const { data } = await withQueryTimeout<SearchProductType>(
           supabase
             .from('products')
             .select('id, name, price, image_url')
@@ -130,7 +131,7 @@ export default function Navbar() {
             .limit(8),
           8000 // Короткий таймаут для поиска
         )
-        setSearchResults(data || [])
+        setSearchResults(Array.isArray(data) ? (data as SearchProductType) : [])
       } finally {
         setSearchLoading(false)
       }
@@ -156,7 +157,7 @@ export default function Navbar() {
   async function loadCategories() {
     if (categoriesLoaded) return // Уже загружены
     try {
-      const { data } = await withQueryTimeout(
+      const { data } = await withQueryTimeout<Category[]>(
         supabase
           .from('categories')
           .select('id, name, slug, image_url')
@@ -164,12 +165,13 @@ export default function Navbar() {
           .order('name', { ascending: true })
       )
       
-      if (!data) {
+      if (!data || !Array.isArray(data)) {
         console.warn('Не удалось загрузить категории (таймаут или ошибка)')
+        setCategories([])
         return
       }
       
-      setCategories(data)
+      setCategories(data as Category[])
       setCategoriesLoaded(true)
     } catch (error) {
       console.error('Ошибка загрузки категорий:', error)

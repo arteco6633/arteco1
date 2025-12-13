@@ -112,7 +112,7 @@ export default function ArticlePage() {
         console.warn(`Статья со slug "${decodedSlug}" не найдена в базе данных`)
         
         // Попробуем найти все статьи с похожим slug для диагностики
-        const { data: allArticles } = await withQueryTimeout(
+        const { data: allArticles } = await withQueryTimeout<Article[]>(
           supabase
             .from('journal_articles')
             .select('slug, is_published, title')
