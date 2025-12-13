@@ -1216,11 +1216,13 @@ export default function HomePage() {
         )}
 
         {/* Arteco - реальные интерьеры */}
-        <section className="py-8 bg-white">
+        {/* КРИТИЧНО: Резервируем место для предотвращения CLS */}
+        <section className="py-8 bg-white min-h-[600px]">
           <div className="max-w-[1680px] 2xl:max-w-none mx-auto px-1 md:px-2 xl:px-4 2xl:px-6 max-w-full">
             {interiorsLoading ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-                {Array.from({ length: 6 }).map((_, index) => (
+                {/* Skeleton loader с тем же количеством элементов, что и реальный контент */}
+                {Array.from({ length: Math.max(interiors.length || 6, 6) }).map((_, index) => (
                   <div
                     key={index}
                     className="relative aspect-[4/3] overflow-hidden rounded-xl border border-gray-200/70 bg-gradient-to-br from-gray-100 via-gray-50 to-white animate-pulse"
@@ -1325,6 +1327,7 @@ export default function HomePage() {
                               className="object-cover transition-transform duration-500 group-hover:scale-105"
                               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                               unoptimized={true}
+                              loading="lazy"
                               onError={(e) => {
                                 const target = e.target as HTMLImageElement
                                 target.style.display = 'none'

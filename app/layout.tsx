@@ -48,6 +48,9 @@ export default function RootLayout({
   return (
     <html lang="ru" className="overflow-x-hidden" suppressHydrationWarning>
       <head>
+        {/* Preconnect к Supabase Storage для ускорения загрузки изображений */}
+        <link rel="preconnect" href="https://zijajicude.beget.app" />
+        <link rel="dns-prefetch" href="https://zijajicude.beget.app" />
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
         {/* DNS Prefetch для ускорения подключения на медленном интернете */}
         <link rel="dns-prefetch" href={process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://zijajicude.beget.app'} />
