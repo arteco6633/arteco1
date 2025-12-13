@@ -204,14 +204,14 @@ export default function CategoryPage() {
         .eq('slug', slug)
         .single()
       
-      const { data: categoryData } = await withQueryTimeout(categoryQuery)
+      const { data: categoryData, error: categoryError } = await withQueryTimeout(categoryQuery)
 
-      if (!categoryData) {
+      if (categoryError || !categoryData) {
         setLoading(false)
         return
       }
 
-      setCategory(categoryData)
+      setCategory(categoryData as Category)
 
       // Загружаем товары этой категории (исключаем скрытые)
       // ОПТИМИЗАЦИЯ: Убрали description из списка - он не нужен для карточек в каталоге
