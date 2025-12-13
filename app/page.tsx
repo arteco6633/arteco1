@@ -847,7 +847,8 @@ export default function HomePage() {
                         {/* Изображение с правильным масштабированием */}
                         <div className="absolute inset-0 w-full h-full z-0">
                           <Image
-                            src={banner.image_url}
+                            // ОПТИМИЗАЦИЯ: Используем оптимизированные изображения
+                            src={getOptimizedImageUrl(banner.image_url, 1200, 85, 'webp')}
                             alt={banner.title}
                             fill
                             sizes="(max-width: 768px) 100vw, 50vw"
@@ -869,7 +870,7 @@ export default function HomePage() {
                         <div 
                           className="absolute inset-0 w-full h-full z-0"
                           style={{
-                            backgroundImage: `url(${banner.image_url})`,
+                            backgroundImage: `url(${getOptimizedImageUrl(banner.image_url, 1200, 85, 'webp')})`,
                             backgroundSize: 'cover',
                             backgroundPosition: 'center center',
                             backgroundRepeat: 'no-repeat',
@@ -1017,7 +1018,8 @@ export default function HomePage() {
                         {/* Изображение с правильным масштабированием */}
                         <div className="absolute inset-0 w-full h-full z-0">
                           <Image
-                            src={banner.image_url}
+                            // ОПТИМИЗАЦИЯ: Используем оптимизированные изображения
+                            src={getOptimizedImageUrl(banner.image_url, 1200, 85, 'webp')}
                             alt={banner.title}
                             fill
                             sizes="(max-width: 768px) 100vw, 50vw"
@@ -1039,7 +1041,7 @@ export default function HomePage() {
                         <div 
                           className="absolute inset-0 w-full h-full z-0"
                           style={{
-                            backgroundImage: `url(${banner.image_url})`,
+                            backgroundImage: `url(${getOptimizedImageUrl(banner.image_url, 1200, 85, 'webp')})`,
                             backgroundSize: 'cover',
                             backgroundPosition: 'center center',
                             backgroundRepeat: 'no-repeat',
