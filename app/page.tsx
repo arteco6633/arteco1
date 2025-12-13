@@ -228,7 +228,7 @@ export default function HomePage() {
 
       // Обертываем запросы в таймаут для предотвращения зависаний
       const [bannersResult, featuredResult, newResult] = await withQueryTimeoutAll(
-        criticalPromises.map(q => withQueryTimeout(q))
+        criticalPromises
       )
 
       setBanners((bannersResult.data || []) as Banner[])

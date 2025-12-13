@@ -43,18 +43,21 @@ function withTimeout<T>(
 
 /**
  * Обертка для Supabase запроса с автоматическим таймаутом
- * @param query - Supabase query builder
+ * @param query - Supabase query builder или Promise
  * @param timeoutMs - Таймаут в миллисекундах (по умолчанию зависит от скорости соединения)
  */
 export async function withQueryTimeout<T>(
-  query: Promise<{ data: T | null; error: any }>,
+  query: Promise<{ data: T | null; error: any }> | { then: (onfulfilled?: any) => any },
   timeoutMs?: number
 ): Promise<{ data: T | null; error: any }> {
   const timeout = timeoutMs ?? (isSlowConnection() ? SLOW_CONNECTION_TIMEOUT : DEFAULT_TIMEOUT)
   
+  // Если это не Promise, преобразуем его в Promise
+  const queryPromise = Promise.resolve(query) as Promise<{ data: T | null; error: any }>
+  
   try {
     const result = await withTimeout(
-      query,
+      queryPromise,
       timeout,
       `Запрос превысил таймаут ${timeout}мс`
     )
