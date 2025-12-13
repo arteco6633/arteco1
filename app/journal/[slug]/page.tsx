@@ -136,8 +136,10 @@ export default function ArticlePage() {
       }
 
       // Проверяем, опубликована ли статья
-      if (!articleData.is_published) {
-        console.warn(`Статья со slug "${decodedSlug}" существует, но не опубликована (is_published = false)`)
+      if (!articleData || !(articleData as any).is_published) {
+        if (articleData) {
+          console.warn(`Статья со slug "${decodedSlug}" существует, но не опубликована (is_published = false)`)
+        }
         setArticle(null)
         setLoading(false)
         return
