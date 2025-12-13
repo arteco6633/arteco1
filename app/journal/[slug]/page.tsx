@@ -161,13 +161,13 @@ export default function ArticlePage() {
         }
 
         // Загружаем связанные товары, если они есть
-        if (articleData.related_products && articleData.related_products.length > 0) {
+        if (articleData && (articleData as any).related_products && (articleData as any).related_products.length > 0) {
           try {
-            const { data: productsData, error: productsError } = await withQueryTimeout(
+            const { data: productsData, error: productsError } = await withQueryTimeout<Array<{ id: number; name: string; price: number; original_price?: number | null; image_url: string; images?: string[] | null }>>(
               supabase
                 .from('products')
                 .select('id, name, price, original_price, image_url, images')
-                .in('id', articleData.related_products)
+                .in('id', (articleData as any).related_products)
             )
 
             if (!productsError && productsData) {
