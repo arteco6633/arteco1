@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
+import Image from 'next/image'
 import { supabase } from '@/lib/supabase'
 import Link from 'next/link'
 import Head from 'next/head'
@@ -361,7 +362,6 @@ export default function ArticlePage() {
                 fill
                 className="object-cover"
                 sizes="100vw"
-                loading="eager"
                 priority
                 unoptimized
               />
