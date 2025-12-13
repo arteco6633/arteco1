@@ -14,6 +14,7 @@ const KitchenMatchmakerQuiz = dynamic(() => import('@/components/KitchenMatchmak
 })
 import { supabase } from '@/lib/supabase'
 import { withQueryTimeout, withQueryTimeoutAll, isSlowConnection as checkSlowConnection } from '@/lib/supabase-query'
+import { getPreviewImageUrl, getOptimizedImageUrl } from '@/lib/image-optimizer'
 import HeroBanners from '@/components/HeroBanners'
 import ProductGrid from '@/components/ProductGrid'
 import Categories from '@/components/Categories'
@@ -736,7 +737,8 @@ export default function HomePage() {
                       {/* Изображение с правильным масштабированием */}
                       <div className="absolute inset-0 w-full h-full">
                         <Image
-                          src={topBanner.image_url}
+                          // ОПТИМИЗАЦИЯ: LCP элемент - используем высокое качество, но оптимизированный размер
+                          src={getOptimizedImageUrl(topBanner.image_url, 1920, 90, 'webp')}
                           alt={topBanner.title}
                           fill
                           sizes="(max-width: 640px) 100vw, (max-width: 768px) 100vw, (max-width: 1024px) 70vw, (max-width: 1280px) 70vw, 70vw"
@@ -748,6 +750,7 @@ export default function HomePage() {
                             height: '100%'
                           }}
                           priority
+                          fetchPriority="high"
                           unoptimized={true}
                         />
                       </div>
@@ -755,7 +758,7 @@ export default function HomePage() {
                       <div 
                         className="absolute inset-0 w-full h-full"
                         style={{
-                          backgroundImage: `url(${topBanner.image_url})`,
+                          backgroundImage: `url(${getOptimizedImageUrl(topBanner.image_url, 1920, 90, 'webp')})`,
                           backgroundSize: 'cover',
                           backgroundPosition: 'center center',
                           backgroundRepeat: 'no-repeat',
@@ -1245,7 +1248,11 @@ export default function HomePage() {
                         >
                           {interior.cover_image ? (
                             <Image
-                              src={interior.cover_image}
+                              // ОПТИМИЗАЦИЯ: Используем preview если есть, иначе оптимизированное изображение
+                              src={interior.cover_preview 
+                                ? getPreviewImageUrl(interior.cover_preview, 800)
+                                : getOptimizedImageUrl(interior.cover_image, 1200, 85)
+                              }
                               alt={interior.title}
                               fill
                               className="object-cover transition-transform duration-500 group-hover:scale-105"
@@ -1321,7 +1328,11 @@ export default function HomePage() {
                         >
                           {interior.cover_image ? (
                             <Image
-                              src={interior.cover_image}
+                              // ОПТИМИЗАЦИЯ: Используем preview если есть, иначе оптимизированное изображение
+                              src={interior.cover_preview 
+                                ? getPreviewImageUrl(interior.cover_preview, 600)
+                                : getOptimizedImageUrl(interior.cover_image, 1200, 85)
+                              }
                               alt={interior.title}
                               fill
                               className="object-cover transition-transform duration-500 group-hover:scale-105"

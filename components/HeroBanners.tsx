@@ -2,6 +2,7 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
+import { getOptimizedImageUrl } from '@/lib/image-optimizer'
 
 interface Banner {
   id: number
@@ -25,7 +26,13 @@ export default function HeroBanners({ banners }: { banners: Banner[] }) {
                 {banner.link_url ? (
                   <Link href={banner.link_url}>
                     <Image
-                      src={banner.image_url}
+                      // ОПТИМИЗАЦИЯ: Используем Supabase Image Transform для сжатия
+                      src={getOptimizedImageUrl(
+                        banner.image_url, 
+                        isLCP ? 1920 : 1200, // LCP элемент - больше, остальные меньше
+                        isLCP ? 90 : 85, // LCP элемент - выше качество
+                        'webp'
+                      )}
                       alt={banner.title}
                       fill
                       sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
@@ -38,7 +45,13 @@ export default function HeroBanners({ banners }: { banners: Banner[] }) {
                   </Link>
                 ) : (
                   <Image
-                    src={banner.image_url}
+                    // ОПТИМИЗАЦИЯ: Используем Supabase Image Transform для сжатия
+                    src={getOptimizedImageUrl(
+                      banner.image_url, 
+                      isLCP ? 1920 : 1200,
+                      isLCP ? 90 : 85,
+                      'webp'
+                    )}
                     alt={banner.title}
                     fill
                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
