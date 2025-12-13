@@ -327,7 +327,7 @@ export default function ProductPage() {
       // 1) Если в товаре заданы related_products — показываем их
       const relIds: number[] = ((product as any).related_products || []) as number[]
       if (Array.isArray(relIds) && relIds.length > 0) {
-        const { data } = await withQueryTimeout(
+        const { data } = await withQueryTimeout<Product[]>(
           supabase
             .from('products')
             .select('id, name, price, original_price, price_type, price_per_m2, image_url, images, colors, category_id, is_featured, is_new, model_3d_url')
@@ -336,13 +336,14 @@ export default function ProductPage() {
         )
         // Сохранить исходный порядок relIds
         const byId: Record<number, any> = {}
-        ;(data || []).forEach((p: any) => { byId[p.id] = p })
+        const productsData = Array.isArray(data) ? data : []
+        productsData.forEach((p: any) => { byId[p.id] = p })
         setRelated(relIds.map(id => byId[id]).filter(Boolean))
         return
       }
       // 2) Иначе — подбор по категории
       if (!product.category_id) return
-      const { data } = await withQueryTimeout(
+      const { data } = await withQueryTimeout<Product[]>(
         supabase
           .from('products')
           .select('id, name, price, original_price, price_type, price_per_m2, image_url, images, colors, category_id, is_featured, is_new, model_3d_url')
@@ -351,7 +352,7 @@ export default function ProductPage() {
           .neq('id', product.id)
           .limit(8)
       )
-      if (data && data.length > 0) { setRelated(data); return }
+      if (data && Array.isArray(data) && data.length > 0) { setRelated(data as Product[]); return }
       // 3) Фоллбек: любые товары (исключаем скрытые)
       const { data: fallback } = await withQueryTimeout(
         supabase
