@@ -634,3 +634,97 @@ body {
   z-index: 1;
 }
 
+/* ===============================================
+   КАСТОМНЫЙ КУРСОР
+   =============================================== */
+
+/* Основной курсор (точка) */
+.custom-cursor {
+  position: fixed;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #000;
+  pointer-events: none;
+  z-index: 9999;
+  transform: translate(-50%, -50%);
+  transition: opacity 0.2s ease, transform 0.1s ease;
+  mix-blend-mode: difference;
+}
+
+.custom-cursor.hidden {
+  opacity: 0;
+}
+
+.custom-cursor-dot {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: #000;
+  transition: transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.custom-cursor-dot.hover {
+  transform: scale(0.5);
+}
+
+.custom-cursor-dot.clicking {
+  transform: scale(0.3);
+}
+
+/* Внешний кольцо (для плавного эффекта) */
+.custom-cursor-ring {
+  position: fixed;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+  z-index: 9998;
+  transform: translate(-50%, -50%);
+  transition: width 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+              height 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+              border-color 0.2s ease,
+              opacity 0.2s ease;
+  mix-blend-mode: difference;
+}
+
+.custom-cursor-ring.hidden {
+  opacity: 0;
+}
+
+.custom-cursor-ring-inner {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.custom-cursor-ring-inner.hover {
+  width: 60px;
+  height: 60px;
+  border-color: rgba(0, 0, 0, 0.8);
+}
+
+.custom-cursor-ring-inner.clicking {
+  width: 50px;
+  height: 50px;
+  border-color: rgba(0, 0, 0, 1);
+}
+
+/* Скрываем кастомный курсор на мобильных устройствах */
+@media (max-width: 767px) {
+  .custom-cursor,
+  .custom-cursor-ring {
+    display: none !important;
+  }
+}
+
+/* Улучшенная производительность для курсора */
+@supports (will-change: transform) {
+  .custom-cursor,
+  .custom-cursor-ring {
+    will-change: transform;
+  }
+}
+
