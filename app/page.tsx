@@ -97,7 +97,7 @@ export default function HomePage() {
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([])
   const [newProducts, setNewProducts] = useState<Product[]>([])
   const [categories, setCategories] = useState<Category[]>([])
-  const [loading, setLoading] = useState(true)
+  const [hasShownContent, setHasShownContent] = useState(false) // Флаг для показа контента сразу
   // Debug: скрытие секций через параметр ?hide=top,middle,bottom,categories,middle2,bottom2,new
   const [hideSet, setHideSet] = useState<Set<string>>(new Set())
   // Временное скрытие блока категорий (выключено)
@@ -135,6 +135,9 @@ export default function HomePage() {
   }, [])
 
   useEffect(() => {
+    // КРИТИЧНО: Загружаем данные асинхронно, НЕ блокируя рендеринг страницы
+    // Страница показывается сразу, данные подгружаются постепенно
+    
     // Определяем скорость соединения для оптимизации загрузки
     const connection = (navigator as any).connection || (navigator as any).mozConnection || (navigator as any).webkitConnection
     const isSlowConnection = connection && (
@@ -143,20 +146,31 @@ export default function HomePage() {
       (connection.downlink && connection.downlink < 1.5) // Медленнее 1.5 Mbps
     )
 
-    // Загружаем критические данные сразу
-    loadData()
+    // Загружаем критические данные асинхронно (не блокируем UI)
+    // Используем requestIdleCallback для неблокирующей загрузки
+    const loadDataAsync = () => {
+      if (window.requestIdleCallback) {
+        window.requestIdleCallback(() => loadData(), { timeout: 500 })
+      } else {
+        // Fallback для браузеров без requestIdleCallback
+        setTimeout(() => loadData(), 100)
+      }
+    }
+
+    // Небольшая задержка перед началом загрузки, чтобы страница успела отрендериться
+    setTimeout(loadDataAsync, 50)
     
-    // Интерьеры загружаем с задержкой на медленном интернете, чтобы не блокировать основной контент
+    // Интерьеры загружаем с еще большей задержкой на медленном интернете
     if (isSlowConnection) {
-      // На медленном интернете откладываем загрузку интерьеров до загрузки основного контента
+      // На медленном интернете откладываем загрузку интерьеров
       setTimeout(() => {
         loadInteriors()
-      }, 2000)
+      }, 3000) // Увеличена задержка для медленного интернета
     } else {
-      // На быстром интернете загружаем параллельно, но с небольшой задержкой
+      // На быстром интернете загружаем с небольшой задержкой
       setTimeout(() => {
         loadInteriors()
-      }, 500)
+      }, 1000)
     }
   }, [])
 
@@ -212,7 +226,8 @@ export default function HomePage() {
       setBanners((bannersResult.data || []) as Banner[])
       setFeaturedProducts((featuredResult.data || []) as Product[])
       setNewProducts((newResult.data || []) as Product[])
-      setLoading(false) // Показываем контент как можно скорее!
+      // НЕ устанавливаем loading = false, так как страница уже видна
+      // setLoading(false) удалено - страница показывается сразу
 
       // Категории загружаем после отображения основного контента
       // Выбираем только нужные поля
@@ -234,7 +249,7 @@ export default function HomePage() {
       }
     } catch (error) {
       console.error('Ошибка загрузки данных:', error)
-      setLoading(false) // Все равно показываем страницу, даже если есть ошибки
+      // Страница уже видна, просто логируем ошибку
     }
   }
 
@@ -620,7 +635,14 @@ export default function HomePage() {
 
   // Показываем минимальный контент сразу, даже если данные еще загружаются
   // Это критично для медленного интернета
-  if (loading && banners.length === 0 && featuredProducts.length === 0 && newProducts.length === 0) {
+  // Показываем контент сразу, не ждем загрузки данных
+  useEffect(() => {
+    const timer = setTimeout(() => setHasShownContent(true), 100) // Быстро показываем контент
+    return () => clearTimeout(timer)
+  }, [])
+
+  // Показываем скелетон только если данных еще нет И еще не прошло время показа
+  if (!hasShownContent && banners.length === 0 && featuredProducts.length === 0 && newProducts.length === 0) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="flex flex-col items-center gap-4">

@@ -6,39 +6,50 @@ export default function BootLoader() {
   const [shouldHide, setShouldHide] = useState(false)
 
   useEffect(() => {
-    // Ждем полной гидрации и загрузки критических данных
-    // На медленном интернете даем больше времени
+    // КРИТИЧНО: Скрываем лоадер как можно быстрее, не дожидаясь загрузки всех данных
+    // На медленном интернете это критично, чтобы пользователь видел страницу
     const hideLoader = () => {
-      // Проверяем, что страница действительно загружена
-      if (document.readyState === 'complete') {
-        setShouldHide(true)
-        const el = document.getElementById('arteco-boot-loader')
-        if (el) {
-          el.style.opacity = '0'
-          el.style.transition = 'opacity 300ms ease'
-          setTimeout(() => {
-            el.style.display = 'none'
-          }, 320)
-        }
+      setShouldHide(true)
+      const el = document.getElementById('arteco-boot-loader')
+      if (el) {
+        el.style.opacity = '0'
+        el.style.transition = 'opacity 200ms ease'
+        setTimeout(() => {
+          el.style.display = 'none'
+        }, 220)
       }
     }
 
-    // Пробуем скрыть сразу, если уже загружено
-    if (document.readyState === 'complete') {
-      hideLoader()
+    // Скрываем лоадер сразу после гидрации React (не ждем загрузки изображений/данных)
+    // Это позволяет показать страницу даже на медленном интернете
+    if (document.readyState === 'loading') {
+      // Если DOM еще загружается, ждем DOMContentLoaded (быстрее чем 'load')
+      document.addEventListener('DOMContentLoaded', hideLoader, { once: true })
     } else {
-      window.addEventListener('load', hideLoader)
-      // Fallback - скрываем максимум через 3 секунды, даже если что-то не загрузилось
-      const timeout = setTimeout(hideLoader, 3000)
-      
-      return () => {
-        window.removeEventListener('load', hideLoader)
-        clearTimeout(timeout)
-      }
+      // Если DOM уже загружен, скрываем сразу
+      hideLoader()
+    }
+
+    // Fallback - обязательно скрываем через 1 секунду максимум
+    // На медленном интернете это лучше чем бесконечная загрузка
+    const fallbackTimeout = setTimeout(hideLoader, 1000)
+    
+    return () => {
+      document.removeEventListener('DOMContentLoaded', hideLoader)
+      clearTimeout(fallbackTimeout)
     }
   }, [])
 
-  return null
+  if (shouldHide) return null
+
+  return (
+    <div className="fixed inset-0 z-[1000] bg-white grid place-items-center" id="arteco-boot-loader">
+      <div className="flex flex-col items-center gap-4">
+        <div className="text-3xl font-bold tracking-wide">ART × CO</div>
+        <div className="w-8 h-8 rounded-full border-2 border-black/20 border-t-black animate-spin" aria-label="Загрузка" />
+      </div>
+    </div>
+  )
 }
 
 
