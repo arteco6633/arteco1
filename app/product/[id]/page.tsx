@@ -354,7 +354,7 @@ export default function ProductPage() {
       )
       if (data && Array.isArray(data) && data.length > 0) { setRelated(data as Product[]); return }
       // 3) Фоллбек: любые товары (исключаем скрытые)
-      const { data: fallback } = await withQueryTimeout(
+      const { data: fallback } = await withQueryTimeout<Product[]>(
         supabase
           .from('products')
           .select('id, name, price, original_price, price_type, price_per_m2, image_url, images, colors, category_id, is_featured, is_new, model_3d_url')
@@ -362,7 +362,7 @@ export default function ProductPage() {
           .neq('id', product.id)
           .limit(8)
       )
-      setRelated(fallback || [])
+      setRelated(Array.isArray(fallback) ? (fallback as Product[]) : [])
     }
     loadRelated()
   }, [product])
