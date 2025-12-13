@@ -198,13 +198,13 @@ export default function CategoryPage() {
   async function loadCategoryData(customFlag?: boolean, fastDeliveryFlag?: boolean) {
     try {
       // Загружаем категорию - выбираем только нужные поля
-      const { data: categoryData } = await withQueryTimeout(
-        supabase
-          .from('categories')
-          .select('id, name, slug, description, image_url, is_active')
-          .eq('slug', slug)
-          .single()
-      )
+      const categoryQuery = supabase
+        .from('categories')
+        .select('id, name, slug, description, image_url, is_active')
+        .eq('slug', slug)
+        .single()
+      
+      const { data: categoryData } = await withQueryTimeout(categoryQuery)
 
       if (!categoryData) {
         setLoading(false)
@@ -216,7 +216,7 @@ export default function CategoryPage() {
       // Загружаем товары этой категории (исключаем скрытые)
       // ОПТИМИЗАЦИЯ: Убрали description из списка - он не нужен для карточек в каталоге
       const slowConn = checkSlowConnection()
-      let query = supabase
+      let productsQuery = supabase
         .from('products')
         .select('id, name, price, original_price, price_type, price_per_m2, image_url, images, colors, category_id, is_featured, is_new, is_custom_size, is_fast_delivery, model_3d_url')
         .eq('category_id', categoryData.id)
@@ -225,17 +225,17 @@ export default function CategoryPage() {
       
       // Ограничиваем количество на медленном интернете
       if (slowConn) {
-        query = query.limit(20) // Меньше товаров на медленном интернете
+        productsQuery = productsQuery.limit(20) // Меньше товаров на медленном интернете
       }
       
       if (customFlag) {
-        query = query.eq('is_custom_size', true)
+        productsQuery = productsQuery.eq('is_custom_size', true)
       }
       if (fastDeliveryFlag) {
-        query = query.eq('is_fast_delivery', true)
+        productsQuery = productsQuery.eq('is_fast_delivery', true)
       }
       
-      const { data: productsData } = await withQueryTimeout(query)
+      const { data: productsData } = await withQueryTimeout(productsQuery)
 
       setProducts(productsData || [])
     } catch (error) {
