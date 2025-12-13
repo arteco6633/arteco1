@@ -43,7 +43,7 @@ export default function ArticlePage() {
   const params = useParams()
   const slug = params?.slug as string
   const [article, setArticle] = useState<Article | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false) // НЕ блокируем показ страницы
   const [relatedArticles, setRelatedArticles] = useState<Article[]>([])
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([])
 
@@ -291,7 +291,9 @@ export default function ArticlePage() {
     return result.join('\n')
   }
 
-  if (loading) {
+  // Показываем страницу сразу, даже если данные еще загружаются
+  // На медленном интернете это критично
+  if (false) { // Отключено - не блокируем показ страницы
     return (
       <div className="min-h-screen">
         <div className="max-w-[1680px] 2xl:max-w-[1880px] mx-auto px-1 md:px-2 xl:px-4 2xl:px-6 py-12">

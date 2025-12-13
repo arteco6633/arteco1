@@ -39,7 +39,7 @@ export default function CategoryPage() {
   
   const [category, setCategory] = useState<Category | null>(null)
   const [products, setProducts] = useState<Product[]>([])
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false) // НЕ блокируем показ страницы
   const [onlyCustom, setOnlyCustom] = useState<boolean>(false)
   const [onlyFastDelivery, setOnlyFastDelivery] = useState<boolean>(false)
   // Выбранные варианты цветов/изображений по товару (индекс)
@@ -248,15 +248,8 @@ export default function CategoryPage() {
     router.replace(`/catalog/${slug}?${sp.toString()}`)
   }
 
-  if (loading) {
-    return (
-      <div className="min-h-screen">
-        <div className="flex items-center justify-center min-h-[50vh]">
-          <div className="text-xl">Загрузка...</div>
-        </div>
-      </div>
-    )
-  }
+  // Показываем страницу сразу, даже если данные еще загружаются
+  // На медленном интернете это критично
 
   if (!category) {
     return (

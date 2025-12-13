@@ -257,9 +257,11 @@ export default function HomePage() {
     try {
       setInteriorsLoading(true)
       // Оптимизация: выбираем только нужные поля для слабого интернета
+      // КРИТИЧНО: Загружаем только минимальные поля для списка интерьеров
+      // gallery_images, gallery_previews, video_urls - ОГРОМНЫЕ массивы, не нужны в списке
       const { data, error } = await supabase
         .from('client_interiors')
-        .select('id, title, description, cover_image, cover_preview, gallery_images, gallery_previews, video_urls, location, project_type, created_at')
+        .select('id, title, description, cover_image, cover_preview, location, project_type, created_at')
         .order('created_at', { ascending: false })
         .limit(20) // Ограничиваем количество для слабого интернета
 

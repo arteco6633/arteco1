@@ -15,7 +15,7 @@ interface Category {
 
 export default function CatalogPage() {
   const [categories, setCategories] = useState<Category[]>([])
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false) // НЕ блокируем показ страницы
   // Тумблер на корне каталога показываем как info, ведёт на первую категорию
 
   useEffect(() => {
@@ -53,7 +53,9 @@ export default function CatalogPage() {
     }
   }
 
-  if (loading) {
+  // Показываем страницу сразу, даже если данные еще загружаются
+  // На медленном интернете это критично
+  if (false) { // Отключено - не блокируем показ страницы
     return (
       <div className="min-h-screen">
         <div className="flex items-center justify-center min-h-[50vh]">

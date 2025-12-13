@@ -83,7 +83,7 @@ export default function ProductPage() {
   
   const [product, setProduct] = useState<Product | null>(null)
   const [category, setCategory] = useState<Category | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false) // НЕ блокируем показ страницы
   const [quantity, setQuantity] = useState(1)
   const [activeImageIdx, setActiveImageIdx] = useState(0)
   const [selectedHandlesIdx, setSelectedHandlesIdx] = useState<number | null>(null)
@@ -574,7 +574,17 @@ export default function ProductPage() {
     }
   }
 
-  if (loading) {
+  // Показываем страницу сразу, даже если данные еще загружаются
+  // На медленном интернете это критично
+  // if (loading) {
+  //   return (
+  //     <div className="min-h-screen flex items-center justify-center">
+  //       <div className="text-xl">Загрузка...</div>
+  //     </div>
+  //   )
+  // }
+  
+  if (false) { // Отключено - не блокируем показ страницы
     return (
       <div className="min-h-screen">
         <div className="flex items-center justify-center min-h-[50vh]">

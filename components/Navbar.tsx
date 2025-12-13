@@ -40,9 +40,32 @@ export default function Navbar() {
   const [profileMenuOpen, setProfileMenuOpen] = useState(false)
   const { data: session } = useSession()
 
+  // КРИТИЧНО: Загружаем категории отложенно, НЕ блокируя рендеринг навигации
+  // На медленном интернете это критично, чтобы навигация отображалась сразу
   useEffect(() => {
-    loadCategories()
-  }, [])
+    if (categoriesLoaded) return // Уже загружены
+    
+    // Загружаем категории с задержкой, чтобы не блокировать рендеринг навигации
+    // Если меню уже открыто, загружаем сразу
+    if (isMenuOpen || isMobileOpen) {
+      loadCategories()
+    } else {
+      // Отложенная загрузка - не блокирует показ навигации
+      const timer = setTimeout(() => {
+        if (!categoriesLoaded) {
+          loadCategories()
+        }
+      }, 1000) // Загружаем через 1 секунду после монтирования
+      return () => clearTimeout(timer)
+    }
+  }, [isMenuOpen, isMobileOpen, categoriesLoaded])
+  
+  // Загружаем категории при открытии меню если еще не загружены
+  useEffect(() => {
+    if ((isMenuOpen || isMobileOpen) && !categoriesLoaded) {
+      loadCategories()
+    }
+  }, [isMenuOpen, isMobileOpen, categoriesLoaded])
 
   // Глобальные события от нижнего мобильного меню
   useEffect(() => {
@@ -126,6 +149,7 @@ export default function Navbar() {
   }, [])
 
   async function loadCategories() {
+    if (categoriesLoaded) return // Уже загружены
     try {
       const { data } = await supabase
         .from('categories')
@@ -134,6 +158,7 @@ export default function Navbar() {
         .order('name', { ascending: true })
       
       setCategories(data || [])
+      setCategoriesLoaded(true)
     } catch (error) {
       console.error('Ошибка загрузки категорий:', error)
     }
