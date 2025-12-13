@@ -327,11 +327,13 @@ export default function ProductPage() {
       // 1) Если в товаре заданы related_products — показываем их
       const relIds: number[] = ((product as any).related_products || []) as number[]
       if (Array.isArray(relIds) && relIds.length > 0) {
-        const { data } = await supabase
-          .from('products')
-          .select('id, name, description, price, original_price, price_type, price_per_m2, image_url, images, colors, category_id, is_featured, is_new, model_3d_url')
-          .in('id', relIds)
-          .limit(12)
+        const { data } = await withQueryTimeout(
+          supabase
+            .from('products')
+            .select('id, name, price, original_price, price_type, price_per_m2, image_url, images, colors, category_id, is_featured, is_new, model_3d_url')
+            .in('id', relIds)
+            .limit(12)
+        )
         // Сохранить исходный порядок relIds
         const byId: Record<number, any> = {}
         ;(data || []).forEach((p: any) => { byId[p.id] = p })
@@ -454,11 +456,13 @@ export default function ProductPage() {
 
   async function loadProduct() {
     try {
-      const { data: productData } = await supabase
-        .from('products')
-        .select('*')
-        .eq('id', id)
-        .single()
+      const { data: productData } = await withQueryTimeout(
+        supabase
+          .from('products')
+          .select('*')
+          .eq('id', id)
+          .single()
+      )
 
       if (!productData) {
         setLoading(false)
@@ -468,20 +472,25 @@ export default function ProductPage() {
       setProduct(productData)
 
       // Загружаем категорию
-      const { data: categoryData } = await supabase
-        .from('categories')
-        .select('id, name, slug')
-        .eq('id', productData.category_id)
-        .single()
+      const { data: categoryData } = await withQueryTimeout(
+        supabase
+          .from('categories')
+          .select('id, name, slug')
+          .eq('id', productData.category_id)
+          .single()
+      )
 
-      setCategory(categoryData)
+      setCategory(categoryData || null)
 
       // Загружаем модули для конструктора
       try {
-        const { data: mods } = await supabase
-          .from('product_modules')
-          .select('id, name, price, image_url, description, width, height, depth, kind')
-          .eq('product_id', productData.id)
+        const { data: mods } = await withQueryTimeout(
+          supabase
+            .from('product_modules')
+            .select('id, name, price, image_url, description, width, height, depth, kind')
+            .eq('product_id', productData.id)
+            .order('position', { ascending: true })
+        )
           .order('position', { ascending: true })
         setModules((mods as any) || [])
       } catch {}
