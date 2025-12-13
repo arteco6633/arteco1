@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import Image from 'next/image'
 import { supabase } from '@/lib/supabase'
+import { withQueryTimeout } from '@/lib/supabase-query'
 import Link from 'next/link'
 import Head from 'next/head'
 import ProductGrid from '@/components/ProductGrid'
@@ -63,12 +64,13 @@ export default function ArticlePage() {
       console.log('Загрузка статьи со slug:', decodedSlug)
       
       // Загружаем статью - сначала без фильтра по is_published, чтобы понять, существует ли она
-      let query = supabase
-        .from('journal_articles')
-        .select('*')
-        .eq('slug', decodedSlug)
-
-      const { data: articleData, error } = await query.single()
+      const { data: articleData, error } = await withQueryTimeout(
+        supabase
+          .from('journal_articles')
+          .select('*')
+          .eq('slug', decodedSlug)
+          .single()
+      )
       
       console.log('Результат запроса:', { articleData, error })
 
@@ -110,10 +112,13 @@ export default function ArticlePage() {
         console.warn(`Статья со slug "${decodedSlug}" не найдена в базе данных`)
         
         // Попробуем найти все статьи с похожим slug для диагностики
-        const { data: allArticles } = await supabase
-          .from('journal_articles')
-          .select('slug, is_published, title')
-          .limit(10)
+        const { data: allArticles } = await withQueryTimeout(
+          supabase
+            .from('journal_articles')
+            .select('slug, is_published, title')
+            .limit(10),
+          5000 // Короткий таймаут для диагностики
+        )
         console.log('Все статьи в базе (первые 10):', allArticles)
         
         setArticle(null)
@@ -156,10 +161,12 @@ export default function ArticlePage() {
         // Загружаем связанные товары, если они есть
         if (articleData.related_products && articleData.related_products.length > 0) {
           try {
-            const { data: productsData, error: productsError } = await supabase
-              .from('products')
-              .select('*')
-              .in('id', articleData.related_products)
+            const { data: productsData, error: productsError } = await withQueryTimeout(
+              supabase
+                .from('products')
+                .select('id, name, price, original_price, image_url, images')
+                .in('id', articleData.related_products)
+            )
 
             if (!productsError && productsData) {
               // Преобразуем данные, чтобы соответствовать интерфейсу Product
@@ -180,14 +187,16 @@ export default function ArticlePage() {
         try {
           let related = null
           if (articleData.category) {
-            const { data } = await supabase
-              .from('journal_articles')
-              .select('*')
-              .eq('is_published', true)
-              .neq('id', articleData.id)
-              .eq('category', articleData.category)
-              .limit(3)
-              .order('published_at', { ascending: false })
+            const { data } = await withQueryTimeout(
+              supabase
+                .from('journal_articles')
+                .select('id, title, slug, excerpt, featured_image, published_at, category')
+                .eq('is_published', true)
+                .neq('id', articleData.id)
+                .eq('category', articleData.category)
+                .limit(3)
+                .order('published_at', { ascending: false })
+            )
             related = data
           }
 
@@ -195,13 +204,15 @@ export default function ArticlePage() {
             setRelatedArticles(related)
           } else {
             // Если нет статей в той же категории, загружаем любые
-            const { data: anyRelated } = await supabase
-              .from('journal_articles')
-              .select('*')
-              .eq('is_published', true)
-              .neq('id', articleData.id)
-              .limit(3)
-              .order('published_at', { ascending: false })
+            const { data: anyRelated } = await withQueryTimeout(
+              supabase
+                .from('journal_articles')
+                .select('id, title, slug, excerpt, featured_image, published_at, category')
+                .eq('is_published', true)
+                .neq('id', articleData.id)
+                .limit(3)
+                .order('published_at', { ascending: false })
+            )
 
             setRelatedArticles(anyRelated || [])
           }

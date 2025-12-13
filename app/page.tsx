@@ -13,6 +13,7 @@ const KitchenMatchmakerQuiz = dynamic(() => import('@/components/KitchenMatchmak
   ssr: false,
 })
 import { supabase } from '@/lib/supabase'
+import { withQueryTimeout, withQueryTimeoutAll, isSlowConnection as checkSlowConnection } from '@/lib/supabase-query'
 import HeroBanners from '@/components/HeroBanners'
 import ProductGrid from '@/components/ProductGrid'
 import Categories from '@/components/Categories'
@@ -199,6 +200,10 @@ export default function HomePage() {
 
       // Критические данные (баннеры и товары) загружаем сразу и параллельно
       // ВАЖНО: Выбираем только нужные поля для списков товаров, чтобы уменьшить размер ответа
+      // ОПТИМИЗАЦИЯ: Убрали description из списка товаров - он не нужен для карточек
+      const slowConn = checkSlowConnection()
+      const productsLimit = slowConn ? Math.min(NEW_PRODUCTS_LIMIT, 6) : NEW_PRODUCTS_LIMIT
+      
       const criticalPromises = [
         supabase
           .from('promo_blocks')
@@ -207,21 +212,23 @@ export default function HomePage() {
           .order('position', { ascending: true }),
         supabase
           .from('products')
-          .select('id, name, description, price, original_price, price_type, price_per_m2, image_url, images, colors, category_id, is_featured, is_new, model_3d_url')
+          .select('id, name, price, original_price, price_type, price_per_m2, image_url, images, colors, category_id, is_featured, is_new, model_3d_url')
           .eq('is_featured', 'true')
           .eq('is_hidden', false)
-          .limit(8),
+          .limit(slowConn ? 6 : 8),
         supabase
           .from('products')
-          .select('id, name, description, price, original_price, price_type, price_per_m2, image_url, images, colors, category_id, is_featured, is_new, model_3d_url')
+          .select('id, name, price, original_price, price_type, price_per_m2, image_url, images, colors, category_id, is_featured, is_new, model_3d_url')
           .eq('is_new', 'true')
           .eq('is_hidden', false)
           .order('id', { ascending: false })
-          .limit(NEW_PRODUCTS_LIMIT)
+          .limit(productsLimit)
       ]
 
-      // Категории не критичны для первого экрана - загружаем отдельно с таймаутом
-      const [bannersResult, featuredResult, newResult] = await Promise.all(criticalPromises)
+      // Обертываем запросы в таймаут для предотвращения зависаний
+      const [bannersResult, featuredResult, newResult] = await withQueryTimeoutAll(
+        criticalPromises.map(q => withQueryTimeout(q))
+      )
 
       setBanners((bannersResult.data || []) as Banner[])
       setFeaturedProducts((featuredResult.data || []) as Product[])
@@ -231,21 +238,25 @@ export default function HomePage() {
 
       // Категории загружаем после отображения основного контента
       // Выбираем только нужные поля
-      if (isSlowConnection) {
-        setTimeout(async () => {
-          const { data: categoriesData } = await supabase
+      const loadCategories = async () => {
+        const { data: categoriesData } = await withQueryTimeout(
+          supabase
             .from('categories')
             .select('id, name, slug, image_url, is_active')
             .order('name', { ascending: true })
-          setCategories(categoriesData || [])
-        }, 1000)
+        )
+        if (!categoriesData) {
+          console.warn('Не удалось загрузить категории (таймаут или ошибка)')
+          return
+        }
+        setCategories(categoriesData)
+      }
+      
+      if (isSlowConnection) {
+        setTimeout(loadCategories, 1000)
       } else {
         // На быстром интернете загружаем сразу
-        const { data: categoriesData } = await supabase
-          .from('categories')
-          .select('id, name, slug, image_url, is_active')
-          .order('name', { ascending: true })
-        setCategories(categoriesData || [])
+        loadCategories()
       }
     } catch (error) {
       console.error('Ошибка загрузки данных:', error)
@@ -259,11 +270,16 @@ export default function HomePage() {
       // Оптимизация: выбираем только нужные поля для слабого интернета
       // КРИТИЧНО: Загружаем только минимальные поля для списка интерьеров
       // gallery_images, gallery_previews, video_urls - ОГРОМНЫЕ массивы, не нужны в списке
-      const { data, error } = await supabase
-        .from('client_interiors')
-        .select('id, title, description, cover_image, cover_preview, location, project_type, created_at')
-        .order('created_at', { ascending: false })
-        .limit(20) // Ограничиваем количество для слабого интернета
+      const slowConn = checkSlowConnection()
+      const interiorsLimit = slowConn ? 10 : 20 // Меньше записей на медленном интернете
+      
+      const { data, error } = await withQueryTimeout(
+        supabase
+          .from('client_interiors')
+          .select('id, title, description, cover_image, cover_preview, location, project_type, created_at')
+          .order('created_at', { ascending: false })
+          .limit(interiorsLimit)
+      )
 
       if (error) throw error
       setInteriors(data || [])

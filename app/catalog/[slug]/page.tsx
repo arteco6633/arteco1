@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { useParams, useSearchParams, useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import { withQueryTimeout, isSlowConnection as checkSlowConnection } from '@/lib/supabase-query'
 import Link from 'next/link'
 import { useWishlist } from '@/components/WishlistContext'
 
@@ -197,11 +198,13 @@ export default function CategoryPage() {
   async function loadCategoryData(customFlag?: boolean, fastDeliveryFlag?: boolean) {
     try {
       // Загружаем категорию - выбираем только нужные поля
-      const { data: categoryData } = await supabase
-        .from('categories')
-        .select('id, name, slug, description, image_url, is_active')
-        .eq('slug', slug)
-        .single()
+      const { data: categoryData } = await withQueryTimeout(
+        supabase
+          .from('categories')
+          .select('id, name, slug, description, image_url, is_active')
+          .eq('slug', slug)
+          .single()
+      )
 
       if (!categoryData) {
         setLoading(false)
@@ -211,20 +214,28 @@ export default function CategoryPage() {
       setCategory(categoryData)
 
       // Загружаем товары этой категории (исключаем скрытые)
-      // Оптимизация: выбираем только нужные поля для списка товаров
+      // ОПТИМИЗАЦИЯ: Убрали description из списка - он не нужен для карточек в каталоге
+      const slowConn = checkSlowConnection()
       let query = supabase
         .from('products')
-        .select('id, name, description, price, original_price, price_type, price_per_m2, image_url, images, colors, category_id, is_featured, is_new, is_custom_size, is_fast_delivery, model_3d_url')
+        .select('id, name, price, original_price, price_type, price_per_m2, image_url, images, colors, category_id, is_featured, is_new, is_custom_size, is_fast_delivery, model_3d_url')
         .eq('category_id', categoryData.id)
         .eq('is_hidden', false) // Исключаем скрытые товары из каталога
         .order('id', { ascending: false })
+      
+      // Ограничиваем количество на медленном интернете
+      if (slowConn) {
+        query = query.limit(20) // Меньше товаров на медленном интернете
+      }
+      
       if (customFlag) {
         query = query.eq('is_custom_size', true)
       }
       if (fastDeliveryFlag) {
         query = query.eq('is_fast_delivery', true)
       }
-      const { data: productsData } = await query
+      
+      const { data: productsData } = await withQueryTimeout(query)
 
       setProducts(productsData || [])
     } catch (error) {

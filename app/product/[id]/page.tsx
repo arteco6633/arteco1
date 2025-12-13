@@ -6,6 +6,7 @@ import { useCart } from '@/components/CartContext'
 import { useWishlist } from '@/components/WishlistContext'
 import { useParams, useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import { withQueryTimeout } from '@/lib/supabase-query'
 import ProductGrid from '@/components/ProductGrid'
 import KitchenQuiz from '@/components/KitchenQuiz'
 import dynamic from 'next/dynamic'
@@ -339,21 +340,25 @@ export default function ProductPage() {
       }
       // 2) Иначе — подбор по категории
       if (!product.category_id) return
-      const { data } = await supabase
-        .from('products')
-        .select('id, name, description, price, original_price, price_type, price_per_m2, image_url, images, colors, category_id, is_featured, is_new, model_3d_url')
-        .eq('category_id', product.category_id)
-        .eq('is_hidden', false) // Исключаем скрытые товары из рекомендаций
-        .neq('id', product.id)
-        .limit(8)
+      const { data } = await withQueryTimeout(
+        supabase
+          .from('products')
+          .select('id, name, price, original_price, price_type, price_per_m2, image_url, images, colors, category_id, is_featured, is_new, model_3d_url')
+          .eq('category_id', product.category_id)
+          .eq('is_hidden', false) // Исключаем скрытые товары из рекомендаций
+          .neq('id', product.id)
+          .limit(8)
+      )
       if (data && data.length > 0) { setRelated(data); return }
       // 3) Фоллбек: любые товары (исключаем скрытые)
-      const { data: fallback } = await supabase
-        .from('products')
-        .select('id, name, description, price, original_price, price_type, price_per_m2, image_url, images, colors, category_id, is_featured, is_new, model_3d_url')
-        .eq('is_hidden', false) // Исключаем скрытые товары из рекомендаций
-        .neq('id', product.id)
-        .limit(8)
+      const { data: fallback } = await withQueryTimeout(
+        supabase
+          .from('products')
+          .select('id, name, price, original_price, price_type, price_per_m2, image_url, images, colors, category_id, is_featured, is_new, model_3d_url')
+          .eq('is_hidden', false) // Исключаем скрытые товары из рекомендаций
+          .neq('id', product.id)
+          .limit(8)
+      )
       setRelated(fallback || [])
     }
     loadRelated()

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
+import { withQueryTimeout } from '@/lib/supabase-query'
 import Link from 'next/link'
 import Image from 'next/image'
 
@@ -24,12 +25,14 @@ export default function CatalogPage() {
 
   async function loadCategories() {
     try {
-      const { data, error } = await supabase
-        .from('categories')
-        .select('*')
-        .eq('is_active', true)
-        .order('position', { ascending: true, nullsFirst: false })
-        .order('name', { ascending: true })
+      const { data, error } = await withQueryTimeout(
+        supabase
+          .from('categories')
+          .select('id, name, slug, description, image_url, is_active')
+          .eq('is_active', true)
+          .order('position', { ascending: true, nullsFirst: false })
+          .order('name', { ascending: true })
+      )
       
       if (error) {
         console.error('Ошибка загрузки категорий:', error)

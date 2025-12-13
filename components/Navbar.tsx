@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { supabase } from '@/lib/supabase'
+import { withQueryTimeout } from '@/lib/supabase-query'
 import { useSession, signOut } from 'next-auth/react'
 import AuthModal from '@/components/AuthModal'
 import { useCart } from '@/components/CartContext'
@@ -120,12 +121,15 @@ export default function Navbar() {
     setSearchLoading(true)
     const t = setTimeout(async () => {
       try {
-        const { data } = await supabase
-          .from('products')
-          .select('id, name, price, image_url')
-          .ilike('name', `%${q}%`)
-          .eq('is_hidden', false) // Исключаем скрытые товары из поиска
-          .limit(8)
+        const { data } = await withQueryTimeout(
+          supabase
+            .from('products')
+            .select('id, name, price, image_url')
+            .ilike('name', `%${q}%`)
+            .eq('is_hidden', false) // Исключаем скрытые товары из поиска
+            .limit(8),
+          8000 // Короткий таймаут для поиска
+        )
         setSearchResults(data || [])
       } finally {
         setSearchLoading(false)
@@ -152,13 +156,20 @@ export default function Navbar() {
   async function loadCategories() {
     if (categoriesLoaded) return // Уже загружены
     try {
-      const { data } = await supabase
-        .from('categories')
-        .select('id, name, slug, image_url')
-        .eq('is_active', true)
-        .order('name', { ascending: true })
+      const { data } = await withQueryTimeout(
+        supabase
+          .from('categories')
+          .select('id, name, slug, image_url')
+          .eq('is_active', true)
+          .order('name', { ascending: true })
+      )
       
-      setCategories(data || [])
+      if (!data) {
+        console.warn('Не удалось загрузить категории (таймаут или ошибка)')
+        return
+      }
+      
+      setCategories(data)
       setCategoriesLoaded(true)
     } catch (error) {
       console.error('Ошибка загрузки категорий:', error)
