@@ -222,7 +222,7 @@ export default function ArticlePage() {
               .order('published_at', { ascending: false })
           )
 
-            setRelatedArticles(anyRelated || [])
+            setRelatedArticles((anyRelated || []) as Article[])
           }
         } catch (relatedError) {
           console.warn('Ошибка загрузки похожих статей:', relatedError)
