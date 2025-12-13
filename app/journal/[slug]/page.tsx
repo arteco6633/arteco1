@@ -126,41 +126,45 @@ export default function ArticlePage() {
         return
       }
 
-      if (articleData) {
-        console.log('Статья найдена:', {
-          id: articleData.id,
-          title: articleData.title,
-          slug: articleData.slug,
-          is_published: articleData.is_published
-        })
-      }
-
-      // Проверяем, опубликована ли статья
-      if (!articleData || !(articleData as any).is_published) {
-        if (articleData) {
-          console.warn(`Статья со slug "${decodedSlug}" существует, но не опубликована (is_published = false)`)
-        }
+      if (!articleData) {
         setArticle(null)
         setLoading(false)
         return
       }
 
-        console.log('Статья успешно загружена и опубликована')
-        setArticle(articleData)
-        
-        // Сразу снимаем флаг загрузки, чтобы показать статью
-        setLoading(false)
+      const article = articleData as Article & { is_published?: boolean; views_count?: number }
 
-        // Увеличиваем счетчик просмотров (не блокируем если ошибка) - делаем асинхронно
-        try {
-          await supabase
-            .from('journal_articles')
-            .update({ views_count: (articleData.views_count || 0) + 1 })
-            .eq('id', articleData.id)
-        } catch (viewsError) {
-          console.warn('Ошибка обновления счетчика просмотров:', viewsError)
-          // Не критично, продолжаем
-        }
+      console.log('Статья найдена:', {
+        id: article.id,
+        title: article.title,
+        slug: article.slug,
+        is_published: article.is_published
+      })
+
+      // Проверяем, опубликована ли статья
+      if (!article.is_published) {
+        console.warn(`Статья со slug "${decodedSlug}" существует, но не опубликована (is_published = false)`)
+        setArticle(null)
+        setLoading(false)
+        return
+      }
+
+      console.log('Статья успешно загружена и опубликована')
+      setArticle(article)
+      
+      // Сразу снимаем флаг загрузки, чтобы показать статью
+      setLoading(false)
+
+      // Увеличиваем счетчик просмотров (не блокируем если ошибка) - делаем асинхронно
+      try {
+        await supabase
+          .from('journal_articles')
+          .update({ views_count: (article.views_count || 0) + 1 })
+          .eq('id', article.id)
+      } catch (viewsError) {
+        console.warn('Ошибка обновления счетчика просмотров:', viewsError)
+        // Не критично, продолжаем
+      }
 
         // Загружаем связанные товары, если они есть
         if (articleData && (articleData as any).related_products && (articleData as any).related_products.length > 0) {
@@ -187,36 +191,36 @@ export default function ArticlePage() {
           }
         }
 
-        // Загружаем похожие статьи - делаем асинхронно
-        try {
-          let related = null
-          if (articleData.category) {
-            const { data } = await withQueryTimeout<Array<{ id: number; title: string; slug: string; excerpt?: string | null; featured_image?: string | null; published_at?: string | null; category?: string | null }>>(
-              supabase
-                .from('journal_articles')
-                .select('id, title, slug, excerpt, featured_image, published_at, category')
-                .eq('is_published', true)
-                .neq('id', articleData.id)
-                .eq('category', articleData.category)
-                .limit(3)
-                .order('published_at', { ascending: false })
-            )
-            related = data
-          }
+      // Загружаем похожие статьи - делаем асинхронно
+      try {
+        let related = null
+        if (article.category) {
+          const { data } = await withQueryTimeout<Array<{ id: number; title: string; slug: string; excerpt?: string | null; featured_image?: string | null; published_at?: string | null; category?: string | null }>>(
+            supabase
+              .from('journal_articles')
+              .select('id, title, slug, excerpt, featured_image, published_at, category')
+              .eq('is_published', true)
+              .neq('id', article.id)
+              .eq('category', article.category)
+              .limit(3)
+              .order('published_at', { ascending: false })
+          )
+          related = data
+        }
 
-          if (related && related.length > 0) {
-            setRelatedArticles(related)
-          } else {
-            // Если нет статей в той же категории, загружаем любые
-            const { data: anyRelated } = await withQueryTimeout<Array<{ id: number; title: string; slug: string; excerpt?: string | null; featured_image?: string | null; published_at?: string | null; category?: string | null }>>(
-              supabase
-                .from('journal_articles')
-                .select('id, title, slug, excerpt, featured_image, published_at, category')
-                .eq('is_published', true)
-                .neq('id', articleData.id)
-                .limit(3)
-                .order('published_at', { ascending: false })
-            )
+        if (related && related.length > 0) {
+          setRelatedArticles(related as Article[])
+        } else {
+          // Если нет статей в той же категории, загружаем любые
+          const { data: anyRelated } = await withQueryTimeout<Array<{ id: number; title: string; slug: string; excerpt?: string | null; featured_image?: string | null; published_at?: string | null; category?: string | null }>>(
+            supabase
+              .from('journal_articles')
+              .select('id, title, slug, excerpt, featured_image, published_at, category')
+              .eq('is_published', true)
+              .neq('id', article.id)
+              .limit(3)
+              .order('published_at', { ascending: false })
+          )
 
             setRelatedArticles(anyRelated || [])
           }
