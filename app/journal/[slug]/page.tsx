@@ -169,22 +169,22 @@ export default function ArticlePage() {
       // Загружаем связанные товары, если они есть
       if (article.related_products && article.related_products.length > 0) {
         try {
-          const { data: productsData, error: productsError } = await withQueryTimeout<Array<{ id: number; name: string; price: number; original_price?: number | null; image_url: string; images?: string[] | null }>>(
+          const { data: productsData, error: productsError } = await withQueryTimeout<Array<{ id: number; name: string; price: number; original_price?: number | null; image_url: string; images?: string[] | null; description?: string | null }>>(
             supabase
               .from('products')
-              .select('id, name, price, original_price, image_url, images')
+              .select('id, name, price, original_price, image_url, images, description')
               .in('id', article.related_products)
           )
 
-            if (!productsError && productsData) {
-              // Преобразуем данные, чтобы соответствовать интерфейсу Product
-              const formattedProducts = productsData.map(p => ({
-                ...p,
-                description: p.description || '',
-                original_price: p.original_price || undefined
-              }))
-              setRelatedProducts(formattedProducts)
-            }
+          if (!productsError && productsData) {
+            // Преобразуем данные, чтобы соответствовать интерфейсу Product
+            const formattedProducts = productsData.map(p => ({
+              ...p,
+              description: p.description || '',
+              original_price: p.original_price || undefined
+            }))
+            setRelatedProducts(formattedProducts as Product[])
+          }
           } catch (productsError) {
             console.warn('Ошибка загрузки связанных товаров:', productsError)
             setRelatedProducts([])
