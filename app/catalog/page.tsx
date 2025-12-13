@@ -25,7 +25,7 @@ export default function CatalogPage() {
 
   async function loadCategories() {
     try {
-      const { data, error } = await withQueryTimeout(
+      const { data, error } = await withQueryTimeout<Category[]>(
         supabase
           .from('categories')
           .select('id, name, slug, description, image_url, is_active')
@@ -36,19 +36,23 @@ export default function CatalogPage() {
       
       if (error) {
         console.error('Ошибка загрузки категорий:', error)
+        setCategories([])
+        return
       }
       
-      if (data) {
-        console.log('Загружено категорий:', data.length)
+      if (data && Array.isArray(data)) {
+        const categoriesArray = data as Category[]
+        console.log('Загружено категорий:', categoriesArray.length)
         // Логируем URL изображений для отладки
-        data.forEach(cat => {
+        categoriesArray.forEach(cat => {
           if (cat.image_url) {
             console.log(`Категория "${cat.name}":`, cat.image_url)
           }
         })
+        setCategories(categoriesArray)
+      } else {
+        setCategories([])
       }
-      
-        setCategories((data || []) as Category[])
     } catch (error) {
       console.error('Ошибка загрузки категорий:', error)
     } finally {
