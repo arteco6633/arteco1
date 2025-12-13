@@ -166,15 +166,15 @@ export default function ArticlePage() {
         // Не критично, продолжаем
       }
 
-        // Загружаем связанные товары, если они есть
-        if (articleData && (articleData as any).related_products && (articleData as any).related_products.length > 0) {
-          try {
-            const { data: productsData, error: productsError } = await withQueryTimeout<Array<{ id: number; name: string; price: number; original_price?: number | null; image_url: string; images?: string[] | null }>>(
-              supabase
-                .from('products')
-                .select('id, name, price, original_price, image_url, images')
-                .in('id', (articleData as any).related_products)
-            )
+      // Загружаем связанные товары, если они есть
+      if (article.related_products && article.related_products.length > 0) {
+        try {
+          const { data: productsData, error: productsError } = await withQueryTimeout<Array<{ id: number; name: string; price: number; original_price?: number | null; image_url: string; images?: string[] | null }>>(
+            supabase
+              .from('products')
+              .select('id, name, price, original_price, image_url, images')
+              .in('id', article.related_products)
+          )
 
             if (!productsError && productsData) {
               // Преобразуем данные, чтобы соответствовать интерфейсу Product
