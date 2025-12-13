@@ -48,7 +48,7 @@ export default function CatalogPage() {
         })
       }
       
-      setCategories(data || [])
+        setCategories((data || []) as Category[])
     } catch (error) {
       console.error('Ошибка загрузки категорий:', error)
     } finally {
