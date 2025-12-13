@@ -64,7 +64,7 @@ export default function ArticlePage() {
       console.log('Загрузка статьи со slug:', decodedSlug)
       
       // Загружаем статью - сначала без фильтра по is_published, чтобы понять, существует ли она
-      const { data: articleData, error } = await withQueryTimeout(
+      const { data: articleData, error } = await withQueryTimeout<Article>(
         supabase
           .from('journal_articles')
           .select('*')
@@ -126,12 +126,14 @@ export default function ArticlePage() {
         return
       }
 
-      console.log('Статья найдена:', {
-        id: articleData.id,
-        title: articleData.title,
-        slug: articleData.slug,
-        is_published: articleData.is_published
-      })
+      if (articleData) {
+        console.log('Статья найдена:', {
+          id: articleData.id,
+          title: articleData.title,
+          slug: articleData.slug,
+          is_published: articleData.is_published
+        })
+      }
 
       // Проверяем, опубликована ли статья
       if (!articleData.is_published) {
@@ -187,7 +189,7 @@ export default function ArticlePage() {
         try {
           let related = null
           if (articleData.category) {
-            const { data } = await withQueryTimeout(
+            const { data } = await withQueryTimeout<Array<{ id: number; title: string; slug: string; excerpt?: string | null; featured_image?: string | null; published_at?: string | null; category?: string | null }>>(
               supabase
                 .from('journal_articles')
                 .select('id, title, slug, excerpt, featured_image, published_at, category')
@@ -204,7 +206,7 @@ export default function ArticlePage() {
             setRelatedArticles(related)
           } else {
             // Если нет статей в той же категории, загружаем любые
-            const { data: anyRelated } = await withQueryTimeout(
+            const { data: anyRelated } = await withQueryTimeout<Array<{ id: number; title: string; slug: string; excerpt?: string | null; featured_image?: string | null; published_at?: string | null; category?: string | null }>>(
               supabase
                 .from('journal_articles')
                 .select('id, title, slug, excerpt, featured_image, published_at, category')
