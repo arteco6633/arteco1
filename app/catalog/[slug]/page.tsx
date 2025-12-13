@@ -237,9 +237,9 @@ export default function CategoryPage() {
         productsQuery = productsQuery.eq('is_fast_delivery', true)
       }
       
-      const { data: productsData } = await withQueryTimeout(productsQuery)
+      const { data: productsData } = await withQueryTimeout<Product[]>(productsQuery)
 
-      setProducts(productsData || [])
+      setProducts((productsData || []) as Product[])
     } catch (error) {
       console.error('Ошибка загрузки данных:', error)
     } finally {
