@@ -21,6 +21,7 @@ export default function Navbar() {
   const { count, setOpen } = useCart()
   const { count: wishlistCount } = useWishlist()
   const [categories, setCategories] = useState<Category[]>([])
+  const [categoriesLoaded, setCategoriesLoaded] = useState(false)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [hideOnScroll, setHideOnScroll] = useState(false)
   const [hasShadow, setHasShadow] = useState(false)
