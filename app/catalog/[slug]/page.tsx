@@ -196,10 +196,10 @@ export default function CategoryPage() {
 
   async function loadCategoryData(customFlag?: boolean, fastDeliveryFlag?: boolean) {
     try {
-      // Загружаем категорию
+      // Загружаем категорию - выбираем только нужные поля
       const { data: categoryData } = await supabase
         .from('categories')
-        .select('*')
+        .select('id, name, slug, description, image_url, is_active')
         .eq('slug', slug)
         .single()
 
@@ -211,9 +211,10 @@ export default function CategoryPage() {
       setCategory(categoryData)
 
       // Загружаем товары этой категории (исключаем скрытые)
+      // Оптимизация: выбираем только нужные поля для списка товаров
       let query = supabase
         .from('products')
-        .select('*')
+        .select('id, name, description, price, original_price, price_type, price_per_m2, image_url, images, colors, category_id, is_featured, is_new, is_custom_size, is_fast_delivery, model_3d_url')
         .eq('category_id', categoryData.id)
         .eq('is_hidden', false) // Исключаем скрытые товары из каталога
         .order('id', { ascending: false })

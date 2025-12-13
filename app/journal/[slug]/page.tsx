@@ -355,10 +355,15 @@ export default function ArticlePage() {
           {/* Изображение */}
           {article.featured_image && (
             <div className="relative w-full aspect-[21/9] overflow-hidden bg-gray-100">
-              <img
+              <Image
                 src={article.featured_image}
                 alt={article.title}
-                className="w-full h-full object-cover"
+                fill
+                className="object-cover"
+                sizes="100vw"
+                loading="eager"
+                priority
+                unoptimized
               />
             </div>
           )}

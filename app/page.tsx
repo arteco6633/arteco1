@@ -241,16 +241,14 @@ export default function HomePage() {
   async function loadInteriors() {
     try {
       setInteriorsLoading(true)
+      // Оптимизация: выбираем только нужные поля для слабого интернета
       const { data, error } = await supabase
         .from('client_interiors')
-        .select('*')
+        .select('id, title, description, cover_image, cover_preview, gallery_images, gallery_previews, video_urls, location, project_type, created_at')
         .order('created_at', { ascending: false })
+        .limit(20) // Ограничиваем количество для слабого интернета
 
       if (error) throw error
-      console.log('Загружено интерьеров:', data?.length || 0)
-      if (data && data.length > 0) {
-        console.log('Пример URL обложки:', data[0]?.cover_image)
-      }
       setInteriors(data || [])
     } catch (error) {
       console.error('Ошибка загрузки интерьеров клиентов:', error)

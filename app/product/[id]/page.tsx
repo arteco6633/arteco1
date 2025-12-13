@@ -328,7 +328,7 @@ export default function ProductPage() {
       if (Array.isArray(relIds) && relIds.length > 0) {
         const { data } = await supabase
           .from('products')
-          .select('*')
+          .select('id, name, description, price, original_price, price_type, price_per_m2, image_url, images, colors, category_id, is_featured, is_new, model_3d_url')
           .in('id', relIds)
           .limit(12)
         // Сохранить исходный порядок relIds
@@ -341,7 +341,7 @@ export default function ProductPage() {
       if (!product.category_id) return
       const { data } = await supabase
         .from('products')
-        .select('*')
+        .select('id, name, description, price, original_price, price_type, price_per_m2, image_url, images, colors, category_id, is_featured, is_new, model_3d_url')
         .eq('category_id', product.category_id)
         .eq('is_hidden', false) // Исключаем скрытые товары из рекомендаций
         .neq('id', product.id)
@@ -350,7 +350,7 @@ export default function ProductPage() {
       // 3) Фоллбек: любые товары (исключаем скрытые)
       const { data: fallback } = await supabase
         .from('products')
-        .select('*')
+        .select('id, name, description, price, original_price, price_type, price_per_m2, image_url, images, colors, category_id, is_featured, is_new, model_3d_url')
         .eq('is_hidden', false) // Исключаем скрытые товары из рекомендаций
         .neq('id', product.id)
         .limit(8)

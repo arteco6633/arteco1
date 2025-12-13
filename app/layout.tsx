@@ -7,7 +7,6 @@ import { Suspense } from 'react'
 import BootLoader from '@/components/BootLoader'
 import AppShell from '@/components/AppShell'
 import LazyPaymentWidgets from '@/components/LazyPaymentWidgets'
-import CustomCursor from '@/components/CustomCursor'
 
 export const metadata: Metadata = {
   title: 'ARTECO - Интернет-магазин',
@@ -47,7 +46,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="ru" className="overflow-x-hidden">
+    <html lang="ru" className="overflow-x-hidden" suppressHydrationWarning>
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
         {/* DNS Prefetch для ускорения подключения на медленном интернете */}
@@ -66,21 +65,26 @@ export default function RootLayout({
         <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
       </head>
       <body className="overflow-x-hidden">
-        {/* Кастомный курсор (только на десктопе) */}
-        <CustomCursor />
-        {/* Прелоадер до гидрации (виден и на жёстком обновлении, и на мобилках) */}
-        <div id="arteco-boot-loader" className="fixed inset-0 z-[1000] bg-white grid place-items-center">
-          <div className="flex flex-col items-center gap-4">
-            <div className="text-3xl font-bold tracking-wide">ART × CO</div>
-            <div className="w-8 h-8 rounded-full border-2 border-black/20 border-t-black animate-spin" />
-          </div>
-        </div>
         <BootLoader />
         {/* Регистрация Service Worker для кэширования */}
         {/* Безопасность: inline script безопасен, так как это статический код без пользовательского ввода */}
         <script
           dangerouslySetInnerHTML={{
             __html: `
+              // Удаляем любой кастомный курсор при загрузке
+              document.addEventListener('DOMContentLoaded', function() {
+                // Удаляем элементы кастомного курсора
+                const customCursors = document.querySelectorAll('[id*="cursor"], [class*="custom-cursor"], [class*="cursor-ring"]');
+                customCursors.forEach(el => el.remove());
+                
+                // Восстанавливаем стандартный курсор
+                document.body.style.cursor = '';
+                document.documentElement.style.cursor = '';
+                
+                // Удаляем классы, которые скрывают курсор
+                document.body.classList.remove('has-custom-cursor');
+              });
+              
               if ('serviceWorker' in navigator) {
                 window.addEventListener('load', () => {
                   navigator.serviceWorker.register('/sw.js')
