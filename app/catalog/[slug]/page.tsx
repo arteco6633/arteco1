@@ -29,6 +29,8 @@ interface Category {
   name: string
   slug: string
   description: string | null
+  image_url?: string | null
+  is_active?: boolean
 }
 
 export default function CategoryPage() {
