@@ -47,7 +47,7 @@ function withTimeout<T>(
  * @param timeoutMs - Таймаут в миллисекундах (по умолчанию зависит от скорости соединения)
  */
 export async function withQueryTimeout<T>(
-  query: Promise<{ data: T | null; error: any }> | { then: (onfulfilled?: any) => any },
+  query: any,
   timeoutMs?: number
 ): Promise<{ data: T | null; error: any }> {
   const timeout = timeoutMs ?? (isSlowConnection() ? SLOW_CONNECTION_TIMEOUT : DEFAULT_TIMEOUT)
@@ -86,14 +86,17 @@ export async function withQueryTimeout<T>(
  * Обертка для Promise.all с таймаутом
  */
 export async function withQueryTimeoutAll<T>(
-  queries: Array<Promise<{ data: T | null; error: any }>>,
+  queries: Array<any>,
   timeoutMs?: number
 ): Promise<Array<{ data: T | null; error: any }>> {
   const timeout = timeoutMs ?? (isSlowConnection() ? SLOW_CONNECTION_TIMEOUT : DEFAULT_TIMEOUT)
   
+  // Преобразуем все запросы в Promise
+  const queriesPromises = queries.map(q => Promise.resolve(q) as Promise<{ data: T | null; error: any }>)
+  
   try {
     const results = await withTimeout(
-      Promise.all(queries),
+      Promise.all(queriesPromises),
       timeout,
       `Запросы превысили таймаут ${timeout}мс`
     )
