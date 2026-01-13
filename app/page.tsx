@@ -273,15 +273,14 @@ export default function HomePage() {
     try {
       setInteriorsLoading(true)
       // Оптимизация: выбираем только нужные поля для слабого интернета
-      // КРИТИЧНО: Загружаем только минимальные поля для списка интерьеров
-      // gallery_images, gallery_previews, video_urls - ОГРОМНЫЕ массивы, не нужны в списке
+      // Загружаем все поля для отображения галереи и дополнительной информации
       const slowConn = checkSlowConnection()
       const interiorsLimit = slowConn ? 10 : 20 // Меньше записей на медленном интернете
       
       const { data, error } = await withQueryTimeout<Interior[]>(
         supabase
           .from('client_interiors')
-          .select('id, title, description, cover_image, cover_preview, location, project_type, created_at')
+          .select('id, title, subtitle, description, cover_image, cover_preview, gallery_images, gallery_previews, video_urls, location, area, style, project_type, created_at')
           .order('created_at', { ascending: false })
           .limit(interiorsLimit)
       )
