@@ -245,6 +245,8 @@ export default function HomePage() {
           supabase
             .from('categories')
             .select('id, name, slug, image_url, is_active')
+            .eq('is_active', true)
+            .order('position', { ascending: true, nullsFirst: false })
             .order('name', { ascending: true })
         )
         if (!categoriesData || !Array.isArray(categoriesData)) {
