@@ -1,15 +1,20 @@
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://zijajicude.beget.app'
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlzcyI6InN1cGFiYXNlIiwiaWF0IjoxNzYxNTIzMjAwLCJleHAiOjE5MTkyODk2MDB9.l9rF02tJ4OKoCSqVsKeHnBR47mYkFG5BxF_Imkz9tcs'
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-// Отладка в консоли
-console.log('Supabase URL:', supabaseUrl)
-console.log('Supabase Anon Key:', supabaseAnonKey?.substring(0, 20) + '...')
+// КРИТИЧНО: Не используем fallback на старый URL - это блокирует загрузку сайта
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.error('❌ КРИТИЧЕСКАЯ ОШИБКА: NEXT_PUBLIC_SUPABASE_URL или NEXT_PUBLIC_SUPABASE_ANON_KEY не установлены!')
+  console.error('Проверьте переменные окружения на Vercel и в .env.local')
+}
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-  auth: {
-    persistSession: false
-  }
-})
+// Создаем клиент только если есть URL и ключ
+export const supabase = supabaseUrl && supabaseAnonKey
+  ? createClient(supabaseUrl, supabaseAnonKey, {
+      auth: {
+        persistSession: false
+      }
+    })
+  : null as any // Временное решение - будет ошибка при использовании, но сайт загрузится
 
