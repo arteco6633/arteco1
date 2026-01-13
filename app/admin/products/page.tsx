@@ -245,7 +245,7 @@ export default function AdminProductsPage() {
       const allDrawers: any[] = []
       const allLighting: any[] = []
 
-      productsData?.forEach(product => {
+      productsData?.forEach((product: Product) => {
         if (product.handles && Array.isArray(product.handles)) {
           product.handles.forEach((h: any) => {
             if (h && h.name && !allHandles.find(ex => ex.name === h.name && ex.description === h.description && ex.image_url === h.image_url)) {
@@ -769,7 +769,13 @@ export default function AdminProductsPage() {
       
       // Определяем, какая колонка отсутствует, и предлагаем соответствующий скрипт
       let suggestion = ''
-      if (errorMessage.includes('model_3d_url')) {
+      if (errorMessage.includes('drawers') || errorMessage.includes('fillings') || errorMessage.includes('hinges') || errorMessage.includes('lighting') || errorMessage.includes('specs') || errorMessage.includes('schemes') || errorMessage.includes('videos') || errorMessage.includes('interior_images')) {
+        suggestion = 'Возможно, нужно добавить недостающие колонки в таблицу products через SQL скрипт setup_products_all_missing_columns.sql'
+      } else if (errorMessage.includes('downloadable_files')) {
+        suggestion = 'Возможно, нужно добавить колонку "downloadable_files" в таблицу products через SQL скрипт setup_products_downloadable_files.sql'
+      } else if (errorMessage.includes('colors')) {
+        suggestion = 'Возможно, нужно добавить колонку "colors" в таблицу products через SQL скрипт setup_products_colors.sql'
+      } else if (errorMessage.includes('model_3d_url')) {
         suggestion = 'Возможно, нужно добавить колонку "model_3d_url" в таблицу products через SQL скрипт setup_products_model_3d_url.sql'
       } else if (errorMessage.includes('handles')) {
         suggestion = 'Возможно, нужно добавить колонку "handles" в таблицу products через SQL скрипт setup_products_handles.sql'
