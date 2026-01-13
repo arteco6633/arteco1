@@ -10,3 +10,4 @@ ADD COLUMN IF NOT EXISTS handles JSONB DEFAULT '[]'::jsonb;
 COMMENT ON COLUMN products.handles IS 'Массив ручек с опциями (name, description, image_url, delta_price)';
 
 
+

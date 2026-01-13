@@ -79,3 +79,4 @@ export function getDesktopImageUrl(
   return getOptimizedImageUrl(originalUrl, maxWidth, 85, 'webp')
 }
 
+

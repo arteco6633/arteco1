@@ -139,3 +139,4 @@
 2. ⚠️ Дополнительные resource hints
 3. ⚠️ Улучшение Service Worker стратегии
 
+

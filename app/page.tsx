@@ -209,18 +209,19 @@ export default function HomePage() {
         supabase
           .from('promo_blocks')
           .select('id, title, description, image_url, video_url, link_url, button_text, position, sort_order, is_active')
-          .eq('is_active', 'true')
-          .order('position', { ascending: true }),
+          .eq('is_active', true)
+          .order('sort_order', { ascending: true })
+          .limit(10),
         supabase
           .from('products')
           .select('id, name, price, original_price, price_type, price_per_m2, image_url, images, colors, category_id, is_featured, is_new, model_3d_url')
-          .eq('is_featured', 'true')
+          .eq('is_featured', true)
           .eq('is_hidden', false)
           .limit(slowConn ? 6 : 8),
         supabase
           .from('products')
           .select('id, name, price, original_price, price_type, price_per_m2, image_url, images, colors, category_id, is_featured, is_new, model_3d_url')
-          .eq('is_new', 'true')
+          .eq('is_new', true)
           .eq('is_hidden', false)
           .order('id', { ascending: false })
           .limit(productsLimit)

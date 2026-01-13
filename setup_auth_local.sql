@@ -21,10 +21,26 @@ create table if not exists public.users_local (
 alter table public.otp_codes enable row level security;
 alter table public.users_local enable row level security;
 
-create policy if not exists "otp read insert" on public.otp_codes for select using (true);
-create policy if not exists "otp insert" on public.otp_codes for insert with check (true);
+-- Политики для OTP кодов
+DROP POLICY IF EXISTS "otp read" ON public.otp_codes;
+CREATE POLICY "otp read" ON public.otp_codes
+    FOR SELECT USING (true);
 
-create policy if not exists "users_local read" on public.users_local for select using (true);
-create policy if not exists "users_local upsert" on public.users_local for insert with check (true);
+DROP POLICY IF EXISTS "otp insert" ON public.otp_codes;
+CREATE POLICY "otp insert" ON public.otp_codes
+    FOR INSERT WITH CHECK (true);
+
+-- Политики для локальных пользователей
+DROP POLICY IF EXISTS "users_local read" ON public.users_local;
+CREATE POLICY "users_local read" ON public.users_local
+    FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS "users_local insert" ON public.users_local;
+CREATE POLICY "users_local insert" ON public.users_local
+    FOR INSERT WITH CHECK (true);
+
+DROP POLICY IF EXISTS "users_local update" ON public.users_local;
+CREATE POLICY "users_local update" ON public.users_local
+    FOR UPDATE USING (true) WITH CHECK (true);
 
 

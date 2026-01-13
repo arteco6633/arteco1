@@ -10,14 +10,17 @@ CREATE POLICY "Публичный доступ к товарам" ON products
     FOR SELECT USING (true);
 
 -- Разрешаем добавление товаров (для админки)
+DROP POLICY IF EXISTS "Разрешить добавление товаров" ON products;
 CREATE POLICY "Разрешить добавление товаров" ON products
     FOR INSERT WITH CHECK (true);
 
 -- Разрешаем обновление товаров (для админки)
+DROP POLICY IF EXISTS "Разрешить обновление товаров" ON products;
 CREATE POLICY "Разрешить обновление товаров" ON products
     FOR UPDATE USING (true) WITH CHECK (true);
 
 -- Разрешаем удаление товаров (для админки)
+DROP POLICY IF EXISTS "Разрешить удаление товаров" ON products;
 CREATE POLICY "Разрешить удаление товаров" ON products
     FOR DELETE USING (true);
 

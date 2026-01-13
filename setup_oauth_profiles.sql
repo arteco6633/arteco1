@@ -12,6 +12,10 @@ create table if not exists public.oauth_profiles (
 );
 
 alter table public.oauth_profiles enable row level security;
-create policy if not exists "oauth_profiles_read" on public.oauth_profiles for select using (true);
+
+-- Политики для OAuth профилей
+DROP POLICY IF EXISTS "oauth_profiles_read" ON public.oauth_profiles;
+CREATE POLICY "oauth_profiles_read" ON public.oauth_profiles
+    FOR SELECT USING (true);
 
 

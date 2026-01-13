@@ -39,37 +39,31 @@ begin
   ) into has_total_amount;
 
   if has_total_amount then
-    execute $$
-      insert into public.orders (
-        user_id, contact, items, total_amount, delivery, payment, status
-      ) values ($1,$2,$3,$4,$5,$6,$7)
-      returning orders.id
-    $$
-    into v_id
-    using
+    insert into public.orders (
+      user_id, contact, items, total_amount, delivery, payment, status
+    ) values (
       (payload->>'user_id')::uuid,
       coalesce(payload->'contact','{}'::jsonb),
       coalesce(payload->'items','[]'::jsonb),
       coalesce((payload->>'total')::numeric,0),
       coalesce(payload->'delivery','{}'::jsonb),
       coalesce(payload->'payment','{}'::jsonb),
-      'new';
+      'new'
+    )
+    returning id into v_id;
   else
-    execute $$
-      insert into public.orders (
-        user_id, contact, items, total, delivery, payment, status
-      ) values ($1,$2,$3,$4,$5,$6,$7)
-      returning orders.id
-    $$
-    into v_id
-    using
+    insert into public.orders (
+      user_id, contact, items, total, delivery, payment, status
+    ) values (
       (payload->>'user_id')::uuid,
       coalesce(payload->'contact','{}'::jsonb),
       coalesce(payload->'items','[]'::jsonb),
       coalesce((payload->>'total')::numeric,0),
       coalesce(payload->'delivery','{}'::jsonb),
       coalesce(payload->'payment','{}'::jsonb),
-      'new';
+      'new'
+    )
+    returning id into v_id;
   end if;
 
   return query select v_id;

@@ -9,3 +9,4 @@ ADD COLUMN IF NOT EXISTS model_3d_url TEXT NULL;
 COMMENT ON COLUMN products.model_3d_url IS 'URL 3D модели товара в формате OBJ для интерактивного просмотра';
 
 
+
