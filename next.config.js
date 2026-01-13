@@ -34,9 +34,6 @@ const nextConfig = {
       supabaseHost
         ? { protocol: 'https', hostname: supabaseHost, pathname: '/storage/**' }
         : null,
-      // Резервные хосты Supabase
-      { protocol: 'https', hostname: 'zijajicude.beget.app', pathname: '/storage/**' },
-      { protocol: 'https', hostname: 'zijajicude.beget.app', pathname: '/**' },
       { protocol: 'https', hostname: 'images.unsplash.com', pathname: '/**' },
     ].filter(Boolean),
     formats: ['image/avif', 'image/webp'],
@@ -85,7 +82,7 @@ const nextConfig = {
               "img-src 'self' data: https: blob:",
               "media-src 'self' data: https: blob:",
               "font-src 'self' data:",
-              `connect-src 'self' https://zijajicude.beget.app ${supabaseHost ? `https://${supabaseHost}` : ''} https://api-statist.tinkoff.ru https://integrationjs.tbank.ru https://gate.smsaero.ru https://vercel.live`,
+              `connect-src 'self' ${supabaseHost ? `https://${supabaseHost}` : ''} https://api-statist.tinkoff.ru https://integrationjs.tbank.ru https://gate.smsaero.ru https://vercel.live`,
               "frame-src https://integrationjs.tbank.ru https://securepay.tinkoff.ru",
               "object-src 'none'",
               "base-uri 'self'",
