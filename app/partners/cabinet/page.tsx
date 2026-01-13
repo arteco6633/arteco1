@@ -104,8 +104,8 @@ export default function PartnerCabinet() {
 
       if (ordersData && ordersData.length > 0) {
         const totalOrders = ordersData.length
-        const totalRevenue = ordersData.reduce((sum, o) => sum + Number(o.total_amount || 0), 0)
-        const totalCommissions = ordersData.reduce((sum, o) => sum + Number(o.commission_amount || 0), 0)
+        const totalRevenue = ordersData.reduce((sum: number, o) => sum + Number(o.total_amount || 0), 0)
+        const totalCommissions = ordersData.reduce((sum: number, o) => sum + Number(o.commission_amount || 0), 0)
         
         const { data: pendingCommissionsData } = await supabase
           .from('partner_commissions')
