@@ -223,7 +223,7 @@ export default function PartnersPage() {
       
       // Сортируем в нужном порядке
       const sortedProducts = wishlistNames
-        .map(name => data?.find(p => p.name === name))
+        .map(name => data?.find((p: any) => p.name === name))
         .filter(Boolean) as Product[]
       
       setWishlistProducts(sortedProducts)
