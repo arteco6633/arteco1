@@ -301,7 +301,7 @@ export default function CartPage() {
           .select('id, related_products')
           .in('id', productIds)
         if (error) throw error
-        const ids = Array.from(new Set((rel||[]).flatMap(r => (r as any).related_products || [])))
+        const ids = Array.from(new Set((rel||[]).flatMap((r: any) => (r as any).related_products || [])))
         if (ids.length === 0) { setSuggested([]); return }
         // 2) Загружаем сами товары
         const { data: prods, error: err2 } = await supabase
