@@ -34,8 +34,8 @@ export default function CRMDashboard() {
 
       const ord = ordersData.data || []
       setOrders(ord)
-      const totalRevenue = ord.reduce((sum, o) => sum + Number(o.total_amount || 0), 0)
-      const pendingOrders = ord.filter(o => o.status === 'pending' || o.status === 'processing' || o.status === 'new').length
+      const totalRevenue = ord.reduce((sum: number, o: any) => sum + Number(o.total_amount || 0), 0)
+      const pendingOrders = ord.filter((o: any) => o.status === 'pending' || o.status === 'processing' || o.status === 'new').length
 
       setStats({
         totalOrders: orders.length,

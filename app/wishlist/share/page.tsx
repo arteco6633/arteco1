@@ -74,7 +74,7 @@ function SharedWishlistContent() {
 
         // Сортируем по порядку в URL
         const sortedProducts = ids
-          .map(id => productsData.find(p => p.id === id))
+          .map(id => productsData.find((p: any) => p.id === id))
           .filter((p) => p !== undefined) as Product[]
 
         if (sortedProducts.length === 0) {
