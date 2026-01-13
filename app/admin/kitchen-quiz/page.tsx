@@ -56,7 +56,7 @@ export default function AdminKitchenQuizPage() {
 
       // Загружаем варианты для каждого шага
       const stepsWithOptions = await Promise.all(
-        (stepsData || []).map(async (step) => {
+        (stepsData || []).map(async (step: QuizStep) => {
           const { data: optionsData } = await supabase
             .from('kitchen_quiz_options')
             .select('*')
