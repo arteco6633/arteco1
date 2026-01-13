@@ -104,8 +104,8 @@ export default function PartnerCabinet() {
 
       if (ordersData && ordersData.length > 0) {
         const totalOrders = ordersData.length
-        const totalRevenue = ordersData.reduce((sum: number, o) => sum + Number(o.total_amount || 0), 0)
-        const totalCommissions = ordersData.reduce((sum: number, o) => sum + Number(o.commission_amount || 0), 0)
+        const totalRevenue = ordersData.reduce((sum: number, o: any) => sum + Number(o.total_amount || 0), 0)
+        const totalCommissions = ordersData.reduce((sum: number, o: any) => sum + Number(o.commission_amount || 0), 0)
         
         const { data: pendingCommissionsData } = await supabase
           .from('partner_commissions')
@@ -113,7 +113,7 @@ export default function PartnerCabinet() {
           .eq('partner_id', partnerId)
           .eq('status', 'pending')
 
-        const pendingCommissions = pendingCommissionsData?.reduce((sum, c) => sum + Number(c.amount || 0), 0) || 0
+        const pendingCommissions = pendingCommissionsData?.reduce((sum: number, c: any) => sum + Number(c.amount || 0), 0) || 0
 
         setStats({
           totalClients,
@@ -124,7 +124,7 @@ export default function PartnerCabinet() {
         })
 
         // Загрузка заказов
-        const formattedOrders = ordersData.map(order => ({
+        const formattedOrders = ordersData.map((order: any) => ({
           id: order.id,
           client_name: order.client_name || '',
           client_phone: order.client_phone || '',
@@ -144,7 +144,7 @@ export default function PartnerCabinet() {
           .order('created_at', { ascending: false })
 
         if (commissionsData) {
-          const formattedCommissions = commissionsData.map(commission => ({
+          const formattedCommissions = commissionsData.map((commission: any) => ({
             id: commission.id,
             order_id: commission.partner_order_id,
             amount: Number(commission.amount || 0),

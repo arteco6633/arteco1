@@ -9,10 +9,12 @@ if (!supabaseUrl || !supabaseServiceKey) {
 }
 
 // Серверный клиент для API routes (обходит RLS)
-export const supabaseServer = createClient(supabaseUrl, supabaseServiceKey, {
-  auth: {
-    autoRefreshToken: false,
-    persistSession: false
-  }
-})
+export const supabaseServer = supabaseUrl && supabaseServiceKey
+  ? createClient(supabaseUrl, supabaseServiceKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    })
+  : null as any
 
