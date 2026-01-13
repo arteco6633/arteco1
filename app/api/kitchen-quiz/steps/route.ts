@@ -14,7 +14,7 @@ export async function GET() {
 
     // Для каждого шага загружаем варианты ответов (если это вопрос типа choice)
     const stepsWithOptions = await Promise.all(
-      (steps || []).map(async (step) => {
+      (steps || []).map(async (step: any) => {
         if (step.question_type === 'choice') {
           const { data: options, error: optionsError } = await supabase
             .from('kitchen_quiz_options')
