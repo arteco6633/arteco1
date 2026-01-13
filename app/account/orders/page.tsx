@@ -102,7 +102,7 @@ export default function AccountOrdersPage() {
       }
 
       // Фильтруем заказы по телефону пользователя
-      const userOrders = (data || []).filter(order => {
+      const userOrders = (data || []).filter((order: Order) => {
         const contact = order.contact as any
         const orderPhone = contact?.phone || ''
         
