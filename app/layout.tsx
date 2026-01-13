@@ -62,7 +62,6 @@ export default function RootLayout({
         {process.env.NEXT_PUBLIC_SUPABASE_URL && (
           <link rel="preconnect" href={process.env.NEXT_PUBLIC_SUPABASE_URL} crossOrigin="anonymous" />
         )}
-        <link rel="preconnect" href="https://zijajicude.beget.app" crossOrigin="anonymous" />
         {/* Оптимизированные favicon - только необходимые */}
         <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
         <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192x192.png" />
