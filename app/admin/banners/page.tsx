@@ -99,10 +99,10 @@ export default function AdminBannersPage() {
   async function uploadImage(file: File): Promise<string> {
     const fileExt = file.name.split('.').pop()
     const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`
-    const filePath = `banners/${fileName}`
+    const filePath = fileName
 
     const { error: uploadError } = await supabase.storage
-      .from('product')
+      .from('banners')
       .upload(filePath, file)
 
     if (uploadError) {
@@ -110,7 +110,7 @@ export default function AdminBannersPage() {
     }
 
     const { data } = supabase.storage
-      .from('product')
+      .from('banners')
       .getPublicUrl(filePath)
 
     return data.publicUrl
@@ -123,12 +123,12 @@ export default function AdminBannersPage() {
     try {
       // Извлекаем путь к файлу из URL
       const urlObj = new URL(url)
-      const pathMatch = urlObj.pathname.match(/\/storage\/v1\/object\/public\/product\/(.+)/)
+      const pathMatch = urlObj.pathname.match(/\/storage\/v1\/object\/public\/banners\/(.+)/)
       
       if (pathMatch && pathMatch[1]) {
         const filePath = pathMatch[1]
         const { error } = await supabase.storage
-          .from('product')
+          .from('banners')
           .remove([filePath])
         
         if (error) {
@@ -144,11 +144,11 @@ export default function AdminBannersPage() {
 
   async function uploadVideo(file: File): Promise<string> {
     const fileExt = file.name.split('.').pop()
-    const fileName = `banners/videos/${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`
+    const fileName = `videos/${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`
     const filePath = fileName
 
     const { error: uploadError } = await supabase.storage
-      .from('product')
+      .from('banners')
       .upload(filePath, file, { cacheControl: '3600', upsert: false })
 
     if (uploadError) {
@@ -156,7 +156,7 @@ export default function AdminBannersPage() {
     }
 
     const { data } = supabase.storage
-      .from('product')
+      .from('banners')
       .getPublicUrl(filePath)
 
     return data.publicUrl
