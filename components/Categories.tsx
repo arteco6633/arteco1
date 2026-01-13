@@ -13,7 +13,7 @@ export default function Categories({ categories }: { categories: Category[] }) {
 
   return (
     <section className="pt-12 pb-2 overflow-x-hidden max-w-full">
-      <div className="max-w-[1680px] 2xl:max-w-none mx-auto px-4 md:px-2 xl:px-4 2xl:px-6 max-w-full">
+      <div className="max-w-[1680px] 2xl:max-w-none mx-auto px-1 md:px-2 xl:px-4 2xl:px-6 max-w-full">
         <div className="md:hidden flex items-center gap-2 text-gray-500 text-sm px-0 mb-3">
           <span>Прокрутите категории</span>
           <span className="inline-block animate-pulse">→</span>
